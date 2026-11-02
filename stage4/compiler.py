@@ -18,6 +18,9 @@ OPS = { '+':'fr_add','-':'fr_sub','*':'fr_mul','/':'fr_div',
     'neg':'fr_neg','abs':'fr_abs', 'floor':'fr_floor',
     'b@':'fr_bfetch','b!':'fr_bstore',
     'io8@':'fr_inb','io8!':'fr_outb',
+    'io16@':'fr_inw','io16!':'fr_outw','band':'fr_band',
+    'sector-byte@':'fr_sector_bfetch','sector-byte!':'fr_sector_bstore',
+    'sector-buffer':'fr_sector_buf',
 }
 
 class CompilerError(Exception): pass

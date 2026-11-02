@@ -19,14 +19,16 @@ layout with reserved `FRANCFS1` data at LBAs 128-199. No C objects are linked.
 
 Current *working subset*: definitions, strings, rational literals, signed
 integer fractions, nested `if/if0/ifnz/else/then`, `begin/while/repeat/again`,
-registers, console serial output, pixel/clear, byte memory and raw 8-bit I/O.
+registers, console serial output, pixel/clear, byte memory and raw 8/16-bit I/O. The existing
+Franc-written `stage3/ata.frac` ATA read/write driver is now compiled into this
+C-free kernel; QEMU verifies a magic-byte read and sector write/readback.
 Arithmetic normalizes 64-bit fractions and emits bottom on intermediate
 multiplication overflow; **this does not yet guarantee every edge case of the
 full Stage 0 arithmetic**.
 
 The AOT build tool is **Python, not yet Franc**. Also not yet migrated: full
 compiler/dictionary at runtime, the interactive REPL, the full Stage 3 storage
-and graphical console stack, PS/2 input, ATA sector transfers, 16-bit port I/O,
+and graphical console stack, PS/2 input, complete persistent source filesystem,
 interrupts, complete numeric tower, verified C-free *self-build*. These remain
 mandatory work, not optional or done by the mere fact this image cold-boots.
 The development branch retains the Stage 1/3 C-backed kernel as a fallback.

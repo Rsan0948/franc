@@ -502,3 +502,64 @@ nanmsg: .asciz "NaN"
  ds_ptr: .quad 0
 printbuf: .skip 64
 .section .note.GNU-stack,"",@progbits
+
+/* Raw PIO bridge for the existing Franc-written ATA sector driver. */
+.section .text,"ax"
+.global fr_band
+fr_band:
+    call fr_pop
+    movq %rax,%r10
+    call fr_pop
+    andq %r10,%rax
+    movq %rax,%rdi
+    movq $1,%rsi
+    jmp fr_push
+.global fr_inw
+fr_inw:
+    call fr_pop
+    movw %ax,%dx
+    xorq %rax,%rax
+    inw %dx,%ax
+    movq %rax,%rdi
+    movq $1,%rsi
+    jmp fr_push
+.global fr_outw
+fr_outw:
+    call fr_pop
+    movq %rax,%r10
+    call fr_pop
+    movw %ax,%dx
+    movw %r10w,%ax
+    outw %ax,%dx
+    ret
+.global fr_sector_buf
+fr_sector_buf:
+    leaq sector_data(%rip),%rdi
+    movq $1,%rsi
+    jmp fr_push
+.global fr_sector_bfetch
+fr_sector_bfetch:
+    call fr_pop
+    cmpq $512,%rax
+    jae .bad_sector_read
+    movzbq sector_data(%rax),%rdi
+    movq $1,%rsi
+    jmp fr_push
+.bad_sector_read:
+    xor %edi,%edi
+    movq $1,%rsi
+    jmp fr_push
+.global fr_sector_bstore
+fr_sector_bstore:
+    call fr_pop
+    movq %rax,%r10
+    call fr_pop
+    cmpq $512,%rax
+    jae .bad_sector_write
+    movb %r10b,sector_data(%rax)
+.bad_sector_write:
+    ret
+.section .bss
+.balign 16
+sector_data: .skip 512
+.section .note.GNU-stack,"",@progbits
