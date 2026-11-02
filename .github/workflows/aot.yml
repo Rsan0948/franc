@@ -1,0 +1,22 @@
+name: Franc C-free experimental AOT boot
+on:
+  push:
+    branches: [stage4-cfree-aot]
+  pull_request:
+    paths:
+      - 'stage4/**'
+      - '.github/workflows/aot.yml'
+jobs:
+  aot-kernel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Franc AOT kernel without C objects
+        run: |
+          make -C stage4
+          python3 stage4/test_compiler.py
+          if nm stage4/kernel.elf | grep -Eq ' (U|T) (main|printf|malloc|free|memcpy|mmap)$'; then exit 1; fi
+      - name: Install QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Cold boot C-free AOT image in software QEMU
+        run: python3 stage4/qemu_aot.py
