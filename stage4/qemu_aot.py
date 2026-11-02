@@ -12,7 +12,7 @@ p=subprocess.Popen([qemu,'-m','128M','-accel','tcg','-display','none',
 selector=selectors.DefaultSelector();selector.register(p.stdout,selectors.EVENT_READ)
 buffer=b''
 try:
-    deadline=time.monotonic()+90
+    deadline=time.monotonic()+30
     while time.monotonic()<deadline and b'AOT BOOT OK' not in buffer:
         if p.poll() is not None:break
         if selector.select(0.3):
@@ -22,6 +22,22 @@ try:
     print(buffer.decode(errors='replace'))
     for marker in [b'FrancOS AOT | 64-bit | no C runtime',b'1/2',b'25',b'BRANCH OK',b'3\n',b'70\n',b'42\n',b'ATA WRITE READBACK DONE',b'def saved 77 ;',b'STORAGE OK',b'AOT BOOT OK']:
         assert marker in buffer, f'missing {marker!r}; QEMU output={buffer!r}'
-    print('PASS: cold BIOS boot -> standalone native Franc program (assembly runtime only)')
+    # Hardware exercised through the Franc-owned COM1 input polling loop.
+    deadline=time.monotonic()+8
+    while time.monotonic()<deadline and b'FRANC INTERACTIVE READY' not in buffer:
+        if selector.select(0.2):
+            data=os.read(p.stdout.fileno(),8192)
+            if data: buffer+=data
+    assert b'FRANC INTERACTIVE READY' in buffer, f'console missing: {buffer!r}'
+    os.write(p.stdin.fileno(), b'psg\x1b')
+    deadline=time.monotonic()+15
+    while time.monotonic()<deadline and b'EXIT CONSOLE' not in buffer:
+        if selector.select(0.3):
+            data=os.read(p.stdout.fileno(),8192)
+            if data: buffer+=data
+    for marker in (b'FRANC FRAMEBUFFER READY',b'FRANC INTERACTIVE READY',b'GRAPHICS IN FRANC',b'EXIT CONSOLE'):
+        assert marker in buffer, f'missing {marker!r} from Franc console: {buffer!r}'
+    assert buffer.count(b'1/2') >= 2, buffer
+    print('PASS: C-free cold boot, Franc framebuffer console, serial keyboard and storage')
 finally:
     p.kill();p.wait()

@@ -601,3 +601,12 @@ fr_source_bstore:
 .balign 16
 source_data: .skip 2050
 .section .note.GNU-stack,"",@progbits
+
+/* Franc framebuffer glyphs use the linked font table as data. */
+.section .text,"ax"
+.global fr_font_base
+fr_font_base:
+    leaq franc_font8x8(%rip), %rdi
+    movq $1, %rsi
+    jmp fr_push
+.section .note.GNU-stack,"",@progbits

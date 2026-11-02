@@ -20,7 +20,7 @@ OPS = { '+':'fr_add','-':'fr_sub','*':'fr_mul','/':'fr_div',
     'io8@':'fr_inb','io8!':'fr_outb',
     'io16@':'fr_inw','io16!':'fr_outw','band':'fr_band',
     'sector-byte@':'fr_sector_bfetch','sector-byte!':'fr_sector_bstore',
-    'sector-buffer':'fr_sector_buf','source-buffer':'fr_source_buffer',
+    'sector-buffer':'fr_sector_buf','source-buffer':'fr_source_buffer', 'font-base':'fr_font_base',
     'source-byte!':'fr_source_bstore','byte@':'fr_bfetch','%':'fr_mod',
 }
 

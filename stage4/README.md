@@ -35,3 +35,22 @@ The development branch retains the Stage 1/3 C-backed kernel as a fallback.
 
 Security limitations: no isolation, no privilege separation, no stack checks
 in the assembly primitives. Fixed, single-user x86-64/BIOS demonstration only.
+
+## Native console and keyboard migration (experimental)
+
+The next standalone image links the DejaVu-derived bitmap font as assembly data
+(`font.S`), and its screen character cells, glyph loops, scroll policy and
+character output are implemented in `display.frac` using byte memory operations.
+`keyboard.frac` owns serial/PS2 polling and scancode translation. An interactive
+Franc menu is started after the AOT boot checks; CI sends real COM1 key events
+(`p`, `s`, `g`, `Esc`) into the emulated machine. The immutable binary continues
+to use Franc's ATA read/write driver and source-store module.
+
+**Important limitations:** the interactive menu is not a source-code REPL. The
+compiler for this image is still `compiler.py` (build-time Python), and the
+native kernel lacks a runtime Franc source compiler, dynamic dictionary and
+multiple numerical/graphics primitives from the older JIT. There are no C
+objects in this image, but this is not a fully self-hosting no-Python build.
+The complete transition requires a Franc-authored native AOT compiler able to
+build the full OS, plus runtime dictionary and compilation support. Do not
+confuse this tested fixed-program image with that end state.
