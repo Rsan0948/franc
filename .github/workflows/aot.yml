@@ -1,7 +1,7 @@
 name: Franc C-free experimental AOT boot
 on:
   push:
-    branches: [stage4-cfree-aot]
+    branches: [stage4-cfree-aot, stage4-franc-native-services]
   pull_request:
     paths:
       - 'stage4/**'
