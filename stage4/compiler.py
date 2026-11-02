@@ -22,6 +22,16 @@ OPS = { '+':'fr_add','-':'fr_sub','*':'fr_mul','/':'fr_div',
     'sector-byte@':'fr_sector_bfetch','sector-byte!':'fr_sector_bstore',
     'sector-buffer':'fr_sector_buf','source-buffer':'fr_source_buffer', 'font-base':'fr_font_base',
     'source-byte!':'fr_source_bstore','byte@':'fr_bfetch','%':'fr_mod',
+    'dict-head':'fr_dict_head', 'dict-next':'fr_dict_next',
+    'dict-name':'fr_dict_name', 'dict-code':'fr_dict_code',
+    's2-token-buffer':'fr_s2_token_buffer',
+    's2-line-buffer':'fr_s2_line_buffer',
+    's2-control-buffer':'fr_s2_control_buffer',
+    's2-code':'fr_s2_code', 's2-run':'fr_s2_run',
+    's2-define':'fr_s2_define', 's2-intern':'fr_s2_intern',
+    's2-lit-addr':'fr_s2_lit_addr', 's2-sign-addr':'fr_s2_sign_addr',
+    's2-string-addr':'fr_s2_string_addr', 's2-self-source':'fr_s2_self_source',
+    '!':'fr_bstore',
 }
 
 class CompilerError(Exception): pass
@@ -160,6 +170,25 @@ def compile_program(sources):
     for name,st in literal_strings:
         chunks.append(f'{name}:')
         chunks.extend(f'  .byte {b}' for b in st.encode('utf-8')+b'\x00')
+    # AOT-compiled words and machine primitives are visible to the Franc JIT.
+    # Mutable definitions prepend to this static linked list at boot.
+    entries = [(name, target) for name, target in OPS.items()]
+    entries += [(name, labels[name]) for name, _, _, _ in defs]
+    chunks.append('.section .rodata')
+    for idx, (name, _) in enumerate(entries):
+        chunks.append(f'franc_word_name_{idx}:')
+        chunks.extend(f'  .byte {byte}' for byte in name.encode('utf-8')+b'\\x00')
+    chunks.append('.global franc_stage2_source')
+    chunks.append('franc_stage2_source:')
+    compiler_source = Path(__file__).resolve().parents[1] / 'stage2' / 'compiler.frac'
+    chunks.extend(f'  .byte {byte}' for byte in compiler_source.read_bytes()+b'\\x00')
+    chunks.extend(['.section .data', '.balign 8', '.global franc_dict_initial', 'franc_dict_initial:'])
+    chunks.append(f'  .quad franc_word_entry_{len(entries)-1}' if entries else '  .quad 0')
+    for idx, (_, target) in enumerate(entries):
+        chunks.append(f'franc_word_entry_{idx}:')
+        chunks.append(f'  .quad franc_word_entry_{idx-1}' if idx else '  .quad 0')
+        chunks.append(f'  .quad franc_word_name_{idx}')
+        chunks.append(f'  .quad {target}')
     chunks.extend(['.bss','.balign 16'])
     for k in usedregs:chunks.extend([f'reg_{ident(k)}:', '  .zero 16'])
     chunks.append('.section .note.GNU-stack,"",@progbits')

@@ -35,6 +35,9 @@ _kstart:
     movabs $ds_stack,%rax
     movabs $ds_ptr,%rdx
     movq %rax,(%rdx)
+    leaq franc_dict_initial(%rip),%rax
+    movq (%rax),%rax
+    movq %rax,fr_dict_head_ptr(%rip)
     call franc_entry
 .hang:
     cli
@@ -609,4 +612,165 @@ fr_font_base:
     leaq franc_font8x8(%rip), %rdi
     movq $1, %rsi
     jmp fr_push
+.section .note.GNU-stack,"",@progbits
+
+
+/* Franc Stage 2 compiler bridge: no C objects, no libc. AOT functions and
+ * primitives form the initial dictionary, with 256 mutable definitions.
+ * JIT code lives at mapped RAM 0x400000+, not in the disk image.
+ */
+.section .text,"ax"
+.global fr_dict_head
+fr_dict_head:
+    movq fr_dict_head_ptr(%rip),%rdi
+    movq $1,%rsi
+    jmp fr_push
+.macro DICT_FIELD name,offset
+.global \name
+\name:
+    call fr_pop
+    testq %rax,%rax
+    jz .Ldf_null\@
+    movq \offset(%rax),%rdi
+    jmp .Ldf_push\@
+.Ldf_null\@:
+    xorq %rdi,%rdi
+.Ldf_push\@:
+    movq $1,%rsi
+    jmp fr_push
+.endm
+DICT_FIELD fr_dict_next,0
+DICT_FIELD fr_dict_name,8
+DICT_FIELD fr_dict_code,16
+
+.macro PUSH_ADDRESS name,symbol
+.global \name
+\name:
+    leaq \symbol(%rip),%rdi
+    movq $1,%rsi
+    jmp fr_push
+.endm
+PUSH_ADDRESS fr_s2_token_buffer,s2_token_buffer
+PUSH_ADDRESS fr_s2_control_buffer,s2_control_buffer
+PUSH_ADDRESS fr_s2_line_buffer,s2_line_buffer
+PUSH_ADDRESS fr_s2_lit_addr,fr_push
+PUSH_ADDRESS fr_s2_sign_addr,fr_condition
+PUSH_ADDRESS fr_s2_string_addr,fr_push
+PUSH_ADDRESS fr_s2_self_source,franc_stage2_source
+
+.global fr_s2_code
+fr_s2_code:
+    movq s2_code_next(%rip),%rdi
+    leaq 65536(%rdi),%rax
+    cmpq $0x02000000,%rax
+    ja .Lcode_exhausted
+    movq %rax,s2_code_next(%rip)
+    movq $1,%rsi
+    jmp fr_push
+.Lcode_exhausted:
+    xorq %rdi,%rdi
+    movq $1,%rsi
+    jmp fr_push
+
+.global fr_s2_run
+fr_s2_run:
+    call fr_pop
+    cmpq $0x400000,%rax
+    jb .Lrun_end
+    cmpq s2_code_next(%rip),%rax
+    jae .Lrun_end
+    call *%rax
+.Lrun_end:
+    ret
+
+.global fr_s2_define
+fr_s2_define:
+    pushq %r12
+    pushq %r13
+    call fr_pop
+    movq %rax,%r12
+    call fr_pop
+    movq %rax,%r13
+    cmpq $0x400000,%r12
+    jb .Ldef_done
+    cmpq s2_code_next(%rip),%r12
+    jae .Ldef_done
+    testq %r13,%r13
+    jz .Ldef_done
+    movq s2_dict_used(%rip),%r9
+    cmpq $256,%r9
+    jae .Ldef_done
+    leaq s2_dict_names(%rip),%r10
+    movq %r9,%r11
+    shlq $6,%r11
+    addq %r11,%r10
+    xorq %rcx,%rcx
+.Ldef_copy:
+    cmpq $63,%rcx
+    jae .Ldef_done
+    movb (%r13,%rcx),%al
+    movb %al,(%r10,%rcx)
+    incq %rcx
+    testb %al,%al
+    jnz .Ldef_copy
+    leaq s2_dict_nodes(%rip),%r11
+    leaq (%r9,%r9,2),%r9
+    shlq $3,%r9
+    addq %r9,%r11
+    movq fr_dict_head_ptr(%rip),%rax
+    movq %rax,(%r11)
+    movq %r10,8(%r11)
+    movq %r12,16(%r11)
+    movq %r11,fr_dict_head_ptr(%rip)
+    incq s2_dict_used(%rip)
+.Ldef_done:
+    popq %r13
+    popq %r12
+    ret
+
+.global fr_s2_intern
+fr_s2_intern:
+    call fr_pop
+    testq %rax,%rax
+    jz .Lintern_fail
+    movq %rax,%r8
+    movq s2_intern_used(%rip),%r9
+    leaq s2_intern_data(%rip),%r10
+    addq %r9,%r10
+    xorq %rcx,%rcx
+.Lintern_copy:
+    cmpq $255,%rcx
+    jae .Lintern_fail
+    movq %r9,%r11
+    addq %rcx,%r11
+    cmpq $32768,%r11
+    jae .Lintern_fail
+    movb (%r8,%rcx),%al
+    movb %al,(%r10,%rcx)
+    incq %rcx
+    testb %al,%al
+    jnz .Lintern_copy
+    addq %rcx,s2_intern_used(%rip)
+    movq %r10,%rdi
+    movq $1,%rsi
+    jmp fr_push
+.Lintern_fail:
+    xorq %rdi,%rdi
+    movq $1,%rsi
+    jmp fr_push
+
+.section .data
+.balign 8
+s2_code_next: .quad 0x400000
+.section .bss
+.balign 16
+fr_dict_head_ptr: .skip 8
+s2_dict_used: .skip 8
+s2_intern_used: .skip 8
+s2_token_buffer: .skip 1024
+s2_control_buffer: .skip 1024
+s2_line_buffer: .skip 4096
+s2_dict_nodes: .skip 6144
+s2_dict_names: .skip 16384
+s2_intern_data: .skip 32768
 .section .note.GNU-stack,"",@progbits

@@ -54,3 +54,13 @@ objects in this image, but this is not a fully self-hosting no-Python build.
 The complete transition requires a Franc-authored native AOT compiler able to
 build the full OS, plus runtime dictionary and compilation support. Do not
 confuse this tested fixed-program image with that end state.
+
+## Experimental runtime native compiler bridge
+
+The C-free image now embeds the Franc-authored Stage 2 compiler, with a
+machine-code dictionary and allocation bridge implemented in x86-64 assembly.
+The initial static dictionary contains AOT definitions and primitive entry
+addresses; new compiled words are installed in a bounded mutable dictionary.
+This is **native JIT compilation inside the C-free kernel**, but not yet a
+Franc-authored AOT image compiler or completely independent rebuild path.
+The QEMU startup probe exercises dynamic expressions and a new definition.
