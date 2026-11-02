@@ -20,7 +20,7 @@ try:
             if not data:break
             buffer+=data
     print(buffer.decode(errors='replace'))
-    for marker in [b'FrancOS AOT | 64-bit | no C runtime',b'1/2',b'25',b'BRANCH OK',b'3\n',b'70\n',b'42\n',b'ATA WRITE READBACK DONE',b'def saved 77 ;',b'STORAGE OK',b'AOT BOOT OK']:
+    for marker in [b'FrancOS AOT | 64-bit | no C runtime',b'1/2',b'25',b'BRANCH OK',b'3\n',b'70\n',b'42\n',b'ATA WRITE READBACK DONE',b'def saved 77 ;',b'STORAGE OK',b'15\n',b'DISPLAY PATH OK',b'AOT BOOT OK']:
         assert marker in buffer, f'missing {marker!r}; QEMU output={buffer!r}'
     print('PASS: cold BIOS boot -> standalone native Franc program (assembly runtime only)')
 finally:

@@ -601,3 +601,74 @@ fr_source_bstore:
 .balign 16
 source_data: .skip 2050
 .section .note.GNU-stack,"",@progbits
+
+/* Primitive graphics memory/font reads. Layout and glyphs live in Franc. */
+.section .text,"ax"
+.global fr_frame_read
+fr_frame_read:
+    call fr_pop
+    cmpq $64000,%rax
+    jae .bad_frame
+    movzbq 0xa0000(%rax),%rdi
+    movq $1,%rsi
+    jmp fr_push
+.bad_frame:
+    xor %edi,%edi
+    movq $1,%rsi
+    jmp fr_push
+.global fr_frame_write
+fr_frame_write:
+    call fr_pop
+    movq %rax,%r10
+    call fr_pop
+    cmpq $64000,%rax
+    jae .bad_frame_write
+    movb %r10b,0xa0000(%rax)
+.bad_frame_write:
+    ret
+.global fr_font_row
+fr_font_row:
+    call fr_pop
+    movq %rax,%r10
+    call fr_pop
+    cmpq $128,%rax
+    jae .bad_font
+    cmpq $8,%r10
+    jae .bad_font
+    leaq font_data(%rip),%r11
+    imulq $8,%rax,%rax
+    addq %r10,%rax
+    movzbq (%r11,%rax),%rdi
+    movq $1,%rsi
+    jmp fr_push
+.bad_font:
+    xor %edi,%edi
+    movq $1,%rsi
+    jmp fr_push
+.global fr_pow
+fr_pow:
+    call fr_pop
+    movq %rax,%r10
+    call fr_pop
+    cmpq $1,%rdx
+    jne .powbad
+    cmpq $0,%r10
+    jl .powbad
+    cmpq $62,%r10
+    jg .powbad
+    movq $1,%rdi
+.powloop:
+    testq %r10,%r10
+    jz .powend
+    imulq %rax,%rdi
+    jo .powbad
+    decq %r10
+    jmp .powloop
+.powend:
+    movq $1,%rsi
+    jmp fr_push
+.powbad:
+    xor %edi,%edi
+    xor %esi,%esi
+    jmp fr_push
+.section .note.GNU-stack,"",@progbits
