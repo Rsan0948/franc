@@ -24,23 +24,6 @@ try:
         assert marker in buffer, f'missing {marker!r}; QEMU output={buffer!r}'
     # Read and send one character at a time. Sending "psg\x1b" together
     # can overflow the emulated COM1 receive register while Franc redraws.
-    def await_output(marker, timeout=12, offset=0):
-        nonlocal_deadline = time.monotonic() + timeout
-        while time.monotonic() < nonlocal_deadline and marker not in buffer[offset:]:
-            if p.poll() is not None:
-                break
-            if selector.select(0.2):
-                data = os.read(p.stdout.fileno(), 8192)
-                if not data:
-                    break
-                buffer_extend(data)
-        assert marker in buffer[offset:], (
-            f'missing {marker!r}; QEMU output={buffer!r}'
-        )
-
-    def buffer_extend(data):
-        nonlocal_buffer.append(data)
-
     nonlocal_buffer = []
     # Use a mutable collector for all output read after boot.
     def read_until(marker, timeout=12, after=0):
