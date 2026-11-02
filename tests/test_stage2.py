@@ -31,6 +31,14 @@ CASES = [
     ('new native cube', '"def cube dup dup * * ;" s2-compile drop\n"4 cube" s2-compile s2-run .', '64'),
     ('multiple references', '"def seven 7 ;" s2-compile drop\n"seven seven +" s2-compile s2-run .', '14'),
     ('dictionary shadowing', '"def + drop drop 42 ;" s2-compile drop\n"5 3 +" s2-compile s2-run .', '42'),
+    ('if negative', '"3 5 - if 11 else 22 then" s2-compile s2-run .', '11'),
+    ('if nonnegative', '"5 3 - if 11 else 22 then" s2-compile s2-run .', '22'),
+    ('if0', '"0 if0 13 else 9 then" s2-compile s2-run .', '13'),
+    ('ifnz', '"1 ifnz 17 then" s2-compile s2-run .', '17'),
+    ('nested conditional', '"1 ifnz 2 ifnz 33 else 44 then else 55 then" s2-compile s2-run .', '33'),
+    ('begin while repeat', '"3 begin dup neg while 1 - repeat" s2-compile s2-run .', '0'),
+    ('begin again exit', '"5 begin dup if0 exit then 1 - again" s2-compile s2-run .', '0'),
+    ('control inside def', '"def under3 dup 3 - if 99 else 77 then ;" s2-compile drop\n"2 under3 nip ." s2-compile s2-run', '99'),
 ]
 
 

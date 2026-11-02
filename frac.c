@@ -656,6 +656,20 @@ HELPER void h_s2_dict_code(void) {
 }
 HELPER void h_s2_token_buffer(void) { h_push((int64_t)(uintptr_t)(g_exec+g_scratch_start+4*1024*1024),1); }
 HELPER void h_s2_lit_addr(void) { h_push((int64_t)(uintptr_t)h_push,1); }
+/* Stage 2 native bridge: compiler decisions remain Franc-owned. */
+HELPER void h_s2_sign_addr(void) { h_push((int64_t)(uintptr_t)h_pop_sign,1); }
+HELPER void h_s2_string_addr(void) { h_push((int64_t)(uintptr_t)h_push_string,1); }
+HELPER void h_s2_control_buffer(void) { h_push((int64_t)(uintptr_t)(g_exec+g_scratch_start+4*1024*1024+8192),1); }
+HELPER void h_s2_intern(void) {
+    int64_t p;if(!s2_pop_int(&p))return;
+    const char *str=(const char*)(uintptr_t)p;
+    size_t n=strlen(str);
+    if(n>254){h_push(0,1);return;}
+    char *dst=malloc(n+1);
+    if(!dst){h_push(0,1);return;}
+    memcpy(dst,str,n+1);
+    h_push((int64_t)(uintptr_t)dst,1);
+}
 HELPER void h_s2_code(void) {
     if (g_s2_code_offset+4096>g_exec_size) { fprintf(stderr,"stage2 code arena exhausted\n"); h_push(0,1); return; }
     size_t start=g_s2_code_offset;
@@ -720,6 +734,10 @@ static void bootstrap(void) {
     add_word("dict-code",h_s2_dict_code);
     add_word("s2-token-buffer",h_s2_token_buffer);
     add_word("s2-lit-addr",h_s2_lit_addr);
+    add_word("s2-sign-addr",h_s2_sign_addr);
+    add_word("s2-string-addr",h_s2_string_addr);
+    add_word("s2-control-buffer",h_s2_control_buffer);
+    add_word("s2-intern",h_s2_intern);
     add_word("s2-code",h_s2_code);
     add_word("s2-run",h_s2_run);
     add_word("s2-define",h_s2_define);
