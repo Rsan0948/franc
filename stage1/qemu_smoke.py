@@ -37,7 +37,11 @@ try:
     tests=[(b'1/7 ~\n',b'0.(142857)'),
            (b'def sq dup * ;\n',b'Frac> '),
            (b'5 sq\n',b'25'),
-           (b'1/0 1 +\n',b'\xe2\x88\x9e')]
+           (b'1/0 1 +\n',b'inf'),
+           (b'0 clearfb\n',b'Frac> '),
+           (b'10 20 14 pixel\n',b'Frac> '),
+           (b'10 20 pixel@ .\n',b'14'),
+           (b'1 2 1 3 tangent? .\n',b'1')]
     for command,result in tests:
         position=len(transcript)
         p.stdin.write(command);p.stdin.flush()
