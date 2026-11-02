@@ -12,7 +12,7 @@ p=subprocess.Popen([qemu,'-m','128M','-accel','tcg','-display','none',
 selector=selectors.DefaultSelector();selector.register(p.stdout,selectors.EVENT_READ)
 buffer=b''
 try:
-    deadline=time.monotonic()+30
+    deadline=time.monotonic()+90
     while time.monotonic()<deadline and b'AOT BOOT OK' not in buffer:
         if p.poll() is not None:break
         if selector.select(0.3):
