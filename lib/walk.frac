@@ -1,0 +1,11 @@
+\ walk.frac -- interactive Stern-Brocot mediant explorer with exact proof checks.
+\ Requires lib/ford.frac and graphics. Call walk-main; Esc quits.
+\ Keys in event mode: LEFT=1003, RIGHT=1004, Esc=27.
+\ 'walk-check' independently certifies both Farey-neighbor invariants.
+\ Registers all prefixed wk-, no collisions with ford/farey libraries.
+def walk-reset 1 :wk-p 1 :wk-q 0 :wk-l 1 :wk-m 1 :wk-u 0 :wk-v 0 :wk-steps ;
+def walk-left wk-p wk-l + :wk-nextp wk-q wk-m + :wk-nextq wk-p :wk-u wk-q :wk-v wk-nextp :wk-p wk-nextq :wk-q wk-steps 1 + :wk-steps ;
+def walk-right wk-p wk-u + :wk-nextp wk-q wk-v + :wk-nextq wk-p :wk-l wk-q :wk-m wk-nextp :wk-p wk-nextq :wk-q wk-steps 1 + :wk-steps ;
+def walk-check wk-p wk-m * wk-l wk-q * - 1 - if0 wk-u wk-q * wk-p wk-v * - 1 - if0 1 exit then then 0 ;
+def walk-render 12 fordland wk-p wk-q 14 ford home "Stern-Brocot explorer" type 10 emit "current: " type wk-p wk-q / . "steps: " type wk-steps . "certified: " type walk-check . "LEFT/RIGHT navigate; Esc quits" type 10 emit ;
+def walk-main 1 key-mode walk-reset begin walk-render key :wk-key wk-key 1 + if0 0 key-mode exit then wk-key 27 - if0 0 key-mode exit then wk-key 1003 - if0 walk-left else wk-key 1004 - if0 walk-right then then again ;
