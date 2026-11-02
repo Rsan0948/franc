@@ -16,6 +16,9 @@ _start:
   movb boot_drive,%dl
   int $0x13
   jc disk_error
+  /* BIOS VGA mode 13h must be set before protected/long mode. */
+  movw $0x0013,%ax
+  int $0x10
   cli
   inb $0x92,%al
   orb $2,%al
