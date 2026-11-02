@@ -7,12 +7,14 @@ import shutil
 import subprocess
 import sys
 import time
+import tempfile
 
 root=Path(__file__).resolve().parent
 qemu=shutil.which('qemu-system-x86_64')
 if not qemu:
     sys.exit('QEMU unavailable; cannot claim a successful boot')
-cmd=[qemu,'-m','128M','-display','none','-monitor','none','-no-reboot',
+trace_file=Path(tempfile.gettempdir())/'franc-qemu-debug.log'
+cmd=[qemu,'-m','128M','-accel','tcg','-d','int,cpu_reset,guest_errors','-D',str(trace_file),'-display','none','-monitor','none','-no-reboot',
      '-serial','stdio','-drive',f'file={root / "fracos.img"},format=raw,if=ide']
 p=subprocess.Popen(cmd,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,bufsize=0)
 sel=selectors.DefaultSelector()
@@ -59,6 +61,9 @@ try:
     print('PASS: QEMU end-to-end smoke test')
 except Exception as exc:
     print('FAIL:',exc,file=sys.stderr)
+    print('QEMU return code:',p.poll(),file=sys.stderr)
+    if trace_file.exists():
+        print('QEMU diagnostic trace tail:',trace_file.read_text(errors='replace')[-10000:],file=sys.stderr)
     print('TRANSCRIPT:',transcript.decode(errors='replace'),file=sys.stderr)
     sys.exit(1)
 finally:
