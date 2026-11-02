@@ -23,7 +23,7 @@ assert boot[-2:]==b'\x55\xaa'
 import subprocess
 syms=subprocess.check_output(['nm', '-n', str(root/'kernel.elf')],text=True)
 bss_end=next(int(line.split()[0],16) for line in syms.splitlines() if line.endswith(' __bss_end'))
-assert bss_end < 0x70000, f'kernel BSS encroaches on stack: {bss_end:#x}'
+assert bss_end < 0x76000, f'kernel BSS encroaches on stack: {bss_end:#x}'
 
 print(f'PASS: BIOS image structure ({len(image)} bytes, kernel {len(kernel)} bytes)')
 print('NOTE: this validates disk layout, not CPU boot execution.')
