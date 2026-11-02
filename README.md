@@ -13,7 +13,7 @@
 - `floor` primitive; rational fixed-point rounding, continued fractions, approximations, intervals, and elementary transcendental functions defined in five `.frac` libraries.
 - Automated black-box tests run generated native code, math libraries, the partial Stage 2 compiler, graphics, interactive apps, two-Rat arithmetic and persistence.
 
-**Not yet confirmed by actual boot execution:** whether the Stage 1 boot image runs correctly under QEMU. A partial compiler is now written in Franc (`stage2/compiler.frac`), but full self-hosting and a kernel in Franc have not been achieved.
+**Verified in GitHub Actions QEMU:** Stage 1 boots to the Frac REPL, executes JIT programs and framebuffer commands, and persists a source file across an IDE-disk cold reboot. A partial compiler is now written in Franc (`stage2/compiler.frac`), but full self-hosting and a kernel in Franc have not been achieved.
 
 ## Build and run
 
@@ -97,7 +97,7 @@ The REPL preserves its data stack across lines and automatically displays the to
 - `~` prints at most 1,024 fractional digits; expansions with longer cycles are truncated rather than marked. It also uses a basic quadratic remainder search.
 - The stack and token buffers are fixed-size. The `@`/`!` experiment restricts addresses to the executable JIT region for some protection; `type` still assumes it receives a valid string pointer. The JIT allocates writable/executable memory, intentionally; don't execute untrusted Frac programs.
 - Syntax for definitions is single-line (`def … ;` must be on one line (library files use one definition per line)). Compilation errors are detected, but this is not a hardened parser or a production runtime.
-- Stage 1 now builds a freestanding graphics/serial/keyboard kernel with a flat ATA-IDE source store on the boot image. **It still requires a QEMU boot test**; hosted tests and a valid linker output do not prove it boots.
+- Stage 1 builds a freestanding graphics/serial/keyboard kernel with an ATA-IDE source store on the boot image, and **passes automated QEMU boot and reboot-persistence tests**. GUI visualization and physical-hardware compatibility are still unverified.
 - Stage 2 has a partial compiler written in Frac and tested under Linux; it **does not compile its own source yet**. Stage 3 (kernel functionality in Frac) is not started.
 - Source persistence is intentionally **QEMU IDE / opt-in host-file only**, not a general-purpose filesystem or USB storage driver.
 - `dd.frac` provides exact two-Rat component pairs for representable operations. It is **not** a general 30-digit double-double number type and does not provide arbitrary precision.
@@ -106,18 +106,19 @@ The REPL preserves its data stack across lines and automatically displays the to
 
 MIT. See [LICENSE](LICENSE).
 
-## Stage 1 — in progress (private development)
+## Stage 1 — QEMU-verified (private development)
 
 `stage1/` contains the first freestanding **x86-64 BIOS boot image** implementation: a 512-byte bootloader, identity-mapped long mode, minimal VGA/serial/PS2 console and memory allocator, and a kernel that compiles the Stage 0 JIT against a small freestanding libc shim. The original hosted Stage 0 remains usable, and the hosted test suite passes. Math, graphics, interactive, and two-component-rational libraries are embedded as source strings and loaded into the JIT before entering its REPL.
 
 ```sh
 make -C stage1
 python3 stage1/verify_image.py
-# Requires QEMU, not installed in the development environment used so far:
+# Requires QEMU; both run successfully in GitHub Actions:
 python3 stage1/qemu_smoke.py
+python3 stage1/qemu_persistence.py
 ```
 
-**Verification status:** image builds and passes offline disk-layout checks with the libraries embedded, but actual QEMU boot and Frac REPL execution on bare metal are still unverified. No claim of successful bare-metal execution is made.
+**Verification status:** the image builds, boots successfully in QEMU, runs the Frac JIT and framebuffer commands, and preserves source through an emulated IDE cold reboot. Real hardware and GUI appearance remain untested.
 
 **Repository privacy:** this project is intended to remain **private during development** and only be made open source when its owner elects to release it.
 
@@ -203,7 +204,7 @@ a PPM on Linux only. The Ford tangency check uses integer arithmetic, while
 the drawing uses rational pixel-center tests on a finite raster; small circles
 may become sub-pixel. Neither proves error bounds for arbitrary approximations.
 
-**Stage 1 execution in QEMU is not yet verified;** Stage 2's Frac-written
+**Stage 1 boots and persists source in QEMU.** Stage 2's Frac-written
 compiler remains partial (control-flow and recompiling its own source are pending).
 The repo remains private until its owner explicitly decides to publish it.
 
@@ -310,4 +311,4 @@ actual implemented features, test commands, and design deviations.
 To run all regression tests: `make test`; build the preformatted QEMU image
 with `make -C stage1 && python3 stage1/verify_image.py`. The image is now
 **128 KiB**, including the 64 KiB BIOS+kernel area and a 64 KiB persistent
-source area. **QEMU execution remains an independent verification step.**
+source area. **QEMU boot/JIT and IDE persistence across reboot passed in GitHub Actions.**

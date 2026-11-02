@@ -1,6 +1,6 @@
 # Stage 1 — FracOS (experimental bare-metal image)
 
-**Current status:** Builds successfully into a BIOS disk image; **not boot-tested yet** in this environment because QEMU isn't installed here. Do not claim the OS has booted until a QEMU smoke test succeeds.
+**Current status:** Builds a BIOS disk image, and both **QEMU boot/JIT smoke testing and persistence through an emulated cold reboot pass in GitHub Actions**. QEMU is not installed in this local container; graphical display inspection and real hardware remain unverified.
 
 This stage retains the Stage 0 C compiler/JIT but runs it as a freestanding x86-64 kernel. The disk image includes:
 
@@ -33,7 +33,7 @@ For a graphical VGA console, replace `-display none -serial stdio` with `-displa
 | `0x200000–0x41fffff` | 64 MiB JIT executable memory (including scratch area) |
 | `0x4800000–0x4ffffff` | 8 MiB bump allocator |
 
-This is deliberately minimal: BIOS boot only (no UEFI path), fixed sector count, fixed memory map requiring 128 MiB RAM, identity-mapped executable pages, minimal PS/2 set-1 scancodes, no interrupts or timer, no filesystem, and no persistence. A real OS would need more; this experiment intentionally doesn't aim to be one yet.
+This is deliberately minimal: BIOS boot only (no UEFI path), fixed sector count, fixed memory map requiring 128 MiB RAM, identity-mapped executable pages, minimal PS/2 set-1 scancodes, no interrupts or timer, and no general-purpose filesystem (only a fixed 12-file ATA source store). A real OS would need more; this experiment intentionally doesn't aim to be one yet.
 
 The build generates `stage1/library_bundle.h` from the included libraries. The generated header is not a source of truth; edit the `.frac` files and rebuild instead.
 
@@ -95,6 +95,7 @@ programs.** Rebuilding replaces the preformatted disk with an empty one.
 Preserve a copy of the image between builds. QEMU must run against a writable
 copy of this image for persistence tests.
 
-The storage code compiles and a Linux file-backed emulation passes tests
-across separate processes. **ATA behavior inside QEMU is still pending its
-first successful boot test; don't treat the hosted tests as hardware proof.**
+The Linux file-backed storage simulation passes across separate processes.
+**QEMU ATA-IDE persistence is also validated:** `stage1/qemu_persistence.py`
+boots FracOS, saves source, powers off, boots again and executes the saved
+word. This does not verify physical USB, SATA, or real-machine drivers.
