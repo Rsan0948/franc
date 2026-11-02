@@ -104,7 +104,9 @@ static uint8_t* g_exec; static size_t g_exec_size, g_exec_used, g_line_start, g_
 static const size_t g_scratch_start = 32 * 1024 * 1024;
 static int g_compile_error = 0;
 static void error(const char* msg) { fprintf(stderr, "%s\n",msg); g_compile_error=1; }
-static Rat g_regs[512];
+/* Stage 3 driver and source-store modules allocate named global registers. */
+#define FRANC_REGISTER_CAP 1024
+static Rat g_regs[FRANC_REGISTER_CAP];
 static int g_next_reg=26;
 
 static int need(int n) {
@@ -539,7 +541,10 @@ static int ensure_register(const char* name) {
     char store_name[64];
     store_name[0]=':'; strncpy(store_name+1,name,62); store_name[63]=0;
     if (lookup(store_name)) return 1;
-    if (g_next_reg>=512) { error("too many registers"); return 0; }
+    if (g_next_reg>=FRANC_REGISTER_CAP) {
+        fprintf(stderr, "too many registers: cap=%d, name=%s\n", FRANC_REGISTER_CAP, name);
+        g_compile_error=1; return 0;
+    }
     int index=g_next_reg++;
     CState saved=cstate_push();
     size_t start=g_exec_used;
