@@ -2,7 +2,7 @@ CC = gcc
 AS = as
 LD = ld
 OBJCOPY = objcopy
-CFLAGS = -std=gnu11 -O2 -Wall -Wextra -ffreestanding -fno-stack-protector -fno-pic -fno-pie -fno-builtin -mno-red-zone -mgeneral-regs-only -mcmodel=large -DFRANC_BARE_METAL -Iinclude
+CFLAGS = -std=gnu11 -Os -Wall -Wextra -ffreestanding -fno-stack-protector -fno-pic -fno-pie -fno-builtin -mno-red-zone -mgeneral-regs-only -mcmodel=large -DFRANC_BARE_METAL -Iinclude
 LDFLAGS = -nostdlib -no-pie -Wl,--build-id=none -Wl,-T,kernel.ld
 .PHONY: all clean run run-gui
 all: fracos.img
@@ -11,9 +11,11 @@ boot.bin: boot.S
 	$(LD) -m elf_x86_64 --oformat binary -Ttext 0x7c00 -o $@ boot.o
 entry.o: entry.S
 	$(AS) --64 -o $@ $<
-library_bundle.h: ../lib/fixpt.frac ../lib/cf.frac ../lib/approx.frac ../lib/iv.frac ../lib/trans.frac ../lib/graphics.frac ../lib/ford.frac ../lib/spiro.frac ../lib/calc.frac ../lib/edit.frac ../lib/walk.frac ../lib/dd.frac embed_libraries.py
+library_bundle.h: ../lib/fixpt.frac ../lib/cf.frac ../lib/approx.frac ../lib/iv.frac ../lib/trans.frac ../lib/graphics.frac ../lib/ford.frac ../lib/spiro.frac ../lib/calc.frac ../lib/edit.frac ../lib/walk.frac ../lib/dd.frac ../stage3/shell.frac ../stage3/drivers.frac ../stage3/ata.frac ../stage3/console.frac embed_libraries.py
 	python3 embed_libraries.py
-frac.o: ../frac.c ../gfx.h library_bundle.h
+../stage2/compiler_source.h: ../stage2/compiler.frac ../stage3/shell.frac ../stage2/gen_compiler_header.py
+	python3 ../stage2/gen_compiler_header.py
+frac.o: ../frac.c ../gfx.h library_bundle.h ../stage2/compiler_source.h
 	$(CC) $(CFLAGS) -Dmain=frac_main -DFRANC_EMBED_LIBS -c -o $@ $<
 gfx.o: ../gfx.c ../gfx.h ../font8x8.h
 	$(CC) $(CFLAGS) -c -o $@ $<

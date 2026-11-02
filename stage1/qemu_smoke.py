@@ -21,7 +21,7 @@ sel=selectors.DefaultSelector()
 sel.register(p.stdout,selectors.EVENT_READ)
 transcript=b''
 
-def read_until(needle, timeout=18):
+def read_until(needle, timeout=60):
     global transcript
     deadline=time.monotonic()+timeout
     while time.monotonic()<deadline:
@@ -34,16 +34,24 @@ def read_until(needle, timeout=18):
             transcript+=buf
     raise RuntimeError(f'timed out waiting for {needle!r}; output:\n{transcript[-3000:]!r}')
 try:
+    read_until(b'Franc compiler and shell self-compiled')
+    read_until(b'FrancOS Stage 3 | shell written in Franc')
     read_until(b'Frac> ')
-    print('PASS: BIOS boot -> 64-bit FracOS REPL')
+    print('PASS: BIOS boot -> 64-bit FracOS -> Franc-authored shell')
     tests=[(b'1/7 ~\n',b'0.(142857)'),
            (b'def sq dup * ;\n',b'Frac> '),
            (b'5 sq\n',b'25'),
+           (b'0.1 0.2 + .\n',b'3/10'),
+           (b'0 if0 42 else 9 then .\n',b'42'),
            (b'1/0 1 +\n',b'inf'),
            (b'0 clearfb\n',b'Frac> '),
            (b'10 20 14 pixel\n',b'Frac> '),
            (b'10 20 pixel@ .\n',b'14'),
-           (b'1 2 1 3 tangent? .\n',b'1')]
+           (b'1 2 1 3 tangent? .\n',b'1'),
+           (b'"guest.frac" "def guest-square dup * ;" save\n',b'Frac> '),
+           (b'"guest.frac" load\n',b'Frac> '),
+           (b'9 guest-square .\n',b'81'),
+           (b'ata-header-byte .\n',b'70')]
     for command,result in tests:
         position=len(transcript)
         p.stdin.write(command);p.stdin.flush()

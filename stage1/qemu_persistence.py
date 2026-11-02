@@ -30,7 +30,7 @@ class Guest:
         self.sel.register(self.process.stdout, selectors.EVENT_READ)
         self.output = b''
 
-    def wait_for(self, needle, start=0, timeout=28):
+    def wait_for(self, needle, start=0, timeout=65):
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             if needle in self.output[start:]: return

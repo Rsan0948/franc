@@ -14,7 +14,7 @@ def s2-find :s2needle dict-head :s2node begin s2node if0 0 exit then s2node dict
 
 \ Scanner: fill reserved JIT buffer with a NUL-terminated token.
 \ The source pointer is saved in s2p and persists across calls.
-def s2-copy s2-token-buffer :s2tok s2tok :s2write begin s2p byte@ :s2ch s2ch if0 s2write 0 ! s2tok exit then s2ch 33 - if s2write 0 ! s2tok exit then s2write s2ch ! s2p 1 + :s2p s2write 1 + :s2write again ;
+def s2-copy s2-token-buffer :s2tok s2tok :s2write 0 :s2quote begin s2p byte@ :s2ch s2ch if0 s2write 0 ! s2tok exit then s2ch 34 - if0 s2write s2ch ! s2p 1 + :s2p s2write 1 + :s2write s2quote if0 1 :s2quote else 0 :s2quote then else s2quote if0 s2ch 33 - if s2write 0 ! s2tok exit then then s2write s2ch ! s2p 1 + :s2p s2write 1 + :s2write then again ;
 def s2-next begin s2p byte@ :s2ch s2ch if0 0 exit then s2ch 33 - if s2p 1 + :s2p else s2-copy exit then again ;
 
 \ Parse single digit as (digit valid). Both 0 and bad input are unambiguous.
@@ -22,11 +22,14 @@ def s2-digit :s2char s2char 48 - if 0 0 exit then s2char 58 - if s2char 48 - 1 e
 
 \ Parse unsigned integer (base prefix $ or #), stopping at / or NUL.
 \ Returns: number end-pointer valid.
-def s2-uint :s2up 10 :s2base 0 :s2acc 0 :s2seen s2up byte@ 36 - if0 16 :s2base s2up 1 + :s2up then s2up byte@ 35 - if0 2 :s2base s2up 1 + :s2up then begin s2up byte@ :s2uch s2uch if0 s2acc s2up s2seen exit then s2uch 47 - if0 s2acc s2up s2seen exit then s2uch s2-digit :s2digitvalid :s2digit s2digitvalid if0 0 s2up 0 exit then s2digit s2base - if s2acc s2base * s2digit + :s2acc 1 :s2seen s2up 1 + :s2up else 0 s2up 0 exit then again ;
+def s2-uint :s2up 10 :s2base 0 :s2acc 0 :s2seen s2up byte@ 36 - if0 16 :s2base s2up 1 + :s2up then s2up byte@ 35 - if0 2 :s2base s2up 1 + :s2up then begin s2up byte@ :s2uch s2uch if0 s2acc s2up s2seen exit then s2uch 47 - if0 s2acc s2up s2seen exit then s2uch 46 - if0 s2acc s2up s2seen exit then s2uch s2-digit :s2digitvalid :s2digit s2digitvalid if0 0 s2up 0 exit then s2digit s2base - if s2acc s2base * s2digit + :s2acc 1 :s2seen s2up 1 + :s2up else 0 s2up 0 exit then again ;
 
 \ Parse a rational literal including mixed-base numerator/denominator.
 \ Returns: numerator denominator valid. Decimal fractional dots TBD.
-def s2-number :s2np 1 :s2sign s2np byte@ 45 - if0 -1 :s2sign s2np 1 + :s2np then s2np s2-uint :s2numeratorvalid :s2endptr :s2numerator s2numeratorvalid if0 0 1 0 exit then s2endptr byte@ if0 s2numerator s2sign * 1 1 exit then s2endptr byte@ 47 - if0 s2endptr 1 + s2-uint :s2denomvalid :s2finalptr :s2denominator s2denomvalid if0 0 1 0 exit then s2finalptr byte@ ifnz 0 1 0 exit then s2numerator s2sign * s2denominator 1 exit then 0 1 0 ;
+\ Read decimal fractional digits without floating point. Return (fraction scale valid).
+def s2-decpart :s2decptr 0 :s2decimal 1 :s2scale begin s2decptr byte@ :s2dch s2dch if0 s2decimal s2scale 1 exit then s2dch s2-digit :s2dvalid :s2dig s2dvalid if0 0 1 0 exit then s2dig 10 - if0 0 1 0 exit then s2dig 10 - if s2decimal 10 * s2dig + :s2decimal s2scale 10 * :s2scale s2decptr 1 + :s2decptr else 0 1 0 exit then again ;
+
+def s2-number :s2np 1 :s2sign s2np byte@ 45 - if0 -1 :s2sign s2np 1 + :s2np else s2np byte@ 43 - if0 s2np 1 + :s2np then then s2np s2-uint :s2numeratorvalid :s2endptr :s2numerator s2numeratorvalid if0 0 1 0 exit then s2endptr byte@ if0 s2numerator s2sign * 1 1 exit then s2endptr byte@ 46 - if0 s2endptr 1 + s2-decpart :s2decok :s2decscale :s2decfrac s2decok if0 0 1 0 exit then s2numerator s2decscale * s2decfrac + s2sign * s2decscale 1 exit then s2endptr byte@ 47 - if0 s2endptr 1 + s2-uint :s2denomvalid :s2finalptr :s2denominator s2denomvalid if0 0 1 0 exit then s2finalptr byte@ ifnz 0 1 0 exit then s2numerator s2sign * s2denominator 1 exit then 0 1 0 ;
 
 \ x86-64 code emission. Byte store uses Franc's existing `!` word.
 def s2-byte :s2bytevalue s2out s2bytevalue ! s2out 1 + :s2out ;
@@ -36,11 +39,40 @@ def s2-lit :s2denval :s2literal $48 s2-byte $BF s2-byte s2literal s2-u64 $48 s2-
 def s2-prologue $48 s2-byte $83 s2-byte $EC s2-byte 8 s2-byte ;
 def s2-epilogue $48 s2-byte $83 s2-byte $C4 s2-byte 8 s2-byte $C3 s2-byte ;
 
+\ Native short/near control transfer support. Each control frame is stored
+\ in the JIT scratch buffer as (tag, address) using nine bytes. The stack
+\ is scoped to one s2-compile invocation and supports nested constructs.
+def s2-u32 :s2u32v 0 :s2u32i begin s2u32i 4 - while s2u32v 256 % s2-byte s2u32v 256 / floor :s2u32v s2u32i 1 + :s2u32i repeat ;
+def s2-write64 :s2wv :s2wa 0 :s2wi begin s2wi 8 - while s2wa s2wi + s2wv 256 % ! s2wv 256 / floor :s2wv s2wi 1 + :s2wi repeat ;
+def s2-read64 :s2ra 0 :s2rv 1 :s2scale 0 :s2ri begin s2ri 8 - while s2ra s2ri + byte@ s2scale * s2rv + :s2rv s2scale 256 * :s2scale s2ri 1 + :s2ri repeat s2rv ;
+def s2-ctrl-push :s2ctrladdr :s2ctrltag s2sp 63 - if0 0 exit then s2-control-buffer s2sp 9 * + :s2frame s2frame s2ctrltag ! s2frame 1 + s2ctrladdr s2-write64 s2sp 1 + :s2sp 1 ;
+def s2-ctrl-pop s2sp if0 0 0 exit then s2sp 1 - :s2sp s2-control-buffer s2sp 9 * + :s2frame s2frame byte@ s2frame 1 + s2-read64 ;
+\ rel32 displacements are signed but the byte writer takes a positive 32-bit value.
+def s2-patch :s2targetaddr :s2patchaddr s2targetaddr s2patchaddr 4 + - 4294967296 % :s2disp 0 :s2patchi begin s2patchi 4 - while s2patchaddr s2patchi + s2disp 256 % ! s2disp 256 / floor :s2disp s2patchi 1 + :s2patchi repeat ;
+def s2-jump $E9 s2-byte s2out :s2jmpaddr 0 s2-u32 s2jmpaddr ;
+def s2-branch :s2opcode s2-sign-addr s2-call $48 s2-byte $85 s2-byte $C0 s2-byte $0F s2-byte s2opcode s2-byte s2out :s2jmpaddr 0 s2-u32 s2jmpaddr ;
+\ Tag 1: unfinished IF; 2: ELSE; 3: BEGIN; 4: WHILE.
+def s2-control :s2ctoken s2ctoken "if" s2-eq ifnz $89 s2-branch 1 swap s2-ctrl-push exit then s2ctoken "if0" s2-eq ifnz $85 s2-branch 1 swap s2-ctrl-push exit then s2ctoken "ifnz" s2-eq ifnz $84 s2-branch 1 swap s2-ctrl-push exit then s2ctoken "begin" s2-eq ifnz 3 s2out s2-ctrl-push exit then s2ctoken "while" s2-eq ifnz $89 s2-branch 4 swap s2-ctrl-push exit then s2ctoken "else" s2-eq ifnz s2-ctrl-pop :s2oldpos :s2oldtag s2oldtag 1 - ifnz 0 exit then s2-jump :s2elsepos s2oldpos s2out s2-patch 2 s2elsepos s2-ctrl-push exit then s2ctoken "then" s2-eq ifnz s2-ctrl-pop :s2oldpos :s2oldtag s2oldtag 1 - if0 s2oldpos s2out s2-patch 1 exit then s2oldtag 2 - if0 s2oldpos s2out s2-patch 1 exit then 0 exit then s2ctoken "again" s2-eq ifnz s2-ctrl-pop :s2oldpos :s2oldtag s2oldtag 3 - ifnz 0 exit then s2-jump s2oldpos s2-patch 1 exit then s2ctoken "repeat" s2-eq ifnz s2-ctrl-pop :s2oldpos :s2oldtag s2oldtag 4 - ifnz 0 exit then s2oldpos :s2whilepos s2-ctrl-pop :s2oldpos :s2oldtag s2oldtag 3 - ifnz 0 exit then s2-jump s2oldpos s2-patch s2whilepos s2out s2-patch 1 exit then s2ctoken "exit" s2-eq ifnz s2-epilogue 1 exit then 0 ;
+
+\ Quoted text is interned into stable memory so the shared tokenizer buffer may be reused.
+def s2-string-lit :s2str s2str 1 + :s2inner s2inner :s2scan begin s2scan byte@ if0 0 exit then s2scan byte@ 34 - if0 s2scan 0 ! s2inner s2-intern :s2owned $48 s2-byte $BF s2-byte s2owned s2-u64 s2-string-addr s2-call 1 exit then s2scan 1 + :s2scan again ;
+
 \ Compile a single token into machine-code helper calls or literal pushes.
 \ Returns true if supported, false otherwise.
-def s2-token-emit :s2token s2token s2-find :s2target s2target ifnz s2target s2-call 1 exit then s2token s2-number :s2valid :s2denval2 :s2litval s2valid if0 0 exit then s2litval s2denval2 s2-lit 1 ;
+def s2-token-emit :s2token s2token byte@ 34 - if0 s2token s2-string-lit exit then s2token s2-find :s2target s2target ifnz s2target s2-call 1 exit then s2token byte@ 39 - if0 s2token 1 + s2-find :s2quoteaddr s2quoteaddr if0 0 exit then s2quoteaddr 1 s2-lit 1 exit then s2token "if" s2-eq ifnz s2token s2-control exit then s2token "if0" s2-eq ifnz s2token s2-control exit then s2token "ifnz" s2-eq ifnz s2token s2-control exit then s2token "else" s2-eq ifnz s2token s2-control exit then s2token "then" s2-eq ifnz s2token s2-control exit then s2token "begin" s2-eq ifnz s2token s2-control exit then s2token "while" s2-eq ifnz s2token s2-control exit then s2token "repeat" s2-eq ifnz s2token s2-control exit then s2token "again" s2-eq ifnz s2token s2-control exit then s2token "exit" s2-eq ifnz s2token s2-control exit then s2token s2-find :s2target s2target ifnz s2target s2-call 1 exit then s2token s2-number :s2valid :s2denval2 :s2litval s2valid if0 0 exit then s2litval s2denval2 s2-lit 1 ;
 
-\ Compiles a straight-line program OR one simple `def name ... ;`.
-\ Definition names are registered before the body so simple recursion can link,
-\ but control-flow compilation has not been implemented yet.
-def s2-compile :s2p s2-next :s2token s2token if0 0 exit then s2token "def" s2-eq :s2defmode s2-code :s2begin s2begin :s2out s2-prologue s2defmode ifnz s2-next :s2token s2token if0 0 exit then s2token s2begin s2-define else s2token s2-token-emit if0 "stage2: unsupported token" type 0 exit then then begin s2-next :s2token s2token if0 s2-epilogue s2begin exit then s2defmode ifnz s2token ";" s2-eq ifnz s2-epilogue s2begin exit then then s2token s2-token-emit if0 "stage2: unsupported token" type 0 exit then again ;
+\ Compiles an expression OR one def, including control flow and quoted strings.
+\ Definition names are registered before the body to support recursion.
+def s2-compile :s2p s2-next :s2token s2token if0 0 exit then s2token "def" s2-eq :s2defmode s2-code :s2begin s2begin :s2out 0 :s2sp s2-prologue s2defmode ifnz s2-next :s2token s2token if0 0 exit then s2token s2begin s2-define else s2token s2-token-emit if0 "stage2: unsupported token" type 0 exit then then begin s2-next :s2token s2token if0 s2sp ifnz "stage2: unclosed control" type 0 exit then s2-epilogue s2begin exit then s2defmode ifnz s2token ";" s2-eq ifnz s2sp ifnz "stage2: unclosed control" type 0 exit then s2-epilogue s2begin exit then then s2token s2-token-emit if0 "stage2: unsupported token" type 0 exit then again ;
+
+\ Copy one source line into a dedicated writable buffer, return nonzero if
+\ a full line or final unterminated line was read. Cursor is s2srci.
+def s2-read-line s2-line-buffer :s2dst 0 :s2line-len begin s2srci byte@ :s2schar s2schar if0 s2dst 0 ! s2line-len exit then s2schar 10 - if0 s2srci 1 + :s2srci s2dst 0 ! 1 exit then s2dst s2schar ! s2dst 1 + :s2dst s2srci 1 + :s2srci s2line-len 1 + :s2line-len again ;
+\ Source is a single pointer to NUL-terminated text. Lines may contain
+\ comments and one definition per line; returns number of compiled lines.
+def s2-source :s2srci 0 :s2lines begin s2-read-line :s2exists s2exists if0 s2lines exit then s2-line-buffer byte@ :s2first s2first ifnz s2first 92 - ifnz s2-line-buffer s2-compile drop s2lines 1 + :s2lines then then again ;
+
+\ Evaluate a NUL-terminated line with the Franc compiler itself. Definitions are
+\ registered by s2-compile but must not be executed as a normal expression.
+\ Neither the tokenizer nor the emitter calls the C compiler.
+def s2-eval :s2eval-text s2eval-text :s2p s2-next "def" s2-eq :s2eval-def s2eval-text s2-compile :s2eval-code s2eval-code if0 exit then s2eval-def if0 s2eval-code s2-run then ;

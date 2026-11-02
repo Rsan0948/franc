@@ -99,3 +99,21 @@ The Linux file-backed storage simulation passes across separate processes.
 **QEMU ATA-IDE persistence is also validated:** `stage1/qemu_persistence.py`
 boots FracOS, saves source, powers off, boots again and executes the saved
 word. This does not verify physical USB, SATA, or real-machine drivers.
+
+## Stage 3 shell handoff
+
+After ROM libraries load, the bare-metal C runtime transfers execution to
+`os-boot` implemented in `stage3/shell.frac`, which launches the Franc-owned
+interactive loop. Press Escape to return to the C fallback diagnostic REPL.
+The hardware runtime and `eval` remain native C services.
+
+## Franc bootstrap kernel (current)
+
+The C/assembly substrate still initializes the machine and its primitive API.
+It loads the first compiler generation from `stage2/compiler.frac`;
+`os-bootstrap` written in Franc self-recompiles that compiler, recompiles
+`stage3/shell.frac` using the newly compiled version, and runs the newly
+compiled `os-main` shell. Commands are JIT-compiled with Franc `s2-eval`,
+not with the C `eval` bootstrap. The QEMU smoke test checks a serial marker
+from this path before asserting the prompt. The kernel builds with `-Os` to
+keep the original 127-sector BIOS loader format.

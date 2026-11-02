@@ -18,6 +18,7 @@
 #include <unistd.h>
 #endif
 #include "gfx.h"
+#include "stage2/compiler_source.h"
 
 typedef struct { int64_t num, den; } Rat;   // den==0: num==0→⊥, else ∞
 
@@ -183,6 +184,71 @@ HELPER void h_breakq(void) {
     h_push(yes,1);
 }
 HELPER void h_keymode(void) { if(!need(1))return;Rat on=*--g_sp;app_key_mode(on.num!=0); }
+/* Stage 3 hardware boundary: these four tiny primitives do not own a driver.
+ * The PS/2 and serial protocol/state machines live in stage3/drivers.frac.
+ * No user-space in/out instructions: the hosted build deliberately exposes
+ * inert ports and routes physical keyboard events through host-key instead. */
+HELPER void h_hw_bare(void) { h_push(
+#ifdef FRANC_BARE_METAL
+    1
+#else
+    0
+#endif
+    ,1); }
+HELPER void h_bitand(void) {
+    if(!need(2))return;
+    Rat b=*--g_sp,*a=&g_sp[-1];
+    *a=(a->den==1&&b.den==1)?(Rat){a->num&b.num,1}:(Rat){0,0};
+}
+HELPER void h_io8_read(void) {
+    if(!need(1))return;
+    Rat port=*--g_sp;
+    if(port.den!=1||port.num<0||port.num>65535){h_push(0,1);return;}
+#ifdef FRANC_BARE_METAL
+    uint8_t v; uint16_t p=(uint16_t)port.num;
+    __asm__ volatile("inb %1,%0":"=a"(v):"Nd"(p));
+    h_push(v,1);
+#else
+    h_push(0,1);
+#endif
+}
+HELPER void h_io8_write(void) {
+    if(!need(2))return;
+    Rat v=*--g_sp,p=*--g_sp;
+    if(p.den!=1||p.num<0||p.num>65535||v.den!=1)return;
+#ifdef FRANC_BARE_METAL
+    uint16_t port=(uint16_t)p.num;
+    __asm__ volatile("outb %0,%1"::"a"((uint8_t)v.num),"Nd"(port));
+#endif
+}
+HELPER void h_io16_read(void) {
+    if(!need(1))return;
+    Rat port=*--g_sp;
+    if(port.den!=1||port.num<0||port.num>65535){h_push(0,1);return;}
+#ifdef FRANC_BARE_METAL
+    uint16_t v,p=(uint16_t)port.num;
+    __asm__ volatile("inw %1,%0":"=a"(v):"Nd"(p));
+    h_push(v,1);
+#else
+    h_push(0,1);
+#endif
+}
+/* Reserved safe DMA-free scratch: stores exactly one ATA sector. */
+static uint8_t g_franc_sector_buffer[512];
+HELPER void h_sector_buffer(void){h_push((int64_t)(uintptr_t)g_franc_sector_buffer,1);}
+HELPER void h_sector_byte_read(void){
+    if(!need(1))return;Rat index=*--g_sp;
+    if(index.den!=1||index.num<0||index.num>=512){h_push(0,1);return;}
+    h_push(g_franc_sector_buffer[index.num],1);
+}
+HELPER void h_sector_byte_write(void){
+    if(!need(2))return;Rat value=*--g_sp,index=*--g_sp;
+    if(index.den!=1||index.num<0||index.num>=512||value.den!=1)return;
+    g_franc_sector_buffer[index.num]=(uint8_t)value.num;
+}
+
+
+
 HELPER void h_depth(void) { h_push((int64_t)(g_sp-g_stack),1); }
 HELPER void h_calc_buffer(void) { h_push((int64_t)(uintptr_t)g_app_memory,1); }
 HELPER void h_history_buffer(void) { h_push((int64_t)(uintptr_t)(g_app_memory+256),1); }
@@ -656,10 +722,30 @@ HELPER void h_s2_dict_code(void) {
 }
 HELPER void h_s2_token_buffer(void) { h_push((int64_t)(uintptr_t)(g_exec+g_scratch_start+4*1024*1024),1); }
 HELPER void h_s2_lit_addr(void) { h_push((int64_t)(uintptr_t)h_push,1); }
+/* Stage 2 architecture bridge: the *compiler logic* is Franc, while the
+ * environment supplies code memory, stable string storage and primitive
+ * function addresses. No tokenizer/compiler is implemented by these helpers. */
+HELPER void h_s2_sign_addr(void) { h_push((int64_t)(uintptr_t)h_pop_sign,1); }
+HELPER void h_s2_string_addr(void) { h_push((int64_t)(uintptr_t)h_push_string,1); }
+HELPER void h_s2_self_source(void) { h_push((int64_t)(uintptr_t)franc_stage2_self_source,1); }
+HELPER void h_s2_shell_source(void) { h_push((int64_t)(uintptr_t)franc_stage3_shell_source,1); }
+HELPER void h_s2_line_buffer(void) { h_push((int64_t)(uintptr_t)(g_exec+g_scratch_start+4*1024*1024+16384),1); }
+HELPER void h_s2_control_buffer(void) { h_push((int64_t)(uintptr_t)(g_exec+g_scratch_start+4*1024*1024+8192),1); }
+HELPER void h_s2_intern(void) {
+    int64_t p;if(!s2_pop_int(&p))return;
+    const char *str=(const char*)(uintptr_t)p;
+    size_t n=strlen(str);
+    if(n>254){h_push(0,1);return;}
+    char *dst=malloc(n+1);
+    if(!dst){h_push(0,1);return;}
+    memcpy(dst,str,n+1);
+    h_push((int64_t)(uintptr_t)dst,1);
+}
+
 HELPER void h_s2_code(void) {
-    if (g_s2_code_offset+4096>g_exec_size) { fprintf(stderr,"stage2 code arena exhausted\n"); h_push(0,1); return; }
+    if (g_s2_code_offset+65536>g_exec_size) { fprintf(stderr,"stage2 code arena exhausted\n"); h_push(0,1); return; }
     size_t start=g_s2_code_offset;
-    g_s2_code_offset+=4096;
+    g_s2_code_offset+=65536;
     h_push((int64_t)(uintptr_t)(g_exec+start),1);
 }
 HELPER void h_s2_define(void) {
@@ -710,6 +796,9 @@ static void bootstrap(void) {
     add_word("b@",h_bfetch); add_word("b!",h_bstore);
     add_word("calc-buffer",h_calc_buffer);add_word("history-buffer",h_history_buffer);
     add_word("key?",h_keyq);add_word("break?",h_breakq);add_word("key-mode",h_keymode);
+    add_word("host-key",h_key);add_word("hardware?",h_hw_bare);
+    add_word("band",h_bitand);add_word("io8@",h_io8_read);add_word("io8!",h_io8_write);
+    add_word("io16@",h_io16_read);add_word("sector-buffer",h_sector_buffer);add_word("sector-byte@",h_sector_byte_read);add_word("sector-byte!",h_sector_byte_write);
     add_word("home",h_home);
     add_word("bye",h_bye);
     add_word("type",h_type); add_word("print",h_type); add_word("key",h_key);
@@ -720,6 +809,13 @@ static void bootstrap(void) {
     add_word("dict-code",h_s2_dict_code);
     add_word("s2-token-buffer",h_s2_token_buffer);
     add_word("s2-lit-addr",h_s2_lit_addr);
+    add_word("s2-sign-addr",h_s2_sign_addr);
+    add_word("s2-string-addr",h_s2_string_addr);
+    add_word("s2-control-buffer",h_s2_control_buffer);
+    add_word("s2-line-buffer",h_s2_line_buffer);
+    add_word("s2-self-source",h_s2_self_source);
+    add_word("s2-shell-source",h_s2_shell_source);
+    add_word("s2-intern",h_s2_intern);
     add_word("s2-code",h_s2_code);
     add_word("s2-run",h_s2_run);
     add_word("s2-define",h_s2_define);
@@ -773,8 +869,10 @@ static void evaluate_source(const char* src) {
         size_t n=0;
         while(*src && *src!='\n' && n+1<sizeof(line))line[n++]=*src++;
         line[n]=0;if(*src=='\n')++src;
-        char tk[128][256];
-        int count=tokenize(line,tk,128);
+        /* Franc compiler definitions exceed 128 tokens. Keep this buffer in
+           BSS rather than consuming the tiny bare-metal kernel stack. */
+        static char tk[512][256];
+        int count=tokenize(line,tk,512);
         if(!count)continue;
         g_line_start=g_scratch_start+(size_t)g_eval_nesting*1024*1024;
         g_pos=0;g_if_sp=g_begin_sp=g_while_sp=0;g_compile_error=0;
@@ -930,8 +1028,17 @@ int main(void) {
     add_word("run-main",h_run_main);add_word("launch",h_launch);
 
 #ifdef FRANC_EMBED_LIBS
+#ifdef FRANC_BARE_METAL
+    /* First compiler generation, installed before shell words refer to it.
+       The Franc os-boot word installs subsequent generations in Franc. */
+    evaluate_source(franc_stage2_self_source);
+#endif
     load_embedded_libraries();
     printf("FrancOS: math, graphics, and application libraries loaded\n");
+#ifdef FRANC_BARE_METAL
+    /* Device initialization stays in C; the shell and boot policy are Franc. */
+    evaluate_source("os-boot");
+#endif
 #endif
     char line[4096];
     while (1) {
