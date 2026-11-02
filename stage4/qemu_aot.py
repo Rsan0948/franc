@@ -22,22 +22,56 @@ try:
     print(buffer.decode(errors='replace'))
     for marker in [b'FrancOS AOT | 64-bit | no C runtime',b'1/2',b'25',b'BRANCH OK',b'3\n',b'70\n',b'42\n',b'ATA WRITE READBACK DONE',b'def saved 77 ;',b'STORAGE OK',b'AOT BOOT OK']:
         assert marker in buffer, f'missing {marker!r}; QEMU output={buffer!r}'
-    # Hardware exercised through the Franc-owned COM1 input polling loop.
-    deadline=time.monotonic()+8
-    while time.monotonic()<deadline and b'FRANC INTERACTIVE READY' not in buffer:
-        if selector.select(0.2):
-            data=os.read(p.stdout.fileno(),8192)
-            if data: buffer+=data
-    assert b'FRANC INTERACTIVE READY' in buffer, f'console missing: {buffer!r}'
-    os.write(p.stdin.fileno(), b'psg\x1b')
-    deadline=time.monotonic()+15
-    while time.monotonic()<deadline and b'EXIT CONSOLE' not in buffer:
-        if selector.select(0.3):
-            data=os.read(p.stdout.fileno(),8192)
-            if data: buffer+=data
-    for marker in (b'FRANC FRAMEBUFFER READY',b'FRANC INTERACTIVE READY',b'GRAPHICS IN FRANC',b'EXIT CONSOLE'):
-        assert marker in buffer, f'missing {marker!r} from Franc console: {buffer!r}'
-    assert buffer.count(b'1/2') >= 2, buffer
+    # Read and send one character at a time. Sending "psg\x1b" together
+    # can overflow the emulated COM1 receive register while Franc redraws.
+    def await_output(marker, timeout=12, offset=0):
+        nonlocal_deadline = time.monotonic() + timeout
+        while time.monotonic() < nonlocal_deadline and marker not in buffer[offset:]:
+            if p.poll() is not None:
+                break
+            if selector.select(0.2):
+                data = os.read(p.stdout.fileno(), 8192)
+                if not data:
+                    break
+                buffer_extend(data)
+        assert marker in buffer[offset:], (
+            f'missing {marker!r}; QEMU output={buffer!r}'
+        )
+
+    def buffer_extend(data):
+        nonlocal_buffer.append(data)
+
+    nonlocal_buffer = []
+    # Use a mutable collector for all output read after boot.
+    def read_until(marker, timeout=12, after=0):
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            current = buffer + b''.join(nonlocal_buffer)
+            if marker in current[after:]:
+                return current
+            if p.poll() is not None:
+                break
+            if selector.select(0.2):
+                data = os.read(p.stdout.fileno(), 8192)
+                if not data:
+                    break
+                nonlocal_buffer.append(data)
+        raise AssertionError(f'missing {marker!r}; QEMU output={current!r}')
+
+    transcript = read_until(b'Franc> ', timeout=10)
+    for key, expected in [
+        (b'p', b'1/2\nFranc> '),
+        (b's', b'def saved 77 ;\nFranc> '),
+        (b'g', b'GRAPHICS IN FRANC\nFranc> '),
+        (b'\x1b', b'EXIT CONSOLE')
+    ]:
+        offset = len(transcript)
+        os.write(p.stdin.fileno(), key)
+        transcript = read_until(expected, timeout=12, after=offset)
+    for marker in (b'FRANC FRAMEBUFFER READY', b'FRANC INTERACTIVE READY',
+                   b'GRAPHICS IN FRANC', b'EXIT CONSOLE'):
+        assert marker in transcript, f'missing {marker!r}: {transcript!r}'
+    assert transcript.count(b'1/2') >= 2, transcript
     print('PASS: C-free cold boot, Franc framebuffer console, serial keyboard and storage')
 finally:
     p.kill();p.wait()
