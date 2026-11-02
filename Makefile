@@ -2,7 +2,9 @@ CC ?= gcc
 CFLAGS ?= -std=gnu11 -O2 -Wall -Wextra
 .PHONY: all test clean
 all: frac
-frac: frac.c gfx.c gfx.h font8x8.h
+stage2/compiler_source.h: stage2/compiler.frac stage3/shell.frac stage2/gen_compiler_header.py
+	python3 stage2/gen_compiler_header.py
+frac: frac.c gfx.c gfx.h font8x8.h stage2/compiler_source.h
 	$(CC) $(CFLAGS) -o $@ frac.c gfx.c
 test: frac
 	python3 tests/test_frac.py

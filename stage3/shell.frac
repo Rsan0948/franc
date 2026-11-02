@@ -1,7 +1,13 @@
-\ Stage 3 experimental Franc-owned REPL/shell.
-\ Runtime services (keyboard, eval, memory, console) are still implemented in C.
-\ This is a partial Stage 3 boundary, NOT a self-hosted kernel.
-\ Requires lib/calc.frac's editor, plus core eval / depth / key-mode words.
-def os-help "Franc shell: Frac expressions, def, load, files; Esc returns" type 10 emit ;
-def os-evaluate calc-len if0 exit then depth :os-old-depth calc-buffer eval depth os-old-depth - ifnz . then ;
-def os-main 1 key-mode "FrancOS shell (Franc-written)" type 10 emit os-help begin "Frac> " type calc-read ifnz 0 key-mode exit then os-evaluate again ;
+\ Stage 3: Franc-owned boot policy, interactive shell and evaluation loop.
+\ C/ASM remains the hardware/primitive substrate. Every line here is Franc.
+\ Esc returns to the fallback C diagnostic REPL.
+def os-help "Franc shell: expressions, def, save, load, files, launch; Esc exits" type 10 emit ;
+def os-evaluate calc-len if0 exit then depth :os-old-depth calc-buffer s2-eval depth os-old-depth - ifnz . then ;
+def os-banner "FrancOS Stage 3 | shell written in Franc" type 10 emit os-help ;
+def os-prompt "Frac> " type ;
+def os-main 1 key-mode os-banner begin os-prompt calc-read ifnz 0 key-mode exit then os-evaluate again ;
+\ Kernel boot hands control to this Franc word after device setup and library load.
+\ Stage 0 loads the first compiler generation; generation two is compiled in
+\ Franc. The operating-system shell subsequently uses that compiler for input.
+def os-bootstrap s2-self-source s2-source drop s2-shell-source s2-source drop "Franc compiler and shell self-compiled" type 10 emit ;
+def os-boot os-bootstrap 0 clearfb "os-main" s2-find s2-run ;

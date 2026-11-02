@@ -18,6 +18,7 @@
 #include <unistd.h>
 #endif
 #include "gfx.h"
+#include "stage2/compiler_source.h"
 
 typedef struct { int64_t num, den; } Rat;   // den==0: num==0→⊥, else ∞
 
@@ -656,9 +657,14 @@ HELPER void h_s2_dict_code(void) {
 }
 HELPER void h_s2_token_buffer(void) { h_push((int64_t)(uintptr_t)(g_exec+g_scratch_start+4*1024*1024),1); }
 HELPER void h_s2_lit_addr(void) { h_push((int64_t)(uintptr_t)h_push,1); }
-/* Stage 2 native bridge: compiler decisions remain Franc-owned. */
+/* Stage 2 architecture bridge: the *compiler logic* is Franc, while the
+ * environment supplies code memory, stable string storage and primitive
+ * function addresses. No tokenizer/compiler is implemented by these helpers. */
 HELPER void h_s2_sign_addr(void) { h_push((int64_t)(uintptr_t)h_pop_sign,1); }
 HELPER void h_s2_string_addr(void) { h_push((int64_t)(uintptr_t)h_push_string,1); }
+HELPER void h_s2_self_source(void) { h_push((int64_t)(uintptr_t)franc_stage2_self_source,1); }
+HELPER void h_s2_shell_source(void) { h_push((int64_t)(uintptr_t)franc_stage3_shell_source,1); }
+HELPER void h_s2_line_buffer(void) { h_push((int64_t)(uintptr_t)(g_exec+g_scratch_start+4*1024*1024+16384),1); }
 HELPER void h_s2_control_buffer(void) { h_push((int64_t)(uintptr_t)(g_exec+g_scratch_start+4*1024*1024+8192),1); }
 HELPER void h_s2_intern(void) {
     int64_t p;if(!s2_pop_int(&p))return;
@@ -670,10 +676,11 @@ HELPER void h_s2_intern(void) {
     memcpy(dst,str,n+1);
     h_push((int64_t)(uintptr_t)dst,1);
 }
+
 HELPER void h_s2_code(void) {
-    if (g_s2_code_offset+4096>g_exec_size) { fprintf(stderr,"stage2 code arena exhausted\n"); h_push(0,1); return; }
+    if (g_s2_code_offset+65536>g_exec_size) { fprintf(stderr,"stage2 code arena exhausted\n"); h_push(0,1); return; }
     size_t start=g_s2_code_offset;
-    g_s2_code_offset+=4096;
+    g_s2_code_offset+=65536;
     h_push((int64_t)(uintptr_t)(g_exec+start),1);
 }
 HELPER void h_s2_define(void) {
@@ -737,6 +744,9 @@ static void bootstrap(void) {
     add_word("s2-sign-addr",h_s2_sign_addr);
     add_word("s2-string-addr",h_s2_string_addr);
     add_word("s2-control-buffer",h_s2_control_buffer);
+    add_word("s2-line-buffer",h_s2_line_buffer);
+    add_word("s2-self-source",h_s2_self_source);
+    add_word("s2-shell-source",h_s2_shell_source);
     add_word("s2-intern",h_s2_intern);
     add_word("s2-code",h_s2_code);
     add_word("s2-run",h_s2_run);
@@ -949,7 +959,16 @@ int main(void) {
 
 #ifdef FRANC_EMBED_LIBS
     load_embedded_libraries();
+#ifdef FRANC_BARE_METAL
+    /* The C bootstrap only installs the FIRST Franc compiler generation.
+       os-boot recompiles it in Franc and evaluates shell input with s2-eval. */
+    evaluate_source(franc_stage2_self_source);
+#endif
     printf("FrancOS: math, graphics, and application libraries loaded\n");
+#ifdef FRANC_BARE_METAL
+    /* Device initialization stays in C; the shell and boot policy are Franc. */
+    evaluate_source("os-boot");
+#endif
 #endif
     char line[4096];
     while (1) {

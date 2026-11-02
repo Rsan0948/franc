@@ -1,12 +1,24 @@
-# Stage 3: Franc-authored shell prototype (partial)
+# Stage 3 — Franc-authored kernel shell and bootstrap
 
-`stage3/shell.frac` provides a line editor and evaluation loop written in Franc,
-using `calc-read`, `eval` and `depth` primitives. It is compiled by
-Stage 0 during the bare-metal library bootstrap and invoked with `os-main`.
-Escape returns to the caller.
+The interactive operating-system control loop lives in
+[`shell.frac`](shell.frac). On BIOS boot, the minimal C/assembly substrate sets
+up the CPU, console, storage, memory and primitive functions, and compiles the
+first generation of Franc compiler definitions. The Franc `os-boot` word then:
 
-Shell policy and the interaction loop live in Franc source. Drivers,
-tokenization, machine-code generation, memory allocation, I/O and kernel boot
-remain C/assembly. This is **not** a full Franc kernel or self-hosted compiler.
+1. Compiles `compiler.frac` **using its own Franc compiler**.
+2. Compiles `shell.frac` with that newly generated compiler.
+3. Resolves and executes the new native `os-main` shell word.
+4. Compiles subsequent interactive input using Franc `s2-eval` rather than
+   C `eval`, including new definitions, rational arithmetic and branches.
+5. Allows Esc to return to the C diagnostic console.
 
-Tests: `python3 tests/test_stage3_shell.py`, and `python3 stage1/qemu_smoke.py`.
+The kernel's high-level shell, compilation policy, application code, graphic
+programs and demos are Franc code. The hardware/runtime substrate (BIOS boot,
+page tables, native primitive arithmetic, keyboard/serial/VGA/ATA drivers,
+heap and executable-code allocation) **remains C/assembly**. The project
+therefore does *not* claim a pure-Franc kernel or zero native bootstrap code.
+
+Verification: `make test` proves the hosted self-compiled shell; the private
+GitHub workflow builds the boot image and uses `stage1/qemu_smoke.py` and
+`stage1/qemu_persistence.py` to test the real guest. A successful host build
+alone does not prove the new QEMU boot path.
