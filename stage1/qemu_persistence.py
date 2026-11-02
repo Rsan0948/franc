@@ -59,7 +59,7 @@ with tempfile.TemporaryDirectory() as temp:
     try:
         first.wait_for(b'Frac> ')
         first.command('disk-ready? .', b'1')
-        first.command('"hello.frac" "def persistent-test 37 5 + ;" save', b'Frac> ')
+        first.command('"hello.frac" "def persistent-test 37 5 + ;" fs-save .', b'1')
         first.command('"hello.frac" load', b'Frac> ')
         first.command('persistent-test .', b'42')
         print('PASS: QEMU writes and loads source from the formatted ATA-IDE image')

@@ -16,6 +16,13 @@ _start:
   movb boot_drive,%dl
   int $0x13
   jc disk_error
+  /* Load optional kernel tail from LBA 200, keeping FRANCFS1 at 128..199.
+     First portion (127 sectors) ends at physical 0x1FE00. */
+  movw $dap_extra,%si
+  movb $0x42,%ah
+  movb boot_drive,%dl
+  int $0x13
+  jc disk_error
   /* BIOS VGA mode 13h must be set before protected/long mode. */
   movw $0x0013,%ax
   int $0x10
@@ -109,5 +116,11 @@ dap:
   .word 127
   .word 0,0x1000
   .quad 1
+.align 4
+dap_extra:
+  .byte 0x10,0
+  .word 56
+  .word 0,0x1fe0
+  .quad 200
 .org 510
 .word 0xaa55

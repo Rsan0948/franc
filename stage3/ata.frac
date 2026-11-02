@@ -1,10 +1,15 @@
-\ Stage 3 read-only ATA PIO driver, implemented in Franc.
-\ Target: legacy primary-master IDE under QEMU. Never writes a sector.
+\ Stage 3 ATA PIO read/write driver, implemented in Franc.
+\ Target: legacy primary-master IDE under QEMU. Write path restricted to source-store LBAs.
 \ Values: lba ata-read-sector -> 1 success, 0 unavailable/timeout/error.
 \ Read 512 bytes into sector-buffer using byte writes. The older C disk store
-\ still handles persistent writes until an independent Franc driver is tested.
+\ remains available only as a fallback for diagnostics.
 \ No IRQs; the hardware-facing substrate is io8@, io8!, io16@ and memory !.
 def at-wait :at-count 0 :at-i begin at-i at-count - while $1F7 io8@ :at-status at-status $FF - if0 0 exit then at-status 128 band if0 at-status 33 band ifnz 0 exit then at-status 8 band ifnz 1 exit then then at-i 1 + :at-i repeat 0 ;
 def ata-read-sector :at-lba hardware? if0 0 exit then at-lba 0 - if 0 exit then at-lba 256 - if 1 else 0 exit then :at-bounds 200000 at-wait drop $1F6 $E0 at-lba 16777216 / floor 15 band + io8! $1F2 1 io8! $1F3 at-lba 255 band io8! $1F4 at-lba 256 / floor 255 band io8! $1F5 at-lba 65536 / floor 255 band io8! $1F7 $20 io8! 200000 at-wait if0 0 exit then 0 :at-i begin at-i 256 - while $1F0 io16@ :at-word at-i 2 * at-word 255 band sector-byte! at-i 2 * 1 + at-word 256 / floor sector-byte! at-i 1 + :at-i repeat 1 ;
 \ Probe the first byte of FRANCFS1 at LBA 128; expected ASCII F (70).
 def ata-header-byte 128 ata-read-sector if0 0 exit then 0 sector-byte@ ;
+\ Franc ATA PIO write path. One raw io16! output word is the only new port primitive.
+\ Deliberately restrict writes to sectors 128..255: never touch BIOS/kernel.
+\ A failed status/timeout returns 0. The destination is the shared 512-byte sector buffer.
+def ata-ready 0 :ar-i begin ar-i 200000 - while $1F7 io8@ :ar-status ar-status $FF - if0 0 exit then ar-status 128 band if0 ar-status 33 band ifnz 0 else 1 then exit then ar-i 1 + :ar-i repeat 0 ;
+def ata-write-sector :aw-lba hardware? if0 0 exit then aw-lba 128 - if 0 exit then aw-lba 200 - if 0 :aw-valid else 1 :aw-valid then aw-valid ifnz 0 exit then ata-ready if0 0 exit then $1F6 $E0 aw-lba 16777216 / floor 15 band + io8! $1F2 1 io8! $1F3 aw-lba 255 band io8! $1F4 aw-lba 256 / floor 255 band io8! $1F5 aw-lba 65536 / floor 255 band io8! $1F7 $30 io8! 200000 at-wait if0 0 exit then 0 :aw-i begin aw-i 256 - while aw-i 2 * sector-byte@ aw-i 2 * 1 + sector-byte@ 256 * + :aw-word $1F0 aw-word io16! aw-i 1 + :aw-i repeat $1F7 $E7 io8! ata-ready ;
