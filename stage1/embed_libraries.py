@@ -9,7 +9,7 @@ for lib in LIBS:
     data=(ROOT/'lib'/f'{lib}.frac').read_text()
     for part in data.splitlines(keepends=True):
         lines.append('  '+json.dumps(part, ensure_ascii=True))
-for path in [ROOT/'stage3'/'shell.frac']:
+for path in [ROOT/'stage3'/name for name in ['drivers.frac', 'ata.frac', 'console.frac', 'shell.frac']]:
     data=path.read_text()
     for part in data.splitlines(keepends=True):
         lines.append('  '+json.dumps(part, ensure_ascii=True))

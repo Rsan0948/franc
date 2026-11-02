@@ -50,7 +50,8 @@ try:
            (b'1 2 1 3 tangent? .\n',b'1'),
            (b'"guest.frac" "def guest-square dup * ;" save\n',b'Frac> '),
            (b'"guest.frac" load\n',b'Frac> '),
-           (b'9 guest-square .\n',b'81')]
+           (b'9 guest-square .\n',b'81'),
+           (b'ata-header-byte .\n',b'70')]
     for command,result in tests:
         position=len(transcript)
         p.stdin.write(command);p.stdin.flush()

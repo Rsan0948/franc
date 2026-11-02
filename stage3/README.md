@@ -1,26 +1,26 @@
-# Stage 3 — Franc-authored kernel shell and bootstrap
+# Stage 3 — Franc-owned kernel services (incremental migration)
 
-The interactive operating-system control loop lives in
-[`shell.frac`](shell.frac). On BIOS boot, the minimal C/assembly substrate sets
-up the CPU, console, storage, memory and primitive functions, and compiles the
-first generation of Franc compiler definitions. The Franc `os-boot` word then:
+The boot image currently relies on a C/assembly initialization and primitive
+substrate. `shell.frac` owns the interactive REPL and calls the self-recompiled
+Franc compiler for user expressions. The new Franc device modules are:
 
-1. Compiles `compiler.frac` **using its own Franc compiler**.
-2. Compiles `shell.frac` with that newly generated compiler.
-3. Resolves and executes the new native `os-main` shell word.
-4. Compiles subsequent interactive input using Franc `s2-eval` rather than
-   C `eval`, including new definitions, rational arithmetic and branches.
-   `load`/`launch` are now Franc-authored policies which compile saved source
-   through `s2-source`; the native storage service supplies source bytes.
-5. Allows Esc to return to the C diagnostic console.
+- `drivers.frac`: COM1 polling, PS/2 scan-set-1 decoding (Shift and extended
+  arrow codes) and key event policy; `key` is rebound *after* loading libraries.
+- `console.frac`: recompiled line editor, linking it to the Franc keyboard word.
+- `ata.frac`: **read-only** primary-master ATA PIO sector fetch through
+  `io8@`, `io8!`, `io16@`; persistent disk writes still use the known-good C
+  driver. `128 ata-read-sector .` should print 1 under the QEMU IDE test image;
+  `ata-header-byte .` should print 70 (the first byte of `FRANCFS1`).
+- `shell.frac`: startup, self-recompilation, shell and C diagnostic fallback.
 
-The kernel's high-level shell, compilation policy, application code, graphic
-programs and demos are Franc code. The hardware/runtime substrate (BIOS boot,
-page tables, native primitive arithmetic, keyboard/serial/VGA/ATA drivers,
-heap and executable-code allocation) **remains C/assembly**. The project
-therefore does *not* claim a pure-Franc kernel or zero native bootstrap code.
+Port primitives are hardware-only in bare metal; on Linux they return zero/noop
+and `host-key` supplies input. The Franc keyboard state machine is tested
+without privileged I/O on Linux. The QEMU tests must validate actual port I/O.
 
-Verification: `make test` proves the hosted self-compiled shell; the private
-GitHub workflow builds the boot image and uses `stage1/qemu_smoke.py` and
-`stage1/qemu_persistence.py` to test the real guest. A successful host build
-alone does not prove the new QEMU boot path.
+**Not yet C-free:** CPU setup, C arithmetic/dictionary/JIT bootstrap, screen
+pixel driver, serial output and persistent writes still depend on C.
+
+The required end-state is explicitly recorded in
+[`docs/C_FREE_EXIT_CRITERIA.md`](../docs/C_FREE_EXIT_CRITERIA.md). We will not
+call the experiment finished until a cold-bootable, self-hosted kernel can be
+built and executed without C compiler/runtime/code dependencies.

@@ -236,6 +236,17 @@ HELPER void h_io16_read(void) {
 /* Reserved safe DMA-free scratch: stores exactly one ATA sector. */
 static uint8_t g_franc_sector_buffer[512];
 HELPER void h_sector_buffer(void){h_push((int64_t)(uintptr_t)g_franc_sector_buffer,1);}
+HELPER void h_sector_byte_read(void){
+    if(!need(1))return;Rat index=*--g_sp;
+    if(index.den!=1||index.num<0||index.num>=512){h_push(0,1);return;}
+    h_push(g_franc_sector_buffer[index.num],1);
+}
+HELPER void h_sector_byte_write(void){
+    if(!need(2))return;Rat value=*--g_sp,index=*--g_sp;
+    if(index.den!=1||index.num<0||index.num>=512||value.den!=1)return;
+    g_franc_sector_buffer[index.num]=(uint8_t)value.num;
+}
+
 
 
 HELPER void h_depth(void) { h_push((int64_t)(g_sp-g_stack),1); }
@@ -787,7 +798,7 @@ static void bootstrap(void) {
     add_word("key?",h_keyq);add_word("break?",h_breakq);add_word("key-mode",h_keymode);
     add_word("host-key",h_key);add_word("hardware?",h_hw_bare);
     add_word("band",h_bitand);add_word("io8@",h_io8_read);add_word("io8!",h_io8_write);
-    add_word("io16@",h_io16_read);add_word("sector-buffer",h_sector_buffer);
+    add_word("io16@",h_io16_read);add_word("sector-buffer",h_sector_buffer);add_word("sector-byte@",h_sector_byte_read);add_word("sector-byte!",h_sector_byte_write);
     add_word("home",h_home);
     add_word("bye",h_bye);
     add_word("type",h_type); add_word("print",h_type); add_word("key",h_key);

@@ -11,7 +11,7 @@ boot.bin: boot.S
 	$(LD) -m elf_x86_64 --oformat binary -Ttext 0x7c00 -o $@ boot.o
 entry.o: entry.S
 	$(AS) --64 -o $@ $<
-library_bundle.h: ../lib/fixpt.frac ../lib/cf.frac ../lib/approx.frac ../lib/iv.frac ../lib/trans.frac ../lib/graphics.frac ../lib/ford.frac ../lib/spiro.frac ../lib/calc.frac ../lib/edit.frac ../lib/walk.frac ../lib/dd.frac ../stage3/shell.frac embed_libraries.py
+library_bundle.h: ../lib/fixpt.frac ../lib/cf.frac ../lib/approx.frac ../lib/iv.frac ../lib/trans.frac ../lib/graphics.frac ../lib/ford.frac ../lib/spiro.frac ../lib/calc.frac ../lib/edit.frac ../lib/walk.frac ../lib/dd.frac ../stage3/shell.frac ../stage3/drivers.frac ../stage3/ata.frac ../stage3/console.frac embed_libraries.py
 	python3 embed_libraries.py
 ../stage2/compiler_source.h: ../stage2/compiler.frac ../stage3/shell.frac ../stage2/gen_compiler_header.py
 	python3 ../stage2/gen_compiler_header.py
