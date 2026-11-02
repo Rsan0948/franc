@@ -563,3 +563,41 @@ fr_sector_bstore:
 .balign 16
 sector_data: .skip 512
 .section .note.GNU-stack,"",@progbits
+
+.section .text,"ax"
+.global fr_mod
+fr_mod:
+    call fr_pop
+    movq %rax,%r10
+    call fr_pop
+    testq %r10,%r10
+    jz .modbad
+    movq %r10,%rcx
+    cqto
+    idivq %rcx
+    movq %rdx,%rdi
+    movq $1,%rsi
+    jmp fr_push
+.modbad:
+    xor %edi,%edi
+    xor %esi,%esi
+    jmp fr_push
+.global fr_source_buffer
+fr_source_buffer:
+    leaq source_data(%rip),%rdi
+    movq $1,%rsi
+    jmp fr_push
+.global fr_source_bstore
+fr_source_bstore:
+    call fr_pop
+    movq %rax,%r10
+    call fr_pop
+    cmpq $2048,%rax
+    ja .badsource
+    movb %r10b,source_data(%rax)
+.badsource:
+    ret
+.section .bss
+.balign 16
+source_data: .skip 2050
+.section .note.GNU-stack,"",@progbits
