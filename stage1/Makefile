@@ -1,0 +1,28 @@
+CC = gcc
+AS = as
+LD = ld
+OBJCOPY = objcopy
+CFLAGS = -std=gnu11 -O2 -Wall -Wextra -ffreestanding -fno-stack-protector -fno-pic -fno-pie -fno-builtin -mno-red-zone -mcmodel=large -Iinclude
+LDFLAGS = -nostdlib -no-pie -Wl,--build-id=none -Wl,-T,kernel.ld
+.PHONY: all clean run
+all: fracos.img
+boot.bin: boot.S
+	$(AS) --64 -o boot.o boot.S
+	$(LD) -m elf_x86_64 --oformat binary -Ttext 0x7c00 -o $@ boot.o
+entry.o: entry.S
+	$(AS) --64 -o $@ $<
+frac.o: ../frac.c
+	$(CC) $(CFLAGS) -Dmain=frac_main -c -o $@ $<
+runtime.o: runtime.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+kernel.elf: entry.o frac.o runtime.o kernel.ld
+	$(CC) $(LDFLAGS) -o $@ entry.o frac.o runtime.o -lgcc
+kernel.bin: kernel.elf
+	$(OBJCOPY) -O binary $< $@
+	@test $$(stat -c%s $@) -le 65024 || (echo 'kernel exceeds 127-sector BIOS loader capacity' >&2; exit 1)
+fracos.img: boot.bin kernel.bin
+	@python3 -c 'from pathlib import Path; b=Path("boot.bin").read_bytes(); k=Path("kernel.bin").read_bytes(); assert len(b)==512; Path("fracos.img").write_bytes(b+k.ljust(127*512,b"\0"))'
+run: fracos.img
+	qemu-system-x86_64 -m 128M -drive file=fracos.img,format=raw,if=ide -serial stdio -display none -no-reboot
+clean:
+	rm -f *.o *.bin *.elf *.img

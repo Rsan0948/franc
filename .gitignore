@@ -1,0 +1,9 @@
+/frac
+/frac-original
+__pycache__/
+*.o
+# Stage 1 generated boot artifacts (recreate with make -C stage1)
+/stage1/*.bin
+/stage1/*.img
+/stage1/*.elf
+/stage1/*.o

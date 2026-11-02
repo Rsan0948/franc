@@ -1,0 +1,8 @@
+1/7 ~
+-1/6 ~
+255 16 ~
+50 % .
+def sq dup * ;
+5 sq .
+def fact dup 1 - if drop 1 else dup 1 - fact * then ;
+5 fact .

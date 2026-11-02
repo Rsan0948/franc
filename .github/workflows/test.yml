@@ -1,0 +1,17 @@
+name: Build and test Frac + FracOS (private development)
+on:
+  push:
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage 0 JIT tests
+        run: make test
+      - name: Stage 1 BIOS image build
+        run: make -C stage1 && python3 stage1/verify_image.py
+      - name: Install QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y qemu-system-x86
+      - name: Stage 1 QEMU boot and REPL smoke tests
+        run: python3 stage1/qemu_smoke.py
