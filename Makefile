@@ -10,5 +10,6 @@ test: frac
 	python3 tests/test_libs.py
 	python3 tests/test_stage2.py
 	python3 tests/test_graphics.py
+	python3 tests/test_apps.py
 clean:
 	rm -f frac frac-original
