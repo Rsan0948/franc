@@ -1,0 +1,46 @@
+\ Stage 2 experimental native compiler, itself implemented in Franc.
+\ Every definition is compiled by Stage 0 during bootstrap. All scanning,
+\ dictionary search, decimal parsing and x86-64 instruction emission below
+\ happen in Franc, not in C. Currently accepts straight-line word bodies:
+\   "2 3 +" s2-compile s2-run  -> 5
+\ The host exposes memory and dictionary structure; this is NOT yet
+\ a self-hosted replacement for Stage 0 (def/if/loop/recursion pending).
+
+\ Bytewise NUL-terminated string equality.
+def s2-eq :s2eqb :s2eqa begin s2eqa byte@ :s2eqc s2eqb byte@ s2eqc - ifnz 0 exit then s2eqc if0 1 exit then s2eqa 1 + :s2eqa s2eqb 1 + :s2eqb again ;
+
+\ Search the existing mutable dictionary from Franc source.
+def s2-find :s2needle dict-head :s2node begin s2node if0 0 exit then s2node dict-name s2needle s2-eq ifnz s2node dict-code exit then s2node dict-next :s2node again ;
+
+\ Scanner: fill reserved JIT buffer with a NUL-terminated token.
+\ The source pointer is saved in s2p and persists across calls.
+def s2-copy s2-token-buffer :s2tok s2tok :s2write begin s2p byte@ :s2ch s2ch if0 s2write 0 ! s2tok exit then s2ch 33 - if s2write 0 ! s2tok exit then s2write s2ch ! s2p 1 + :s2p s2write 1 + :s2write again ;
+def s2-next begin s2p byte@ :s2ch s2ch if0 0 exit then s2ch 33 - if s2p 1 + :s2p else s2-copy exit then again ;
+
+\ Parse single digit as (digit valid). Both 0 and bad input are unambiguous.
+def s2-digit :s2char s2char 48 - if 0 0 exit then s2char 58 - if s2char 48 - 1 exit then s2char 65 - if 0 0 exit then s2char 71 - if s2char 65 - 10 + 1 exit then s2char 97 - if 0 0 exit then s2char 103 - if s2char 97 - 10 + 1 exit then 0 0 ;
+
+\ Parse unsigned integer (base prefix $ or #), stopping at / or NUL.
+\ Returns: number end-pointer valid.
+def s2-uint :s2up 10 :s2base 0 :s2acc 0 :s2seen s2up byte@ 36 - if0 16 :s2base s2up 1 + :s2up then s2up byte@ 35 - if0 2 :s2base s2up 1 + :s2up then begin s2up byte@ :s2uch s2uch if0 s2acc s2up s2seen exit then s2uch 47 - if0 s2acc s2up s2seen exit then s2uch s2-digit :s2digitvalid :s2digit s2digitvalid if0 0 s2up 0 exit then s2digit s2base - if s2acc s2base * s2digit + :s2acc 1 :s2seen s2up 1 + :s2up else 0 s2up 0 exit then again ;
+
+\ Parse a rational literal including mixed-base numerator/denominator.
+\ Returns: numerator denominator valid. Decimal fractional dots TBD.
+def s2-number :s2np 1 :s2sign s2np byte@ 45 - if0 -1 :s2sign s2np 1 + :s2np then s2np s2-uint :s2numeratorvalid :s2endptr :s2numerator s2numeratorvalid if0 0 1 0 exit then s2endptr byte@ if0 s2numerator s2sign * 1 1 exit then s2endptr byte@ 47 - if0 s2endptr 1 + s2-uint :s2denomvalid :s2finalptr :s2denominator s2denomvalid if0 0 1 0 exit then s2finalptr byte@ ifnz 0 1 0 exit then s2numerator s2sign * s2denominator 1 exit then 0 1 0 ;
+
+\ x86-64 code emission. Byte store uses Franc's existing `!` word.
+def s2-byte :s2bytevalue s2out s2bytevalue ! s2out 1 + :s2out ;
+def s2-u64 :s2word 0 :s2i begin s2i 8 - while s2word 256 % s2-byte s2word 256 / floor :s2word s2i 1 + :s2i repeat ;
+def s2-call :s2callee $48 s2-byte $B8 s2-byte s2callee s2-u64 $FF s2-byte $D0 s2-byte ;
+def s2-lit :s2denval :s2literal $48 s2-byte $BF s2-byte s2literal s2-u64 $48 s2-byte $BE s2-byte s2denval s2-u64 s2-lit-addr s2-call ;
+def s2-prologue $48 s2-byte $83 s2-byte $EC s2-byte 8 s2-byte ;
+def s2-epilogue $48 s2-byte $83 s2-byte $C4 s2-byte 8 s2-byte $C3 s2-byte ;
+
+\ Compile a single token into machine-code helper calls or literal pushes.
+\ Returns true if supported, false otherwise.
+def s2-token-emit :s2token s2token s2-find :s2target s2target ifnz s2target s2-call 1 exit then s2token s2-number :s2valid :s2denval2 :s2litval s2valid if0 0 exit then s2litval s2denval2 s2-lit 1 ;
+
+\ Compiles a straight-line program OR one simple `def name ... ;`.
+\ Definition names are registered before the body so simple recursion can link,
+\ but control-flow compilation has not been implemented yet.
+def s2-compile :s2p s2-next :s2token s2token if0 0 exit then s2token "def" s2-eq :s2defmode s2-code :s2begin s2begin :s2out s2-prologue s2defmode ifnz s2-next :s2token s2token if0 0 exit then s2token s2begin s2-define else s2token s2-token-emit if0 "stage2: unsupported token" type 0 exit then then begin s2-next :s2token s2token if0 s2-epilogue s2begin exit then s2defmode ifnz s2token ";" s2-eq ifnz s2-epilogue s2begin exit then then s2token s2-token-emit if0 "stage2: unsupported token" type 0 exit then again ;
