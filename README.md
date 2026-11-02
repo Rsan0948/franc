@@ -167,8 +167,7 @@ zero, and integer-overflow-to-bottom is an implementation compromise.
 estimate when the arithmetic remains representable. Global named registers are
 not lexical locals, so concurrent/reentrant definitions should avoid collisions.
 
-Tests: `make test` runs the original 62 Stage 0 tests plus 28 library smoke tests.
-QEMU boot remains separate; static kernel-image checks are not proof of boot.
+Tests: `make test` runs the original 62 Stage 0 tests, 28 library checks, 19 Stage 2 checks, 15 graphics checks, and 12 application checks (136 total). QEMU boot remains separate; static kernel-image checks are not proof of boot.
 
 ## Stage 2 — partial Franc-authored compiler
 
@@ -205,3 +204,78 @@ may become sub-pixel. Neither proves error bounds for arbitrary approximations.
 **Stage 1 execution in QEMU is not yet verified;** Stage 2's Frac-written
 compiler remains partial (control-flow and recompiling its own source are pending).
 The repo remains private until its owner explicitly decides to publish it.
+
+## FracCalc and Stern–Brocot explorer (last two applications before Stage 3)
+
+These applications live **in Franc source**, not in special kernel code. The
+shared C bootstrap provides minimal OS-facing words (`eval`, `depth`, `key`,
+`key?`, `break?`, `key-mode`, `calc-buffer`, `history-buffer`, `b@`, `b!`,
+`save`, `load`, `files`, `copy`, `source`, and `home`). `eval` generates and
+runs native code without overwriting the currently executing REPL word.
+
+```sh
+make
+cat lib/{fixpt,cf,approx,iv,trans,graphics,ford,spiro,calc,edit,walk}.frac - | ./frac
+```
+
+Launch the calculator by typing `calc-main`; evaluate postfix expressions with
+Enter, use Up to recall older expressions, Backspace to correct an entry, and
+Esc to exit. `ans` is a Franc word for the current accumulator. For example:
+
+```text
+Frac> calc-main
+> 1/3 1/6 +
+ans: 1/2
+> def twice dup + ;
+> 7 twice
+ans: 14
+> ans 2 *
+ans: 28
+> [Esc]
+Frac> 7 twice .
+14
+```
+
+The RAM source store works without a filesystem, but **does not survive reboot**:
+
+```text
+Frac> "foo" "def twice dup + ;" save
+Frac> "foo" "foo.bak" copy
+Frac> "foo" edit-line
+> def triple dup dup + + ;
+Frac> "foo" load
+Frac> 9 triple .
+27
+```
+
+`edit-line` is an intentionally minimal replacement-line editor, not a multi-line
+full-screen file editor. A file can store multiple newline-separated definitions
+through `save`, and `load` evaluates them; the interactive editor edits one line.
+The memory stores at most 12 files of 2,047 bytes each, in RAM.
+
+For the landscape use `walk-main`. The left/right arrows take exact mediants,
+Esc returns to the normal REPL, and `walk-check` returns 1 only when both
+Farey-neighbor determinant invariants are 1. You can test the arithmetic without
+a keyboard:
+
+```text
+Frac> walk-reset
+Frac> walk-left
+Frac> wk-p wk-q / .
+1/2
+Frac> walk-right
+Frac> wk-p wk-q / .
+2/3
+Frac> walk-check .
+1
+```
+
+Both are embedded into the Stage 1 kernel image at build time. The hosted tests
+exercise the actual compiler/JIT and framebuffer, including scripted keyboard
+events. **Neither app has yet been verified booting in QEMU**. Keyboard arrows
+use PS/2 in bare-metal mode; host terminals use ANSI arrow sequences. Serial
+input currently handles ASCII, not extended arrow sequences.
+
+Stage 2 remains **partially** self-hosted: it cannot yet compile its own source.
+Completing that compiler and verifying a real Stage 1 boot are separate gates
+before claiming a full Frac-authored Stage 3 kernel.
