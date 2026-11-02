@@ -4,14 +4,14 @@ LD = ld
 OBJCOPY = objcopy
 CFLAGS = -std=gnu11 -O2 -Wall -Wextra -ffreestanding -fno-stack-protector -fno-pic -fno-pie -fno-builtin -mno-red-zone -mcmodel=large -DFRANC_BARE_METAL -Iinclude
 LDFLAGS = -nostdlib -no-pie -Wl,--build-id=none -Wl,-T,kernel.ld
-.PHONY: all clean run
+.PHONY: all clean run run-gui
 all: fracos.img
 boot.bin: boot.S
 	$(AS) --64 -o boot.o boot.S
 	$(LD) -m elf_x86_64 --oformat binary -Ttext 0x7c00 -o $@ boot.o
 entry.o: entry.S
 	$(AS) --64 -o $@ $<
-library_bundle.h: ../lib/fixpt.frac ../lib/cf.frac ../lib/approx.frac ../lib/iv.frac ../lib/trans.frac ../lib/graphics.frac ../lib/ford.frac ../lib/spiro.frac embed_libraries.py
+library_bundle.h: ../lib/fixpt.frac ../lib/cf.frac ../lib/approx.frac ../lib/iv.frac ../lib/trans.frac ../lib/graphics.frac ../lib/ford.frac ../lib/spiro.frac ../lib/calc.frac ../lib/edit.frac ../lib/walk.frac embed_libraries.py
 	python3 embed_libraries.py
 frac.o: ../frac.c ../gfx.h library_bundle.h
 	$(CC) $(CFLAGS) -Dmain=frac_main -DFRANC_EMBED_LIBS -c -o $@ $<
@@ -28,5 +28,7 @@ fracos.img: boot.bin kernel.bin
 	@python3 -c 'from pathlib import Path; b=Path("boot.bin").read_bytes(); k=Path("kernel.bin").read_bytes(); assert len(b)==512; Path("fracos.img").write_bytes(b+k.ljust(127*512,b"\0"))'
 run: fracos.img
 	qemu-system-x86_64 -m 128M -drive file=fracos.img,format=raw,if=ide -serial stdio -display none -no-reboot
+run-gui: fracos.img
+	qemu-system-x86_64 -m 128M -drive file=fracos.img,format=raw,if=ide -serial mon:stdio -no-reboot
 clean:
 	rm -f *.o *.bin *.elf *.img
