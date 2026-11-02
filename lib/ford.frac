@@ -1,0 +1,11 @@
+\ Ford circles on 320x200 with rational inside-disk tests at pixel centers.
+\ Certificate: p/q and p'/q' are Farey neighbors iff |pq'-p'q|=1.
+\ Assumes positive q and 0<=p/q<=1. Small circles may not cover pixel centers.
+\ Globally allocated registers: tangent uses tq1,tq2,tp1,tp2;
+\ ford uses fp,fq,fcolor,fxc,fyc,fr,fxl,fxr,fyt,fyb,fx,fy,fv;
+\ farey uses fn,fa,fb,fc,fd,fk,ft,fu. No collisions.
+def tangent? :tq2 :tp2 :tq1 :tp1 tp1 tq2 * tp2 tq1 * - abs 1 - if0 1 else 0 then ;
+def ford :fcolor :fq :fp fq if0 exit then 320 fp * fq / :fxc 100 fq fq * / :fr 200 fr - :fyc fxc fr - floor 0 max :fxl fxc fr + ceil 319 min :fxr fyc fr - floor 0 max :fyt fyc fr + ceil 199 min :fyb fxl :fx begin fx fxr - 1 - while fyt :fy begin fy fyb - 1 - while fx 1/2 + fxc - dup * fy 1/2 + fyc - dup * + fr fr * - :fv fv if fx fy fcolor pixel then fv if0 fx fy fcolor pixel then fy 1 + :fy repeat fx 1 + :fx repeat ;
+\ Standard Farey iterator, enumerating all reduced p/q in [0,1] with q<=n.
+def farey :fn 0 :fa 1 :fb 1 :fc fn :fd begin fa fb fb 14 % 1 + ford fc fn - 1 - if0 exit then fn fb + fd / floor :fk fk fc * fa - :ft fk fd * fb - :fu fc :fa fd :fb ft :fc fu :fd again ;
+def fordland :fl 0 clearfb fl farey ;
