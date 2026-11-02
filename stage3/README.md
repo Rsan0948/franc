@@ -10,6 +10,8 @@ first generation of Franc compiler definitions. The Franc `os-boot` word then:
 3. Resolves and executes the new native `os-main` shell word.
 4. Compiles subsequent interactive input using Franc `s2-eval` rather than
    C `eval`, including new definitions, rational arithmetic and branches.
+   `load`/`launch` are now Franc-authored policies which compile saved source
+   through `s2-source`; the native storage service supplies source bytes.
 5. Allows Esc to return to the C diagnostic console.
 
 The kernel's high-level shell, compilation policy, application code, graphic

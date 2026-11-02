@@ -47,7 +47,10 @@ try:
            (b'0 clearfb\n',b'Frac> '),
            (b'10 20 14 pixel\n',b'Frac> '),
            (b'10 20 pixel@ .\n',b'14'),
-           (b'1 2 1 3 tangent? .\n',b'1')]
+           (b'1 2 1 3 tangent? .\n',b'1'),
+           (b'"guest.frac" "def guest-square dup * ;" save\n',b'Frac> '),
+           (b'"guest.frac" load\n',b'Frac> '),
+           (b'9 guest-square .\n',b'81')]
     for command,result in tests:
         position=len(transcript)
         p.stdin.write(command);p.stdin.flush()

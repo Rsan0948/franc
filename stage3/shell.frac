@@ -3,6 +3,11 @@
 \ Esc returns to the fallback C diagnostic REPL.
 def os-help "Franc shell: expressions, def, save, load, files, launch; Esc exits" type 10 emit ;
 def os-evaluate calc-len if0 exit then depth :os-old-depth calc-buffer s2-eval depth os-old-depth - ifnz . then ;
+\ User-facing source loading belongs to Franc. `source` is a native storage
+\ primitive, while s2-source lexes and compiles the file in Franc.
+def load :os-load-name os-load-name source :os-load-src os-load-src if0 exit then os-load-src s2-source drop ;
+\ Launches only a freshly defined main; no accidental re-run of stale apps.
+def launch :os-launch-name "main" s2-find :os-before os-launch-name load "main" s2-find :os-after os-after if0 exit then os-after os-before - if0 exit then os-after s2-run ;
 def os-banner "FrancOS Stage 3 | shell written in Franc" type 10 emit os-help ;
 def os-prompt "Frac> " type ;
 def os-main 1 key-mode os-banner begin os-prompt calc-read ifnz 0 key-mode exit then os-evaluate again ;

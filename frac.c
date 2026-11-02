@@ -184,6 +184,60 @@ HELPER void h_breakq(void) {
     h_push(yes,1);
 }
 HELPER void h_keymode(void) { if(!need(1))return;Rat on=*--g_sp;app_key_mode(on.num!=0); }
+/* Stage 3 hardware boundary: these four tiny primitives do not own a driver.
+ * The PS/2 and serial protocol/state machines live in stage3/drivers.frac.
+ * No user-space in/out instructions: the hosted build deliberately exposes
+ * inert ports and routes physical keyboard events through host-key instead. */
+HELPER void h_hw_bare(void) { h_push(
+#ifdef FRANC_BARE_METAL
+    1
+#else
+    0
+#endif
+    ,1); }
+HELPER void h_bitand(void) {
+    if(!need(2))return;
+    Rat b=*--g_sp,*a=&g_sp[-1];
+    *a=(a->den==1&&b.den==1)?(Rat){a->num&b.num,1}:(Rat){0,0};
+}
+HELPER void h_io8_read(void) {
+    if(!need(1))return;
+    Rat port=*--g_sp;
+    if(port.den!=1||port.num<0||port.num>65535){h_push(0,1);return;}
+#ifdef FRANC_BARE_METAL
+    uint8_t v; uint16_t p=(uint16_t)port.num;
+    __asm__ volatile("inb %1,%0":"=a"(v):"Nd"(p));
+    h_push(v,1);
+#else
+    h_push(0,1);
+#endif
+}
+HELPER void h_io8_write(void) {
+    if(!need(2))return;
+    Rat v=*--g_sp,p=*--g_sp;
+    if(p.den!=1||p.num<0||p.num>65535||v.den!=1)return;
+#ifdef FRANC_BARE_METAL
+    uint16_t port=(uint16_t)p.num;
+    __asm__ volatile("outb %0,%1"::"a"((uint8_t)v.num),"Nd"(port));
+#endif
+}
+HELPER void h_io16_read(void) {
+    if(!need(1))return;
+    Rat port=*--g_sp;
+    if(port.den!=1||port.num<0||port.num>65535){h_push(0,1);return;}
+#ifdef FRANC_BARE_METAL
+    uint16_t v,p=(uint16_t)port.num;
+    __asm__ volatile("inw %1,%0":"=a"(v):"Nd"(p));
+    h_push(v,1);
+#else
+    h_push(0,1);
+#endif
+}
+/* Reserved safe DMA-free scratch: stores exactly one ATA sector. */
+static uint8_t g_franc_sector_buffer[512];
+HELPER void h_sector_buffer(void){h_push((int64_t)(uintptr_t)g_franc_sector_buffer,1);}
+
+
 HELPER void h_depth(void) { h_push((int64_t)(g_sp-g_stack),1); }
 HELPER void h_calc_buffer(void) { h_push((int64_t)(uintptr_t)g_app_memory,1); }
 HELPER void h_history_buffer(void) { h_push((int64_t)(uintptr_t)(g_app_memory+256),1); }
@@ -731,6 +785,9 @@ static void bootstrap(void) {
     add_word("b@",h_bfetch); add_word("b!",h_bstore);
     add_word("calc-buffer",h_calc_buffer);add_word("history-buffer",h_history_buffer);
     add_word("key?",h_keyq);add_word("break?",h_breakq);add_word("key-mode",h_keymode);
+    add_word("host-key",h_key);add_word("hardware?",h_hw_bare);
+    add_word("band",h_bitand);add_word("io8@",h_io8_read);add_word("io8!",h_io8_write);
+    add_word("io16@",h_io16_read);add_word("sector-buffer",h_sector_buffer);
     add_word("home",h_home);
     add_word("bye",h_bye);
     add_word("type",h_type); add_word("print",h_type); add_word("key",h_key);
@@ -801,8 +858,10 @@ static void evaluate_source(const char* src) {
         size_t n=0;
         while(*src && *src!='\n' && n+1<sizeof(line))line[n++]=*src++;
         line[n]=0;if(*src=='\n')++src;
-        char tk[128][256];
-        int count=tokenize(line,tk,128);
+        /* Franc compiler definitions exceed 128 tokens. Keep this buffer in
+           BSS rather than consuming the tiny bare-metal kernel stack. */
+        static char tk[512][256];
+        int count=tokenize(line,tk,512);
         if(!count)continue;
         g_line_start=g_scratch_start+(size_t)g_eval_nesting*1024*1024;
         g_pos=0;g_if_sp=g_begin_sp=g_while_sp=0;g_compile_error=0;
@@ -958,12 +1017,12 @@ int main(void) {
     add_word("run-main",h_run_main);add_word("launch",h_launch);
 
 #ifdef FRANC_EMBED_LIBS
-    load_embedded_libraries();
 #ifdef FRANC_BARE_METAL
-    /* The C bootstrap only installs the FIRST Franc compiler generation.
-       os-boot recompiles it in Franc and evaluates shell input with s2-eval. */
+    /* First compiler generation, installed before shell words refer to it.
+       The Franc os-boot word installs subsequent generations in Franc. */
     evaluate_source(franc_stage2_self_source);
 #endif
+    load_embedded_libraries();
     printf("FrancOS: math, graphics, and application libraries loaded\n");
 #ifdef FRANC_BARE_METAL
     /* Device initialization stays in C; the shell and boot policy are Franc. */
