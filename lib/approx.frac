@@ -1,0 +1,13 @@
+\ rational approximations; finite precision/overflow limitations apply
+\ NOTE: sqrt-err is an exact residual-based upper bound for positive s,n.
+def min :mb :ma ma mb - if ma else mb then ;
+def max :mb :ma ma mb - if mb else ma then ;
+def sqrt :sn sn if 0/0 exit then sn if0 0 exit then sn 1 - if 1 :sx else sn :sx then begin sx sn sx / + 2 / :sy sy sx - abs eps 2 / - if sy fix exit then sy fix :sx again ;
+def sqrt-err :ss :se ss if0 0/0 exit then ss ss * se - abs ss abs / ;
+def isqrt sqrt floor ;
+\ Fixed-point accumulation to keep 64-bit fractions representable.
+def atan-inv :an an an * :aq 0 :as 1 an / :at 0 :ai begin eps at abs - while ai 2 % if0 as at + :as else as at - :as then as fix :as at aq / ai 2 * 1 + * ai 2 * 3 + / :at ai 1 + :ai repeat as ;
+def pi fp :piprec 8 :fp 5 atan-inv 4 * 239 atan-inv - 4 * :pival piprec :fp pival ;
+def pi-err eps 50 * ;
+def e 1 :es 1 :ef 1 :ei begin ef ei * :ef 1 ef / :et eps et abs - while es et + fix :es ei 1 + :ei repeat es ;
+def e-err eps 20 * ;

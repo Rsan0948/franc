@@ -1,0 +1,11 @@
+\ transcendental approximations via bounded rational Taylor series
+\ Global register namespaces intentionally disjoint among functions.
+def exp :ex 0 :ek begin 1/2 ex abs - while ex 2 / :ex ek 1 + :ek repeat 0 :es 1 :et 1 :en begin eps et abs - while es et + fix :es et ex * fix en / fix :et en 1 + :en repeat begin 0 ek - while es es * fix :es ek 1 - :ek repeat es ;
+def ln2 1/3 :lc 1/9 :ld 1 :ln 0 :ls begin lc ln / :lt eps lt abs - while ls lt + fix :ls lc ld * :lc ln 2 + :ln repeat ls 2 * ;
+def log :lx lx if 0/0 exit then lx if0 0/0 exit then 0 :lk begin 2 lx - while lx 2 / :lx lk 1 + :lk repeat begin lx 1/2 - while lx 2 * :lx lk 1 - :lk repeat lx 1 - lx 1 + / :ly 0 :lsum ly :lterm 1 :li begin lterm li / :lu eps lu abs - while lsum lu + fix :lsum lterm ly * fix ly * fix :lterm li 2 + :li repeat lsum 2 * lk ln2 * + ;
+def mod2pi :mz 2 pi * :mp begin mp mz - while mz mp - :mz repeat begin mz while mz mp + :mz repeat mz ;
+def sin mod2pi :sx pi :sp sp sx - if sx 2 sp * - :sx then 0 :ss sx :st 1 :si 1 :sg begin eps st abs - while sg if ss st - fix :ss else ss st + fix :ss then sg neg :sg st sx * fix sx * fix si 1 + / si 2 + / fix :st si 2 + :si repeat ss ;
+def cos dup if0 drop 1 else pi 2 / + sin then ;
+def atan :ax ax if ax neg atan neg exit then ax 1 - if0 pi 4 / exit then ax 1 - if 0 :as ax :at 1 :ai 1 :ag begin eps at abs - while ag if as at - fix :as else as at + fix :as then ag neg :ag at ax * fix ax * fix ai * ai 2 + / fix :at ai 2 + :ai repeat as else pi 2 / 1 ax / atan - then ;
+def sinh :sh sh exp sh neg exp - 2 / ;
+def cosh :ch ch exp ch neg exp + 2 / ;

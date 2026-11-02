@@ -11,8 +11,10 @@ boot.bin: boot.S
 	$(LD) -m elf_x86_64 --oformat binary -Ttext 0x7c00 -o $@ boot.o
 entry.o: entry.S
 	$(AS) --64 -o $@ $<
-frac.o: ../frac.c
-	$(CC) $(CFLAGS) -Dmain=frac_main -c -o $@ $<
+library_bundle.h: ../lib/fixpt.frac ../lib/cf.frac ../lib/approx.frac ../lib/iv.frac ../lib/trans.frac embed_libraries.py
+	python3 embed_libraries.py
+frac.o: ../frac.c library_bundle.h
+	$(CC) $(CFLAGS) -Dmain=frac_main -DFRANC_EMBED_LIBS -c -o $@ $<
 runtime.o: runtime.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 kernel.elf: entry.o frac.o runtime.o kernel.ld

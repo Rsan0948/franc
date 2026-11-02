@@ -7,3 +7,8 @@ __pycache__/
 /stage1/*.img
 /stage1/*.elf
 /stage1/*.o
+
+# Generated from lib/*.frac during the kernel build
+/stage1/library_bundle.h
+
+/stage1/library_bundle.h

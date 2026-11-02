@@ -6,13 +6,14 @@
 
 - A hosted **x86-64 Linux JIT**, written in C, that emits machine-code calls and relative conditional branches into executable memory (`mmap`). No bytecode interpreter for compiled words.
 - Rat values with total division behavior: `1/0` represents `∞`, `0/0` represents `⊥`. Arithmetic uses cross-products and gcd reduction.
-- `if` (negative), `if0` (zero), `ifnz` (nonzero); `else`, `then`, and `begin … again`.
+- `if` (negative), `if0` (zero), `ifnz` (nonzero); `else`, `then`, `begin … again`, and `begin … while … repeat`.
 - User-defined, recursively callable JIT functions with `def name … ;`, and a mutable dictionary, including operator, numeric-literal and immediate-word shadowing.
 - Decimal repeating-cycle `~`, base `~`, unary-percent/binary-modulo `%`, hex `$`, binary `#`, and mixed-base fraction literals.
-- String literals (`"hello"`) with `type`, registers `a`–`z` and `:a`–`:z`, and byte-level JIT memory access via `@`/`!`.
-- Automated black-box tests running the actual generated code.
+- String literals (`"hello"`) with `type`, registers `a`–`z`, `:a`–`:z`, and dynamically allocated named global registers such as `:angle` / `angle`, and byte-level JIT memory access via `@`/`!`.
+- `floor` primitive; rational fixed-point rounding, continued fractions, approximations, intervals, and elementary transcendental functions defined in five `.frac` libraries.
+- Automated black-box tests running the actual generated code (62 core tests + 28 library checks).
 
-**Not present:** freestanding/bare-metal boot, VGA keyboard REPL, a compiler written in Frac, or a Frac kernel. Those are later stages.
+**Not yet confirmed by actual boot execution:** Stage 1 boot image runs correctly under QEMU. A compiler written in Frac and a self-hosted Frac kernel are also not implemented.
 
 ## Build and run
 
@@ -28,6 +29,24 @@ Or run a source file through the REPL:
 ```sh
 ./frac < examples/demo.frac
 make test
+```
+
+Load all libraries in order on Linux:
+
+```sh
+cat lib/fixpt.frac lib/cf.frac lib/approx.frac lib/iv.frac lib/trans.frac - | ./frac
+```
+
+Examples after loading:
+
+```text
+Frac> 3 fix-precision
+Frac> 1/3 fix 1/3 - .
+-1/3000
+Frac> 355/113 cf .s
+3 7 16
+Frac> pi 6 / sin .
+1/2
 ```
 
 ## Quick start
@@ -57,7 +76,7 @@ The REPL preserves its data stack across lines and automatically displays the to
 
 ## Operators and conventions
 
-- `+ - * / ^ abs neg inv`: exact rational arithmetic within the bounded representation; denominator zero stays an ordinary value.
+- `+ - * / ^ pow abs neg inv floor`: exact rational arithmetic within the bounded representation; denominator zero stays an ordinary value.
 - `%`: unary percent (divide by 100), binary Euclidean-style remainder for integers. Invalid remainder operands produce `⊥`.
 - `~`: unary decimal/repeating expansion or binary integer-to-base output (2–36).
 - `if`, `if0`, `ifnz`: **consume** the top value. `if` executes on negative, `if0` on zero, `ifnz` on nonzero. `else` and `then` delimit branches.
@@ -77,7 +96,7 @@ The REPL preserves its data stack across lines and automatically displays the to
 - `Rat` stores signed 64-bit numerator and denominator. Math uses 128-bit intermediates; if a reduced answer does not fit, it currently becomes `⊥` (a **bounded-implementation compromise**, not a property of mathematical wheels). No arbitrary-precision arithmetic.
 - `~` prints at most 1,024 fractional digits; expansions with longer cycles are truncated rather than marked. It also uses a basic quadratic remainder search.
 - The stack and token buffers are fixed-size. The `@`/`!` experiment restricts addresses to the executable JIT region for some protection; `type` still assumes it receives a valid string pointer. The JIT allocates writable/executable memory, intentionally; don't execute untrusted Frac programs.
-- Syntax for definitions is single-line (`def … ;` must be on one line). Compilation errors are detected, but this is not a hardened parser or a production runtime.
+- Syntax for definitions is single-line (`def … ;` must be on one line (library files use one definition per line)). Compilation errors are detected, but this is not a hardened parser or a production runtime.
 - Stage 1 (bootable FracOS) will require an actual boot path, freestanding runtime, I/O drivers, and memory layout, **not** just swapping four libc functions.
 - Stage 2 is a compiler implemented in Frac; Stage 3 is the Frac kernel. Neither has been implemented yet.
 
@@ -87,7 +106,7 @@ MIT. See [LICENSE](LICENSE).
 
 ## Stage 1 — in progress (private development)
 
-`stage1/` contains the first freestanding **x86-64 BIOS boot image** implementation: a 512-byte bootloader, identity-mapped long mode, minimal VGA/serial/PS2 console and memory allocator, and a kernel that compiles the Stage 0 JIT against a small freestanding libc shim. The original hosted Stage 0 remains usable and its 62 tests still pass.
+`stage1/` contains the first freestanding **x86-64 BIOS boot image** implementation: a 512-byte bootloader, identity-mapped long mode, minimal VGA/serial/PS2 console and memory allocator, and a kernel that compiles the Stage 0 JIT against a small freestanding libc shim. The original hosted Stage 0 remains usable, and all 90 host-side checks pass. Five rational math libraries are compiled into the Stage 1 kernel as source strings and loaded into the JIT before entering its REPL.
 
 ```sh
 make -C stage1
@@ -96,6 +115,57 @@ python3 stage1/verify_image.py
 python3 stage1/qemu_smoke.py
 ```
 
-**Verification status:** image builds and passes offline disk-layout checks, but actual QEMU boot and Frac REPL execution on bare metal are still unverified. No claim of successful bare-metal execution is made.
+**Verification status:** image builds and passes offline disk-layout checks with the libraries embedded, but actual QEMU boot and Frac REPL execution on bare metal are still unverified. No claim of successful bare-metal execution is made.
 
 **Repository privacy:** this project is intended to remain **private during development** and only be made open source when its owner elects to release it.
+
+## Library limitations and numerical honesty
+
+`lib/fixpt.frac`, `cf.frac`, `approx.frac`, `iv.frac`, and `trans.frac` deliberately operate in the existing bounded 64-bit rational system. Rounding error from `fix` can be obtained exactly by subtraction **when no intermediate overflow occurs**. `pi`, `e`, `sqrt`, `exp`, `log`, `sin`, and other routines are numerical approximations, not arbitrary-precision or formally verified implementations; many deliberately round intermediate results to avoid overflow. Interval division through zero is not a sound interval enclosure. The demo is designed to be runnable, not a numerical-analysis library.
+
+## Math libraries (Stage 0 + Stage 1)
+
+Five pure-Frac libraries live in `lib/`. They are loaded in this order:
+
+1. `fixpt.frac` — decimal fixed-point rounding (`fix`, `fix-precision`, `eps`, `ceil`, `trunc`).
+2. `cf.frac` — continued-fraction expansion (`cf`).
+3. `approx.frac` — rational approximations of square root, π, e, and `min`/`max`.
+4. `iv.frac` — basic interval arithmetic with pairs of rationals.
+5. `trans.frac` — rational-series approximations for exp/log/sin/cos/atan and hyperbolic functions.
+
+Load on Linux without modifying the core:
+
+```sh
+make
+cat lib/{fixpt,cf,approx,iv,trans}.frac - | ./frac
+```
+
+Or copy the libraries into stdin followed by expressions. For example:
+
+```text
+3 fix-precision
+1/3 fix 1/3 - .
+355/113 cf .s
+```
+
+The command is postfix: `3 fix-precision`, not `fix-precision 3`.
+The compiler supports `\` comments extending to end of source line, not `#` comments;
+`#` is the binary literal prefix. Each `def` must fit on one line.
+
+`stage1/embed_libraries.py` produces a C header from these source files as part
+of `make -C stage1`, and the bare-metal kernel compiles and runs the definitions
+before presenting its REPL. The same source files are used for the Linux tests.
+
+**Numerical contract:** Fractions stay exact only when intermediate numerator and
+denominator values fit in signed 64-bit integers. The approximate functions
+explicitly quantize some intermediate values to avoid overflows. This gives a
+convenient *measurable* rational rounding difference, but `pi-err` and `e-err`
+are illustrative tolerance budgets, **not formally certified error bounds**.
+Interval `/` does not offer a valid enclosure when a denominator interval crosses
+zero, and integer-overflow-to-bottom is an implementation compromise.
+`sqrt-err` provides an exact residual-based bound for positive input and positive
+estimate when the arithmetic remains representable. Global named registers are
+not lexical locals, so concurrent/reentrant definitions should avoid collisions.
+
+Tests: `make test` runs the original 62 Stage 0 tests plus 28 library smoke tests.
+QEMU boot remains separate; static kernel-image checks are not proof of boot.

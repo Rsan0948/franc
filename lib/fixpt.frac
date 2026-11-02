@@ -1,0 +1,10 @@
+\ fixed-point decimal helpers over exact bounded rational arithmetic
+\ Registers are global; precision defaults to 6 decimal places.
+6 :fp
+def fix-precision :fp ;
+def pow10 10 fp ^ ;
+def eps 1 pow10 / ;
+def ceil neg floor neg ;
+def trunc dup if ceil else floor then ;
+def fix :fx pow10 :fd fx fd * 1/2 + floor fd / ;
+def round-to :rn :rx 10 rn ^ :rd rx rd * 1/2 + floor rd / ;

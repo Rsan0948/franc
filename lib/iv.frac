@@ -1,0 +1,7 @@
+\ interval arithmetic; stack layout: alo ahi blo bhi -- clo chi
+\ Contains-zero divisors are not rigorous enclosures in this wheel model.
+def iv+ :ihb :ilb :iha :ila ila ilb + iha ihb + ;
+def iv- :ihb :ilb :iha :ila ila ihb - iha ilb - ;
+def iv* :ihb :ilb :iha :ila ila ilb * :ip1 ila ihb * :ip2 iha ilb * :ip3 iha ihb * :ip4 ip1 ip2 min ip3 min ip4 min ip1 ip2 max ip3 max ip4 max ;
+def iv/ :ihb :ilb :iha :ila ila ihb / :ip1 ila ilb / :ip2 iha ihb / :ip3 iha ilb / :ip4 ip1 ip2 min ip3 min ip4 min ip1 ip2 max ip3 max ip4 max ;
+def .iv :ivh :ivl ivl . ivh . ;

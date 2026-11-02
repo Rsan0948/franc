@@ -1,0 +1,2 @@
+\ continued fractions, coefficients remain on data stack (x -- a0 a1 ...)
+def cf :cx begin cx floor :ca ca cx ca - if0 exit then cx ca - inv :cx again ;

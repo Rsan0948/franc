@@ -92,7 +92,8 @@ static uint8_t* g_exec; static size_t g_exec_size, g_exec_used, g_line_start, g_
 static const size_t g_scratch_start = 32 * 1024 * 1024;
 static int g_compile_error = 0;
 static void error(const char* msg) { fprintf(stderr, "%s\n",msg); g_compile_error=1; }
-static Rat g_regs[26];
+static Rat g_regs[256];
+static int g_next_reg=26;
 
 static int need(int n) {
     if (g_sp - g_stack < n) { fprintf(stderr, "stack underflow\n"); return 0; }
@@ -144,6 +145,16 @@ HELPER void h_mod(void) {
             *a = canon128(m,1);
         } else *a = (Rat){0, 0};
     } else { if (!need(1)) return; Rat* a = &g_sp[-1]; *a = canon128(a->num, (__int128)a->den * 100); }
+}
+
+// Rounding toward negative infinity; wheel values pass through unchanged.
+HELPER void h_floor(void) {
+    if (!need(1)) return;
+    Rat* a=&g_sp[-1];
+    if (a->den <= 1) return;
+    int64_t q=a->num/a->den;
+    if (a->num % a->den < 0) --q;
+    *a=(Rat){q,1};
 }
 
 HELPER void h_abs(void) { if (!need(1)) return; Rat* a = &g_sp[-1]; if (a->num < 0) *a=canon128(-(__int128)a->num,a->den); }
@@ -257,10 +268,34 @@ static void emit_jmp_target(size_t target) {
 typedef struct { size_t pos_cond, pos_else; int has_else; } IfState;
 static IfState g_if_stack[64]; static int g_if_sp = 0;
 static size_t  g_begin_stack[64]; static int g_begin_sp = 0;
+static size_t g_while_stack[64]; static int g_while_sp=0;
 
 typedef struct { size_t line_start, pos; } CState;
 static CState cstate_push(void) { return (CState){g_line_start, g_pos}; }
 static void   cstate_pop(CState s) { g_line_start = s.line_start; g_pos = s.pos; }
+
+// Named registers extend the original a..z register convention. They are
+// still global (not locals) and compile into the same native getter/setter words.
+static int ensure_register(const char* name) {
+    if (!*name || strlen(name)>=60) { error("bad register name"); return 0; }
+    char store_name[64];
+    store_name[0]=':'; strncpy(store_name+1,name,62); store_name[63]=0;
+    if (lookup(store_name)) return 1;
+    if (g_next_reg>=256) { error("too many registers"); return 0; }
+    int index=g_next_reg++;
+    CState saved=cstate_push();
+    size_t start=g_exec_used;
+    g_line_start=start;g_pos=0;
+    emit_prologue();emit_movabs_rdi(index);emit_call((void*)h_push_reg);emit_ret();
+    g_exec_used=start+g_pos;
+    add_word(name,g_exec+start);
+    start=g_exec_used;g_line_start=start;g_pos=0;
+    emit_prologue();emit_movabs_rdi(index);emit_call((void*)h_store_reg);emit_ret();
+    g_exec_used=start+g_pos;
+    add_word(store_name,g_exec+start);
+    cstate_pop(saved);
+    return 1;
+}
 
 // ─── tokenizer / literal parser ──────────────────────────────────────
 static int tokenize(const char* line, char tokens[][256], int max_tok) {
@@ -320,6 +355,9 @@ static int parse_rat(const char* tok, Rat* out) {
 
 // ─── compiler ────────────────────────────────────────────────────────
 static void compile_token(char* tok) {
+    if (tok[0]==':' && tok[1] && !lookup(tok)) {
+        if (!ensure_register(tok+1)) return;
+    }
     Word* w=lookup(tok); // Dictionary first: even numeric literals and keywords can be shadowed.
     if (w && w->immediate) {
         if (!strcmp(tok,"if")||!strcmp(tok,"if0")||!strcmp(tok,"ifnz")) {
@@ -346,6 +384,16 @@ static void compile_token(char* tok) {
         } else if (!strcmp(tok,"again")) {
             if (!g_begin_sp) { error("again without begin"); return; }
             emit_jmp_target(g_begin_stack[--g_begin_sp]);
+        } else if (!strcmp(tok,"while")) {
+            if (!g_begin_sp || g_while_sp>=64) { error("while without begin"); return; }
+            emit_call((void*)h_pop_sign);
+            emit_test_rax_rax();
+            g_while_stack[g_while_sp++]=emit_jns_ph();
+        } else if (!strcmp(tok,"repeat")) {
+            if (!g_begin_sp || !g_while_sp) { error("repeat without while/begin"); return; }
+            size_t loop=g_begin_stack[--g_begin_sp];
+            emit_jmp_target(loop);
+            patch_rel32(g_while_stack[--g_while_sp],g_pos);
         } else if (!strcmp(tok,"exit")) emit_ret();
         else error("unexpected immediate word");
         return;
@@ -375,6 +423,11 @@ static void compile_token(char* tok) {
 }
 
 static void compile_tokens(char tokens[][256], int ntok) {
+    // Reserve native getter/setter slots before emitting any definition body.
+    // Otherwise allocating them while a def is being compiled overwrites its code.
+    for (int j=0;j<ntok;j++)
+        if (tokens[j][0]==':' && tokens[j][1] && !lookup(tokens[j]))
+            if (!ensure_register(tokens[j]+1)) return;
     for (int i=0;i<ntok;i++) {
         char* tok=tokens[i];
         Word* w=lookup(tok);
@@ -383,8 +436,8 @@ static void compile_tokens(char tokens[][256], int ntok) {
             char* name=tokens[i];
             if (g_exec_used >= g_scratch_start) { error("dictionary code space exhausted"); return; }
             CState outer=cstate_push();
-            int old_if=g_if_sp,old_begin=g_begin_sp;
-            g_line_start=g_exec_used; g_pos=0; g_if_sp=g_begin_sp=0;
+            int old_if=g_if_sp,old_begin=g_begin_sp,old_while=g_while_sp;
+            g_line_start=g_exec_used; g_pos=0; g_if_sp=g_begin_sp=g_while_sp=0;
             size_t body=g_exec_used;
             emit_prologue();
             // Pre-register for recursion, and give user definitions dictionary priority.
@@ -393,7 +446,7 @@ static void compile_tokens(char tokens[][256], int ntok) {
             i++;
             while (i<ntok && strcmp(tokens[i],";")!=0) compile_token(tokens[i++]);
             if (i>=ntok) error("def: missing ;");
-            if (g_if_sp || g_begin_sp) error("def: unclosed control structure");
+            if (g_if_sp || g_begin_sp || g_while_sp) error("def: unclosed control structure");
             emit_ret();
             if (g_compile_error!=err_at_entry) {
                 // Roll back a malformed word so future calls cannot enter corrupt code.
@@ -401,7 +454,7 @@ static void compile_tokens(char tokens[][256], int ntok) {
                 free(defined);
                 g_exec_used=body;
             } else g_exec_used=body+g_pos;
-            g_if_sp=old_if;g_begin_sp=old_begin; cstate_pop(outer);
+            g_if_sp=old_if;g_begin_sp=old_begin;g_while_sp=old_while; cstate_pop(outer);
             continue;
         }
         if (tok[0]=='\'' && tok[1]==0) {
@@ -409,6 +462,7 @@ static void compile_tokens(char tokens[][256], int ntok) {
             char buf[256]; snprintf(buf,sizeof(buf),"'%.253s",tokens[i]);
             compile_token(buf); continue;
         }
+        if (tok[0]=='\\') break; // source comments until end of line
         if (!strcmp(tok,";")) { error("stray ;"); continue; }
         compile_token(tok);
     }
@@ -417,8 +471,9 @@ static void compile_tokens(char tokens[][256], int ntok) {
 // ─── bootstrap ───────────────────────────────────────────────────────
 static void bootstrap(void) {
     add_word("+",h_add); add_word("-",h_sub); add_word("*",h_mul); add_word("/",h_div);
-    add_word("%",h_mod); add_word("^",h_pow);
+    add_word("%",h_mod); add_word("^",h_pow); add_word("pow",h_pow);
     add_word("abs",h_abs); add_word("neg",h_neg); add_word("inv",h_inv);
+    add_word("floor",h_floor);
     add_word("drop",h_drop); add_word("dup",h_dup); add_word("swap",h_swap);
     add_word("over",h_over); add_word("rot",h_rot); add_word("nip",h_nip);
     add_word("tuck",h_tuck); add_word("pick",h_pick);
@@ -428,7 +483,7 @@ static void bootstrap(void) {
     add_word("@",h_fetch); add_word("!",h_store);
     add_word("bye",h_bye);
     add_word("type",h_type); add_word("print",h_type); add_word("key",h_key);
-    const char* imm[]={"def","if","if0","ifnz","else","then","begin","again","exit"};
+    const char* imm[]={"def","if","if0","ifnz","else","then","begin","again","while","repeat","exit"};
     for (size_t i=0;i<sizeof(imm)/sizeof(*imm);i++) add_immediate(imm[i]);
 
     for (int i = 0; i < 26; i++) {
@@ -448,6 +503,36 @@ static void bootstrap(void) {
     }
 }
 
+// Execute a single line. This entry point is shared by the host REPL and
+// freestanding embedded-library bootstrap; no filesystem is needed in Stage 1.
+static void execute_line(const char* line) {
+    static char tokens[512][256];
+    int ntok=tokenize(line,tokens,512);
+    if (!ntok) return;
+    g_line_start=g_scratch_start;g_pos=0;
+    g_if_sp=0;g_begin_sp=0;g_while_sp=0;g_compile_error=0;
+    emit_prologue();
+    compile_tokens(tokens,ntok);
+    if (g_if_sp || g_begin_sp || g_while_sp) error("unclosed control structure");
+    emit_ret();
+    if (!g_compile_error) ((void(*)(void))(g_exec+g_scratch_start))();
+}
+
+#ifdef FRANC_EMBED_LIBS
+#include "stage1/library_bundle.h"
+static void load_embedded_libraries(void) {
+    char line[4096];
+    const char *src=franc_library_source;
+    while (*src) {
+        size_t n=0;
+        while (*src && *src!='\n' && n+1<sizeof(line)) line[n++]=*src++;
+        line[n]=0;
+        if (*src=='\n') ++src;
+        execute_line(line);
+    }
+}
+#endif
+
 // ─── REPL ────────────────────────────────────────────────────────────
 int main(void) {
     g_exec_size = 64 * 1024 * 1024;
@@ -457,22 +542,15 @@ int main(void) {
     g_exec_used = 0;
     bootstrap();
 
+#ifdef FRANC_EMBED_LIBS
+    load_embedded_libraries();
+    printf("FrancOS: five math libraries loaded\n");
+#endif
     char line[4096];
-    static char tokens[512][256];
     while (1) {
         printf("Frac> "); fflush(stdout);
         if (!fgets(line, sizeof(line), stdin)) break;
-        int ntok = tokenize(line, tokens, 512);
-        if (ntok == 0) continue;
-
-        g_line_start=g_scratch_start;g_pos=0;
-        g_if_sp=0;g_begin_sp=0;g_compile_error=0;
-        emit_prologue();
-        compile_tokens(tokens,ntok);
-        if (g_if_sp || g_begin_sp) error("unclosed control structure");
-        emit_ret();
-        if (!g_compile_error) ((void(*)(void))(g_exec+g_scratch_start))();
-
+        execute_line(line);
         if (g_sp > g_stack) { print_rat(g_sp[-1]); putchar('\n'); fflush(stdout); }
     }
     return 0;
