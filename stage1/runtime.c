@@ -17,6 +17,44 @@ static FILE in_file={0},out_file={1},err_file={2};
 FILE *stdin=&in_file,*stdout=&out_file,*stderr=&err_file;
 static inline void outb(uint16_t p,uint8_t v){ __asm__ volatile("outb %0,%1"::"a"(v),"Nd"(p)); }
 static inline uint8_t inb(uint16_t p){uint8_t v;__asm__ volatile("inb %1,%0":"=a"(v):"Nd"(p));return v;}
+/* ATA PIO: QEMU primary-master IDE disk only. Bounded polling, no interrupts.
+ * Never write arbitrary sectors: disk_store.h only uses 128..199, and only
+ * after the FRANCFS1 magic is present or an explicit disk-format command. */
+static int ata_ready(void){
+    for(unsigned tries=0;tries<2000000;tries++){
+        uint8_t status=inb(0x1f7);
+        if(status==0xff||status==0)return 0;
+        if(!(status&0x80))return !(status&0x21);
+    }
+    return 0;
+}
+static int ata_transfer(unsigned lba,uint8_t* buffer,int write){
+    if(lba>=256||!ata_ready())return 0;
+    outb(0x1f6,(uint8_t)(0xe0|((lba>>24)&15)));
+    outb(0x1f2,1);outb(0x1f3,(uint8_t)lba);
+    outb(0x1f4,(uint8_t)(lba>>8));outb(0x1f5,(uint8_t)(lba>>16));
+    outb(0x1f7,write?0x30:0x20);
+    int ok=0;
+    for(unsigned tries=0;tries<2000000;tries++){
+        uint8_t st=inb(0x1f7);
+        if(st==0xff||st&0x21)return 0;
+        if(!(st&0x80)&&(st&0x08)){ok=1;break;}
+    }
+    if(!ok)return 0;
+    for(unsigned i=0;i<256;i++){
+        uint16_t v;
+        if(write){v=(uint16_t)buffer[i*2]|(uint16_t)buffer[i*2+1]<<8;
+                  __asm__ volatile("outw %0,%1"::"a"(v),"Nd"((uint16_t)0x1f0));}
+        else{__asm__ volatile("inw %1,%0":"=a"(v):"Nd"((uint16_t)0x1f0));
+             buffer[i*2]=(uint8_t)v;buffer[i*2+1]=(uint8_t)(v>>8);}
+    }
+    if(write){outb(0x1f7,0xe7);return ata_ready();}
+    return 1;
+}
+int franc_disk_read_sector(unsigned lba,uint8_t* dest){return ata_transfer(lba,dest,0);}
+int franc_disk_write_sector(unsigned lba,const uint8_t* src){
+    return ata_transfer(lba,(uint8_t*)src,1);
+}
 /* Mode 13h: 320x200x8; glyphs render into the pixel framebuffer. */
 static unsigned row,col;
 static int serial_ok;

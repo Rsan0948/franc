@@ -802,12 +802,24 @@ HELPER void h_eval(void) {
     }
     evaluate_source(src);
 }
-// Named source store: session-only, not a disk filesystem. cap=12 * 2048.
+#include "stage1/disk_store.h"
+// RAM store shadows the optional flat disk store (no filesystem).
 #define MAX_RAM_FILES 12
 #define MAX_RAM_SOURCE 2048
 typedef struct { char name[48]; char source[MAX_RAM_SOURCE]; } RamFile;
 static RamFile g_ram_files[MAX_RAM_FILES];
 static int g_ram_count;
+static char g_disk_source[2048];
+static const char* locate_source(const char* name) {
+    for(int i=0;i<g_ram_count;i++)
+        if(strcmp(g_ram_files[i].name,name)==0)return g_ram_files[i].source;
+    return franc_disk_load_source(name,g_disk_source)?g_disk_source:NULL;
+}
+static void h_disk_format(void) {
+    if(!franc_disk_format())fprintf(stderr,"disk-format: unavailable/failed\n");
+}
+static void h_disk_ready(void) {h_push(franc_disk_formatted(),1);}
+
 static RamFile* find_ram_file(const char* name) {
     for(int i=0;i<g_ram_count;i++)if(strcmp(g_ram_files[i].name,name)==0)return &g_ram_files[i];
     return NULL;
@@ -822,38 +834,66 @@ HELPER void h_save(void) {
     RamFile* f=find_ram_file(n);
     if(!f){if(g_ram_count==MAX_RAM_FILES){fprintf(stderr,"save: RAM store full\n");return;}f=&g_ram_files[g_ram_count++];}
     memcpy(f->name,n,nn+1);memcpy(f->source,s,sn+1);
+    /* Only persist on a deliberately formatted/attached disk. */
+    if(franc_disk_formatted() && !franc_disk_save_source(n,s))
+        fprintf(stderr,"save: disk write failed (RAM copy retained)\n");
 }
 HELPER void h_load(void) {
     if(!need(1))return;
     Rat name=*--g_sp;
     if(name.den!=1||!name.num)return;
-    RamFile* f=find_ram_file((const char*)(uintptr_t)name.num);
-    if(!f){fprintf(stderr,"load: source not found in RAM store\n");return;}
-    evaluate_source(f->source);
+    const char *src=locate_source((const char*)(uintptr_t)name.num);
+    if(!src){fprintf(stderr,"load: source not found\n");return;}
+    evaluate_source(src);
 }
 HELPER void h_source(void) {
     if(!need(1))return;
     Rat name=*--g_sp;
     if(name.den!=1||!name.num){h_push(0,1);return;}
-    RamFile* f=find_ram_file((const char*)(uintptr_t)name.num);
-    h_push(f?(int64_t)(uintptr_t)f->source:0,1);
+    const char *src=locate_source((const char*)(uintptr_t)name.num);
+    h_push(src?(int64_t)(uintptr_t)src:0,1);
 }
 HELPER void h_copy(void) {
     if(!need(2))return;
     Rat dst=*--g_sp,src=*--g_sp;
     if(dst.den!=1||src.den!=1||!dst.num||!src.num)return;
     const char* d=(const char*)(uintptr_t)dst.num;
-    RamFile* existing=find_ram_file((const char*)(uintptr_t)src.num);
-    if(!existing){fprintf(stderr,"copy: source not found\n");return;}
+    const char* original=locate_source((const char*)(uintptr_t)src.num);
+    if(!original){fprintf(stderr,"copy: source not found\n");return;}
     size_t n=strlen(d);
     if(!n||n>=48)return;
     RamFile* target=find_ram_file(d);
     if(!target){if(g_ram_count==MAX_RAM_FILES)return;target=&g_ram_files[g_ram_count++];}
     strncpy(target->name,d,47);target->name[47]=0;
-    memcpy(target->source,existing->source,strlen(existing->source)+1);
+    memcpy(target->source,original,strlen(original)+1);
+    if(franc_disk_formatted() && !franc_disk_save_source(d,target->source))
+        fprintf(stderr,"copy: disk write failed (RAM copy retained)\n");
 }
 HELPER void h_files(void) {
     for(int i=0;i<g_ram_count;i++)printf("%s\n",g_ram_files[i].name);
+    unsigned char dir[512];
+    if(franc_disk_dir(dir))for(int i=0;i<FRANC_FS_SLOTS;i++) {
+        const char* name=(const char*)(dir+i*32);
+        if(name[0] && !find_ram_file(name))printf("%s\n",name);
+    }
+}
+HELPER void h_run_main(void) {
+    Word* w=lookup("main");
+    if(!w||!w->addr){fprintf(stderr,"run-main: no main defined\n");return;}
+    ((void(*)(void))w->addr)();
+}
+HELPER void h_launch(void) {
+    if(!need(1))return;
+    Rat a=*--g_sp;
+    if(a.den!=1||!a.num)return;
+    const char* src=locate_source((const char*)(uintptr_t)a.num);
+    if(!src){fprintf(stderr,"launch: source not found\n");return;}
+    /* Do not re-run an unrelated stale 'main' if this file lacks one. */
+    Word* old=lookup("main");
+    evaluate_source(src);
+    Word* current=lookup("main");
+    if(current!=old && current && current->addr) ((void(*)(void))current->addr)();
+    else fprintf(stderr,"launch: loaded source has no new main\n");
 }
 #ifdef FRANC_EMBED_LIBS
 #include "stage1/library_bundle.h"
@@ -886,6 +926,8 @@ int main(void) {
     add_word("eval",h_eval);add_word("save",h_save);
     add_word("load",h_load);add_word("files",h_files);
     add_word("source",h_source);add_word("copy",h_copy);
+    add_word("disk-format",h_disk_format);add_word("disk-ready?",h_disk_ready);
+    add_word("run-main",h_run_main);add_word("launch",h_launch);
 
 #ifdef FRANC_EMBED_LIBS
     load_embedded_libraries();

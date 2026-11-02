@@ -1,4 +1,4 @@
-# Frac — Stage 0: x86-64 JIT
+# Franc — AI-built rational language, JIT and experimental OS
 
 **Tiny, deliberately strange, AI-assisted language/compiler experiment.** Frac is a Forth-style stack language over fractions, inspired by Terry Davis's tightly integrated HolyC/TempleOS development environment. This repository is a miniature proof of capability, **not** a TempleOS implementation and not intended to be a general-purpose product.
 
@@ -11,7 +11,7 @@
 - Decimal repeating-cycle `~`, base `~`, unary-percent/binary-modulo `%`, hex `$`, binary `#`, and mixed-base fraction literals.
 - String literals (`"hello"`) with `type`, registers `a`–`z`, `:a`–`:z`, and dynamically allocated named global registers such as `:angle` / `angle`, and byte-level JIT memory access via `@`/`!`.
 - `floor` primitive; rational fixed-point rounding, continued fractions, approximations, intervals, and elementary transcendental functions defined in five `.frac` libraries.
-- Automated black-box tests running the actual generated code (62 core tests + 28 library checks + 19 Stage 2 compiler checks).
+- Automated black-box tests run generated native code, math libraries, the partial Stage 2 compiler, graphics, interactive apps, two-Rat arithmetic and persistence.
 
 **Not yet confirmed by actual boot execution:** whether the Stage 1 boot image runs correctly under QEMU. A partial compiler is now written in Franc (`stage2/compiler.frac`), but full self-hosting and a kernel in Franc have not been achieved.
 
@@ -97,8 +97,10 @@ The REPL preserves its data stack across lines and automatically displays the to
 - `~` prints at most 1,024 fractional digits; expansions with longer cycles are truncated rather than marked. It also uses a basic quadratic remainder search.
 - The stack and token buffers are fixed-size. The `@`/`!` experiment restricts addresses to the executable JIT region for some protection; `type` still assumes it receives a valid string pointer. The JIT allocates writable/executable memory, intentionally; don't execute untrusted Frac programs.
 - Syntax for definitions is single-line (`def … ;` must be on one line (library files use one definition per line)). Compilation errors are detected, but this is not a hardened parser or a production runtime.
-- Stage 1 (bootable FracOS) will require an actual boot path, freestanding runtime, I/O drivers, and memory layout, **not** just swapping four libc functions.
-- Stage 2 is a compiler implemented in Frac; Stage 3 is the Frac kernel. Neither has been implemented yet.
+- Stage 1 now builds a freestanding graphics/serial/keyboard kernel with a flat ATA-IDE source store on the boot image. **It still requires a QEMU boot test**; hosted tests and a valid linker output do not prove it boots.
+- Stage 2 has a partial compiler written in Frac and tested under Linux; it **does not compile its own source yet**. Stage 3 (kernel functionality in Frac) is not started.
+- Source persistence is intentionally **QEMU IDE / opt-in host-file only**, not a general-purpose filesystem or USB storage driver.
+- `dd.frac` provides exact two-Rat component pairs for representable operations. It is **not** a general 30-digit double-double number type and does not provide arbitrary precision.
 
 ## License
 
@@ -106,7 +108,7 @@ MIT. See [LICENSE](LICENSE).
 
 ## Stage 1 — in progress (private development)
 
-`stage1/` contains the first freestanding **x86-64 BIOS boot image** implementation: a 512-byte bootloader, identity-mapped long mode, minimal VGA/serial/PS2 console and memory allocator, and a kernel that compiles the Stage 0 JIT against a small freestanding libc shim. The original hosted Stage 0 remains usable, and all 109 host-side checks pass. Five rational math libraries are compiled into the Stage 1 kernel as source strings and loaded into the JIT before entering its REPL.
+`stage1/` contains the first freestanding **x86-64 BIOS boot image** implementation: a 512-byte bootloader, identity-mapped long mode, minimal VGA/serial/PS2 console and memory allocator, and a kernel that compiles the Stage 0 JIT against a small freestanding libc shim. The original hosted Stage 0 remains usable, and the hosted test suite passes. Math, graphics, interactive, and two-component-rational libraries are embedded as source strings and loaded into the JIT before entering its REPL.
 
 ```sh
 make -C stage1
@@ -279,3 +281,33 @@ input currently handles ASCII, not extended arrow sequences.
 Stage 2 remains **partially** self-hosted: it cannot yet compile its own source.
 Completing that compiler and verifying a real Stage 1 boot are separate gates
 before claiming a full Frac-authored Stage 3 kernel.
+
+## "next steps" implementation (pre-Stage 3)
+
+The GitHub `next steps` design file is preserved verbatim. See
+[`docs/NEXT_STEPS_IMPLEMENTATION.md`](docs/NEXT_STEPS_IMPLEMENTATION.md) for the
+actual implemented features, test commands, and design deviations.
+
+- `key`, `key?`, `break?`, and `key-mode`: interactive character/arrow input,
+  with cooperative Esc checking (`break?`). Bare metal polls PS/2 and COM1.
+- `eval`, `depth`, `save`, `load`, `source`, `copy`, `files`: compile source
+  dynamically and maintain editable named source files in RAM.
+- `disk-ready?`, `disk-format`: optional **FRANCFS1** fixed-slot persistence.
+  In the QEMU boot image the disk is preformatted. For hosted tests, set
+  `FRANC_DISK_IMAGE=/path/to/256-sector.img` to opt in. Without a formatted
+  image, `save` stores only in RAM. Files survive a fresh process or QEMU reboot
+  when the same disk image is retained.
+- `launch` loads a named source file and calls its freshly defined `main` once;
+  `run-main` invokes an existing `main`. We deliberately do **not** auto-run
+  `main` after every REPL line.
+- `lib/calc.frac`, `lib/edit.frac`, `lib/walk.frac`: interactive calculator,
+  one-line source editor and exact Farey/Stern–Brocot explorer. Use `calc-main`,
+  `"file" edit-line`, `walk-main` respectively. The editor is **not** yet a
+  full-screen editor.
+- `lib/dd.frac`: exact `(hi lo)` component arithmetic, intentionally not
+  advertised as 30-digit precision.
+
+To run all regression tests: `make test`; build the preformatted QEMU image
+with `make -C stage1 && python3 stage1/verify_image.py`. The image is now
+**128 KiB**, including the 64 KiB BIOS+kernel area and a 64 KiB persistent
+source area. **QEMU execution remains an independent verification step.**

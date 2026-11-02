@@ -1,0 +1,15 @@
+\ dd.frac -- two-component rational expansions (hi lo), not IEEE double-double.
+\ A value is represented as the *unevaluated exact sum* hi + lo. Each component
+\ must itself be representable as a bounded Rat. This extends representable
+\ sums without widening the core, but is NOT a general 30-digit float, and
+\ operations can still yield bottom when individual components overflow.
+\ The component pair remains on the stack. Requires no new C primitives.
+def dd+ :dd-blo :dd-bhi :dd-alo :dd-ahi dd-ahi dd-bhi + dd-alo dd-blo + ;
+def dd- :dd-blo :dd-bhi :dd-alo :dd-ahi dd-ahi dd-bhi - dd-alo dd-blo - ;
+def dd-neg :dd-lo :dd-hi dd-hi neg dd-lo neg ;
+def dd* :dd-blo :dd-bhi :dd-alo :dd-ahi dd-ahi dd-bhi * dd-ahi dd-blo * dd-alo dd-bhi * + dd-alo dd-blo * + ;
+def dd-int* :dd-scale :dd-lo :dd-hi dd-hi dd-scale * dd-lo dd-scale * ;
+\ Print each exact component separately, rather than overflowing by folding.
+def dd. :dd-lo :dd-hi dd-hi . dd-lo . ;
+\ dd-collapse works only when hi+lo fits a single core Rat.
+def dd-collapse + ;
