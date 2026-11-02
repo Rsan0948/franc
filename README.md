@@ -328,3 +328,11 @@ To run all regression tests: `make test`; build the preformatted QEMU image
 with `make -C stage1 && python3 stage1/verify_image.py`. The image is now
 **128 KiB**, including the 64 KiB BIOS+kernel area and a 64 KiB persistent
 source area. **QEMU execution remains an independent verification step.**
+
+## Required release milestone: zero C dependencies
+
+FrancOS must eventually build and boot without C source, C compiler, C
+runtime, or C-derived helper functions. The incremental Stage 3 driver
+migration is not that end state. See
+[`docs/C_FREE_EXIT_CRITERIA.md`](docs/C_FREE_EXIT_CRITERIA.md) for concrete
+AOT, relocations, native primitives, hardware porting and cold-boot CI gates.
