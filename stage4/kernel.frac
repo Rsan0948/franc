@@ -14,6 +14,6 @@ def disk-format 0 ;
 def host-save drop drop 0 ;
 def host-source drop 0 ;
 def host-files 0 drop ;
-def store-check "proof.frac" "def saved 77 ;" fs-save . "proof.frac" fs-source type cr "STORAGE OK" type cr ;
+def store-check "proof.frac" "def saved 77 ;" fs-save . "STORAGE READ START" type cr "proof.frac" fs-source :loadptr loadptr if0 "LOAD FAILED" type cr exit then loadptr byte@ . loadptr type cr "STORAGE OK" type cr ;
 def ata-check 128 ata-read-sector if0 "ATA READ FAILED" type cr exit then 0 sector-byte@ . 0 42 sector-byte! 190 ata-write-sector . 0 0 sector-byte! 190 ata-read-sector . 0 sector-byte@ . "ATA WRITE READBACK DONE" type cr ;
 def boot banner add-test 5 square . branch-test loop-test draw-demo ata-check store-check "AOT BOOT OK" type cr ;
