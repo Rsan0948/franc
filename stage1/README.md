@@ -5,8 +5,8 @@
 This stage retains the Stage 0 C compiler/JIT but runs it as a freestanding x86-64 kernel. The disk image includes:
 
 - A 512-byte BIOS boot sector, which loads a fixed 127-sector payload via INT 13h extensions, enables A20, enters protected mode, sets identity-mapped 2 MiB pages, enters 64-bit long mode, and transfers control to the linked kernel at physical address `0x10000`.
-- A freestanding C runtime providing VGA text, COM1 serial input/output (useful under QEMU), a minimal polled PS/2 keyboard, allocation from a fixed heap, a tiny printf subset, string functions, and a fixed executable-memory arena at physical `0x200000`.
-- The **same Stage 0 Frac JIT** (`../frac.c`) built with `-Dmain=frac_main` against small freestanding replacement headers. The five Frac math libraries are compiled from `../lib/*.frac` into an embedded C string at build time and initialized at boot before entering the REPL. No Linux syscalls are used at runtime. The five `lib/*.frac` modules are bundled as text by `embed_libraries.py` and compiled into the live JIT during boot.
+- A freestanding C runtime providing Mode 13h 320x200 VGA pixel graphics with an 8x8 raster font (40x25 graphical text cells), COM1 serial input/output (useful under QEMU), a minimal polled PS/2 keyboard, allocation from a fixed heap, a tiny printf subset, string functions, and a fixed executable-memory arena at physical `0x200000`.
+- The **same Stage 0 Frac JIT** (`../frac.c`) built with `-Dmain=frac_main` against small freestanding replacement headers. The five Frac math libraries plus three graphical demos are compiled from `../lib/*.frac` into an embedded C string at build time and initialized at boot before entering the REPL. No Linux syscalls are used at runtime. The eight `lib/*.frac` modules are bundled as text by `embed_libraries.py` and compiled into the live JIT during boot.
 
 ## Requirements
 
@@ -34,4 +34,36 @@ For a graphical VGA console, replace `-display none -serial stdio` with `-displa
 
 This is deliberately minimal: BIOS boot only (no UEFI path), fixed sector count, fixed memory map requiring 128 MiB RAM, identity-mapped executable pages, minimal PS/2 set-1 scancodes, no interrupts or timer, no filesystem, and no persistence. A real OS would need more; this experiment intentionally doesn't aim to be one yet.
 
-The build generates `stage1/library_bundle.h` from the five libraries. The generated header is not a source of truth; edit the `.frac` files and rebuild instead.
+The build generates `stage1/library_bundle.h` from all eight libraries. The generated header is not a source of truth; edit the `.frac` files and rebuild instead.
+
+## Mode 13h graphic commands
+
+The 16-bit BIOS loader sets mode `0x13` before switching to protected/long mode.
+Framebuffer: `0xA0000`, 320x200 pixels, 8-bit palette indices (0..255).
+This is a legacy BIOS/VGA-only experiment, **not UEFI GOP or VESA**.
+
+Commands available in the Frac REPL:
+
+```text
+0 clearfb
+0 100 319 100 15 line
+160 0 160 199 15 line
+10 10 80 40 14 fillrect
+160 100 pixel@ .
+20 fordland
+0 clearfb 5 2 14 spiro
+```
+
+`pixel` takes `x y color`, `line` takes `x0 y0 x1 y1 color`, `fillrect`
+takes `x y width height color`, `palette` takes `index R G B` with 6-bit
+DAC channels. `pixel@` returns an 8-bit palette index at that position.
+
+The graphical console shares the framebuffer with plotted output: drawing may
+cover old terminal text. COM1 serial remains independent for debugging.
+The Linux-hosted REPL emulates the same framebuffer and provides the additional
+`screenshot` word to write `franc-frame.ppm`. Frac libraries are loaded at
+boot and stored as text in the kernel; no filesystem is required.
+
+**Test boundary:** build-time disk layout and Linux framebuffer tests do not
+prove the BIOS image boots. Use `python3 stage1/qemu_smoke.py` when QEMU is
+available, and independently inspect the VGA display in graphical QEMU.
