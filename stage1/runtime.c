@@ -72,6 +72,27 @@ static int keyboard_char(void){
     if(code&0x80 || code>=sizeof(scancode_us))return -1;
     return shift_down?(unsigned char)scancode_shift[code]:(unsigned char)scancode_us[code];
 }
+// Event mode serves graphical applications without changing line-oriented REPL
+// input. Extended PS/2 arrow codes are translated to 1001..1004.
+static int extended_key_prefix;
+int franc_key_event_poll(void) {
+    if(serial_ok && (inb(0x3fd)&1)) {
+        int ch=inb(0x3f8);return ch;
+    }
+    if(!(inb(0x64)&1))return -1;
+    uint8_t sc=inb(0x60);
+    if(sc==0xe0){extended_key_prefix=1;return -1;}
+    if(sc==0x2a||sc==0x36){shift_down=1;return -1;}
+    if(sc==0xaa||sc==0xb6){shift_down=0;return -1;}
+    if(sc&0x80){extended_key_prefix=0;return -1;}
+    if(extended_key_prefix) {
+        extended_key_prefix=0;
+        return sc==0x48?1001:sc==0x50?1002:sc==0x4b?1003:sc==0x4d?1004:-1;
+    }
+    if(sc>=sizeof(scancode_us))return -1;
+    return shift_down?(unsigned char)scancode_shift[sc]:(unsigned char)scancode_us[sc];
+}
+void franc_console_home(void) {row=0;col=0;}
 int getchar(void){
     for(;;){
         if(serial_ok&&(inb(0x3fd)&1))return (int)inb(0x3f8);
