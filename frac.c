@@ -12,6 +12,11 @@
 #include <sys/mman.h>
 #include <errno.h>
 #include <limits.h>
+#ifndef FRANC_BARE_METAL
+#include <sys/select.h>
+#include <termios.h>
+#include <unistd.h>
+#endif
 #include "gfx.h"
 
 typedef struct { int64_t num, den; } Rat;   // den==0: num==0→⊥, else ∞
@@ -111,7 +116,100 @@ static int need(int n) {
 HELPER void h_push(int64_t n, int64_t d) { if (g_sp == g_stack + 1024) { fprintf(stderr,"stack overflow\n"); return; } *g_sp++ = canon(n, d); }
 HELPER void h_push_string(int64_t ptr) { h_push(ptr, 1); }
 HELPER void h_type(void) { if(!need(1)) return; Rat p = *--g_sp; if (p.den!=1 || !p.num) { fprintf(stderr,"type: invalid string\n"); return; } fputs((const char*)(uintptr_t)p.num,stdout); fflush(stdout); }
-HELPER void h_key(void) { int c = getchar(); h_push(c == EOF ? -1 : c,1); }
+// Application memory is byte-addressable; raw @/! remain JIT opcode access.
+static uint8_t g_app_memory[256+16*128];
+static int g_pending_key=-1;
+#ifdef FRANC_BARE_METAL
+extern int franc_key_event_poll(void);
+extern void franc_console_home(void);
+static int platform_key_poll(void) { return franc_key_event_poll(); }
+static void app_key_mode(int active) { (void)active; }
+#else
+static struct termios g_saved_tty;
+static int g_raw_keys=0;
+static void app_key_mode(int active) {
+    if (active && !g_raw_keys && isatty(0) && tcgetattr(0,&g_saved_tty)==0) {
+        struct termios raw=g_saved_tty;
+        raw.c_lflag &= (tcflag_t)~(ICANON|ECHO);
+        raw.c_cc[VMIN]=1; raw.c_cc[VTIME]=0;
+        if(tcsetattr(0,TCSANOW,&raw)==0)g_raw_keys=1;
+    } else if(!active && g_raw_keys){tcsetattr(0,TCSANOW,&g_saved_tty);g_raw_keys=0;}
+}
+static int platform_key_poll(void) {
+    fd_set set;struct timeval tv={0,0};FD_ZERO(&set);FD_SET(0,&set);
+    if(select(1,&set,NULL,NULL,&tv)>0) return getchar();
+    return -1;
+}
+#endif
+// Key events: ASCII for printable/Enter/Backspace/Esc; 1001-1004 for arrows.
+#ifndef FRANC_BARE_METAL
+static int decode_key(int c) {
+    if(c!='\033')return c;
+#ifdef FRANC_BARE_METAL
+    return c;
+#else
+    // ANSI arrows are ESC [ A/B/C/D; retain a bare Esc as an exit key.
+    if(!isatty(0) && feof(stdin))return 27;
+    fd_set set;struct timeval tv={0,30000};FD_ZERO(&set);FD_SET(0,&set);
+    if(select(1,&set,NULL,NULL,&tv)<=0)return 27;
+    int next=getchar();
+    if(next!='['){if(next!=EOF)ungetc(next,stdin);return 27;}
+    tv.tv_sec=0;tv.tv_usec=30000;FD_ZERO(&set);FD_SET(0,&set);
+    if(select(1,&set,NULL,NULL,&tv)<=0)return 27;
+    int arrow=getchar();
+    return arrow=='A'?1001:arrow=='B'?1002:arrow=='D'?1003:arrow=='C'?1004:27;
+#endif
+}
+#endif
+HELPER void h_key(void) {
+    int c=g_pending_key;
+    if(c>=0)g_pending_key=-1;
+#ifdef FRANC_BARE_METAL
+    else { do { c=platform_key_poll(); } while(c<0); }
+    h_push(c,1);
+#else
+    else c=decode_key(getchar());
+    h_push(c==EOF?-1:c,1);
+#endif
+}
+HELPER void h_keyq(void) {
+    if(g_pending_key<0)g_pending_key=platform_key_poll();
+    h_push(g_pending_key>=0,1);
+}
+HELPER void h_breakq(void) {
+    if(g_pending_key<0)g_pending_key=platform_key_poll();
+    int yes=g_pending_key==27;
+    if(yes)g_pending_key=-1;
+    h_push(yes,1);
+}
+HELPER void h_keymode(void) { if(!need(1))return;Rat on=*--g_sp;app_key_mode(on.num!=0); }
+HELPER void h_depth(void) { h_push((int64_t)(g_sp-g_stack),1); }
+HELPER void h_calc_buffer(void) { h_push((int64_t)(uintptr_t)g_app_memory,1); }
+HELPER void h_history_buffer(void) { h_push((int64_t)(uintptr_t)(g_app_memory+256),1); }
+static int app_memory_range(Rat addr) {
+    uintptr_t p=(uintptr_t)addr.num,lo=(uintptr_t)g_app_memory;
+    return addr.den==1 && p>=lo && p-lo<sizeof(g_app_memory);
+}
+HELPER void h_bfetch(void) {
+    if(!need(1))return;
+    Rat a=*--g_sp;
+    if(!app_memory_range(a)){fprintf(stderr,"b@: invalid application address\n");h_push(0,1);return;}
+    h_push(*(uint8_t*)(uintptr_t)a.num,1);
+}
+HELPER void h_bstore(void) {
+    if(!need(2))return;
+    Rat val=*--g_sp,addr=*--g_sp;
+    if(!app_memory_range(addr)||val.den!=1){fprintf(stderr,"b!: invalid application write\n");return;}
+    *(uint8_t*)(uintptr_t)addr.num=(uint8_t)val.num;
+}
+HELPER void h_home(void) {
+#ifdef FRANC_BARE_METAL
+    franc_console_home();
+#else
+    fputs("\033[H",stdout);
+#endif
+}
+
 
 HELPER void h_add(void) { if (!need(2)) return; Rat b = *--g_sp; Rat* a = &g_sp[-1]; *a = canon128((__int128)a->num*b.den + (__int128)b.num*a->den, (__int128)a->den*b.den); }
 HELPER void h_sub(void) { if (!need(2)) return; Rat b = *--g_sp; Rat* a = &g_sp[-1]; *a = canon128((__int128)a->num*b.den - (__int128)b.num*a->den, (__int128)a->den*b.den); }
@@ -282,7 +380,7 @@ static Word* lookup(const char* name) {
 
 // ─── emitter ─────────────────────────────────────────────────────────
 static void emit_u8(uint8_t b) {
-    if (g_line_start + g_pos >= (g_line_start==g_scratch_start?g_exec_size:g_scratch_start)) { fprintf(stderr, "code overflow\n"); exit(1); }
+    if (g_line_start + g_pos >= (g_line_start>=g_scratch_start?g_scratch_start+4*1024*1024:g_scratch_start)) { fprintf(stderr, "code overflow\n"); exit(1); }
     g_exec[g_line_start + g_pos++] = b;
 }
 static void emit_u32(uint32_t v) { for (int i=0;i<4;i++) emit_u8((v>>(8*i))&0xff); }
@@ -608,6 +706,11 @@ static void bootstrap(void) {
 #ifndef FRANC_BARE_METAL
     add_word("screenshot",h_screenshot);
 #endif
+    add_word("depth",h_depth);
+    add_word("b@",h_bfetch); add_word("b!",h_bstore);
+    add_word("calc-buffer",h_calc_buffer);add_word("history-buffer",h_history_buffer);
+    add_word("key?",h_keyq);add_word("break?",h_breakq);add_word("key-mode",h_keymode);
+    add_word("home",h_home);
     add_word("bye",h_bye);
     add_word("type",h_type); add_word("print",h_type); add_word("key",h_key);
     add_word("byte@",h_s2_byte_fetch);
@@ -656,6 +759,102 @@ static void execute_line(const char* line) {
     if (!g_compile_error) ((void(*)(void))(g_exec+g_scratch_start))();
 }
 
+// Eval compiles into separate scratch pages so an eval invoked from an
+// executing REPL line cannot overwrite its caller's machine code.
+static int g_eval_nesting;
+static void evaluate_source(const char* src) {
+    if(!src || g_eval_nesting>=3) {fprintf(stderr,"eval: nesting limit\n");return;}
+    CState prev=cstate_push();
+    int old_if=g_if_sp,old_begin=g_begin_sp,old_while=g_while_sp;
+    int old_err=g_compile_error;
+    ++g_eval_nesting;
+    char line[4096];
+    while(*src) {
+        size_t n=0;
+        while(*src && *src!='\n' && n+1<sizeof(line))line[n++]=*src++;
+        line[n]=0;if(*src=='\n')++src;
+        char tk[128][256];
+        int count=tokenize(line,tk,128);
+        if(!count)continue;
+        g_line_start=g_scratch_start+(size_t)g_eval_nesting*1024*1024;
+        g_pos=0;g_if_sp=g_begin_sp=g_while_sp=0;g_compile_error=0;
+        emit_prologue();
+        compile_tokens(tk,count);
+        if(g_if_sp||g_begin_sp||g_while_sp)error("eval: unbalanced control flow");
+        emit_ret();
+        if(!g_compile_error)((void(*)(void))(g_exec+g_line_start))();
+    }
+    --g_eval_nesting;
+    cstate_pop(prev);
+    g_if_sp=old_if;g_begin_sp=old_begin;g_while_sp=old_while;
+    g_compile_error=old_err;
+}
+HELPER void h_eval(void) {
+    if(!need(1))return;
+    Rat a=*--g_sp;
+    // Accept only app memory or compiler-created quoted strings for eval.
+    if(a.den!=1 || a.num==0)return;
+    const char* src=(const char*)(uintptr_t)a.num;
+    if(app_memory_range(a)) {
+        size_t remaining=sizeof(g_app_memory)-((uintptr_t)a.num-(uintptr_t)g_app_memory);
+        size_t n=0;while(n<remaining && src[n] && n<4095)n++;
+        if(n>=remaining||n>=4095){fprintf(stderr,"eval: unterminated application string\n");return;}
+    }
+    evaluate_source(src);
+}
+// Named source store: session-only, not a disk filesystem. cap=12 * 2048.
+#define MAX_RAM_FILES 12
+#define MAX_RAM_SOURCE 2048
+typedef struct { char name[48]; char source[MAX_RAM_SOURCE]; } RamFile;
+static RamFile g_ram_files[MAX_RAM_FILES];
+static int g_ram_count;
+static RamFile* find_ram_file(const char* name) {
+    for(int i=0;i<g_ram_count;i++)if(strcmp(g_ram_files[i].name,name)==0)return &g_ram_files[i];
+    return NULL;
+}
+HELPER void h_save(void) {
+    if(!need(2))return;
+    Rat src=*--g_sp,name=*--g_sp;
+    if(src.den!=1||name.den!=1||!src.num||!name.num)return;
+    const char *n=(const char*)(uintptr_t)name.num,*s=(const char*)(uintptr_t)src.num;
+    size_t nn=strlen(n),sn=strlen(s);
+    if(!nn||nn>=48||sn>=MAX_RAM_SOURCE){fprintf(stderr,"save: file too large\n");return;}
+    RamFile* f=find_ram_file(n);
+    if(!f){if(g_ram_count==MAX_RAM_FILES){fprintf(stderr,"save: RAM store full\n");return;}f=&g_ram_files[g_ram_count++];}
+    memcpy(f->name,n,nn+1);memcpy(f->source,s,sn+1);
+}
+HELPER void h_load(void) {
+    if(!need(1))return;
+    Rat name=*--g_sp;
+    if(name.den!=1||!name.num)return;
+    RamFile* f=find_ram_file((const char*)(uintptr_t)name.num);
+    if(!f){fprintf(stderr,"load: source not found in RAM store\n");return;}
+    evaluate_source(f->source);
+}
+HELPER void h_source(void) {
+    if(!need(1))return;
+    Rat name=*--g_sp;
+    if(name.den!=1||!name.num){h_push(0,1);return;}
+    RamFile* f=find_ram_file((const char*)(uintptr_t)name.num);
+    h_push(f?(int64_t)(uintptr_t)f->source:0,1);
+}
+HELPER void h_copy(void) {
+    if(!need(2))return;
+    Rat dst=*--g_sp,src=*--g_sp;
+    if(dst.den!=1||src.den!=1||!dst.num||!src.num)return;
+    const char* d=(const char*)(uintptr_t)dst.num;
+    RamFile* existing=find_ram_file((const char*)(uintptr_t)src.num);
+    if(!existing){fprintf(stderr,"copy: source not found\n");return;}
+    size_t n=strlen(d);
+    if(!n||n>=48)return;
+    RamFile* target=find_ram_file(d);
+    if(!target){if(g_ram_count==MAX_RAM_FILES)return;target=&g_ram_files[g_ram_count++];}
+    strncpy(target->name,d,47);target->name[47]=0;
+    memcpy(target->source,existing->source,strlen(existing->source)+1);
+}
+HELPER void h_files(void) {
+    for(int i=0;i<g_ram_count;i++)printf("%s\n",g_ram_files[i].name);
+}
 #ifdef FRANC_EMBED_LIBS
 #include "stage1/library_bundle.h"
 static void load_embedded_libraries(void) {
@@ -679,13 +878,18 @@ int main(void) {
     if (g_exec == MAP_FAILED) { perror("mmap"); return 1; }
     g_exec_used = 0;
 #ifndef FRANC_BARE_METAL
+    setvbuf(stdin,NULL,_IONBF,0);
     gfx_init();
 #endif
     bootstrap();
+    // These words live here because evaluate_source depends on the compiler.
+    add_word("eval",h_eval);add_word("save",h_save);
+    add_word("load",h_load);add_word("files",h_files);
+    add_word("source",h_source);add_word("copy",h_copy);
 
 #ifdef FRANC_EMBED_LIBS
     load_embedded_libraries();
-    printf("FrancOS: five math libraries loaded\n");
+    printf("FrancOS: math, graphics, and application libraries loaded\n");
 #endif
     char line[4096];
     while (1) {
