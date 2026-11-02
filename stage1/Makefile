@@ -2,7 +2,7 @@ CC = gcc
 AS = as
 LD = ld
 OBJCOPY = objcopy
-CFLAGS = -std=gnu11 -O2 -Wall -Wextra -ffreestanding -fno-stack-protector -fno-pic -fno-pie -fno-builtin -mno-red-zone -mcmodel=large -Iinclude
+CFLAGS = -std=gnu11 -O2 -Wall -Wextra -ffreestanding -fno-stack-protector -fno-pic -fno-pie -fno-builtin -mno-red-zone -mcmodel=large -DFRANC_BARE_METAL -Iinclude
 LDFLAGS = -nostdlib -no-pie -Wl,--build-id=none -Wl,-T,kernel.ld
 .PHONY: all clean run
 all: fracos.img
@@ -11,14 +11,16 @@ boot.bin: boot.S
 	$(LD) -m elf_x86_64 --oformat binary -Ttext 0x7c00 -o $@ boot.o
 entry.o: entry.S
 	$(AS) --64 -o $@ $<
-library_bundle.h: ../lib/fixpt.frac ../lib/cf.frac ../lib/approx.frac ../lib/iv.frac ../lib/trans.frac embed_libraries.py
+library_bundle.h: ../lib/fixpt.frac ../lib/cf.frac ../lib/approx.frac ../lib/iv.frac ../lib/trans.frac ../lib/graphics.frac ../lib/ford.frac ../lib/spiro.frac embed_libraries.py
 	python3 embed_libraries.py
-frac.o: ../frac.c library_bundle.h
+frac.o: ../frac.c ../gfx.h library_bundle.h
 	$(CC) $(CFLAGS) -Dmain=frac_main -DFRANC_EMBED_LIBS -c -o $@ $<
-runtime.o: runtime.c
+gfx.o: ../gfx.c ../gfx.h ../font8x8.h
 	$(CC) $(CFLAGS) -c -o $@ $<
-kernel.elf: entry.o frac.o runtime.o kernel.ld
-	$(CC) $(LDFLAGS) -o $@ entry.o frac.o runtime.o -lgcc
+runtime.o: runtime.c ../gfx.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+kernel.elf: entry.o frac.o runtime.o gfx.o kernel.ld
+	$(CC) $(LDFLAGS) -o $@ entry.o frac.o runtime.o gfx.o -lgcc
 kernel.bin: kernel.elf
 	$(OBJCOPY) -O binary $< $@
 	@test $$(stat -c%s $@) -le 65024 || (echo 'kernel exceeds 127-sector BIOS loader capacity' >&2; exit 1)
