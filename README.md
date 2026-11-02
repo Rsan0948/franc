@@ -181,3 +181,27 @@ results to the expected values. Run `make test` or see [stage2/README.md](stage2
 It does **not** yet compile conditional words, loops, or its own source; do not
 call Stage 2 fully self-hosted until a compiler built by the Franc compiler
 successfully compiles Franc's compiler again.
+
+## Mode 13h graphics (pre-Stage 3)
+
+Franc now has a shared framebuffer API backed by **320x200x256 VGA** on
+bare metal or an in-memory 320x200 framebuffer under Linux. A rasterized
+8x8 ASCII font draws the kernel's 40x25 console on VGA. COM1 remains active.
+
+```sh
+make
+cat lib/{fixpt,cf,approx,iv,trans,graphics,ford,spiro}.frac demos/graphics-demo.frac | ./frac
+# screenshot written to franc-frame.ppm (host only)
+make -C stage1 && python3 stage1/verify_image.py
+```
+
+After loading the library definitions: `crosshair`, `20 fordland`,
+`5 2 14 spiro`, `1 2 1 3 tangent?`. New C primitives: `clearfb`,
+`pixel`, `pixel@`, `line`, `fillrect`, `palette`. `screenshot` exports
+a PPM on Linux only. The Ford tangency check uses integer arithmetic, while
+the drawing uses rational pixel-center tests on a finite raster; small circles
+may become sub-pixel. Neither proves error bounds for arbitrary approximations.
+
+**Stage 1 execution in QEMU is not yet verified;** Stage 2's Frac-written
+compiler remains partial (control-flow and recompiling its own source are pending).
+The repo remains private until its owner explicitly decides to publish it.
