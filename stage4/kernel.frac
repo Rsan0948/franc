@@ -15,7 +15,7 @@ def host-save drop drop 0 ;
 def host-source drop 0 ;
 def host-files 0 drop ;
 def host-key 0 ;
-def store-check "proof.frac" "def saved 77 ;" fs-save . 129 ata-read-sector . 0 sector-byte@ . 1 sector-byte@ . 24 sector-byte@ . 25 sector-byte@ . "proof.frac" fs-source dup . type cr "STORAGE OK" type cr ;
+def store-check "proof.frac" "def saved 77 ;" fs-save . fs-ready? . 129 ata-read-sector . "proof.frac" 0 fs-match . 136 ata-read-sector . 0 sector-byte@ . "proof.frac" fs-source dup . dup if0 drop "SOURCE NULL" type cr exit then type cr "STORAGE OK" type cr ;
 def ata-check 128 ata-read-sector if0 "ATA READ FAILED" type cr exit then 0 sector-byte@ . 0 42 sector-byte! 190 ata-write-sector . 0 0 sector-byte! 190 ata-read-sector . 0 sector-byte@ . "ATA WRITE READBACK DONE" type cr ;
 \ Native keyboard loop: Franc owns the serial/PS2 input semantics and menu.
 def console-help "h help  p rational  s storage  g graphics  Esc exits" vc-type vc-newline ;
