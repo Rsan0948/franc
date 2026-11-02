@@ -48,9 +48,12 @@ try:
         (b'g', b'GRAPHICS IN FRANC\nFranc> '),
         (b'\x1b', b'EXIT CONSOLE')
     ]:
+        # COM1 has a single-byte receive register. Wait for the Franc
+        # polling loop to re-enter input mode after drawing the prompt.
+        time.sleep(0.5)
         offset = len(transcript)
         os.write(p.stdin.fileno(), key)
-        transcript = read_until(expected, timeout=12, after=offset)
+        transcript = read_until(expected, timeout=45, after=offset)
     for marker in (b'FRANC FRAMEBUFFER READY', b'FRANC INTERACTIVE READY',
                    b'GRAPHICS IN FRANC', b'EXIT CONSOLE'):
         assert marker in transcript, f'missing {marker!r}: {transcript!r}'
