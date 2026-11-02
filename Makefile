@@ -8,5 +8,6 @@ test: frac
 	python3 tests/test_frac.py
 	python3 tests/test_libraries.py
 	python3 tests/test_libs.py
+	python3 tests/test_stage2.py
 clean:
 	rm -f frac frac-original
