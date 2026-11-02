@@ -12,6 +12,7 @@
 #include <sys/mman.h>
 #include <errno.h>
 #include <limits.h>
+#include "gfx.h"
 
 typedef struct { int64_t num, den; } Rat;   // den==0: num==0→⊥, else ∞
 
@@ -212,6 +213,57 @@ HELPER void h_store(void) {
 }
 HELPER void h_push_reg(int64_t i) { *g_sp++ = g_regs[i]; }
 HELPER void h_store_reg(int64_t i) { if (!need(1)) return; g_regs[i] = *--g_sp; }
+/* Display is a shared implementation: VGA Mode 13h on bare metal, RAM on Linux. */
+static int graphical_int(Rat r, int *v) {
+    if (!r.den) return 0;
+    int64_t q = r.num/r.den;
+    if (q < INT32_MIN || q > INT32_MAX) return 0;
+    *v=(int)q;return 1;
+}
+HELPER void h_pixel(void) {
+    if(!need(3))return;
+    Rat c=*--g_sp, y=*--g_sp, x=*--g_sp;
+    int ix,iy,ic;
+    if(graphical_int(x,&ix)&&graphical_int(y,&iy)&&graphical_int(c,&ic))
+        gfx_pixel(ix,iy,(uint8_t)ic);
+}
+HELPER void h_pixel_fetch(void) {
+    if(!need(2))return;
+    Rat y=*--g_sp,x=*--g_sp;
+    int ix,iy;
+    h_push(graphical_int(x,&ix)&&graphical_int(y,&iy)?gfx_get(ix,iy):0,1);
+}
+HELPER void h_line(void) {
+    if(!need(5))return;
+    Rat c=*--g_sp,y1=*--g_sp,x1=*--g_sp,y0=*--g_sp,x0=*--g_sp;
+    int a,b,d,e,f;
+    if(graphical_int(x0,&a)&&graphical_int(y0,&b)&&graphical_int(x1,&d)&&
+       graphical_int(y1,&e)&&graphical_int(c,&f))gfx_line(a,b,d,e,(uint8_t)f);
+}
+HELPER void h_fillrect(void) {
+    if(!need(5))return;
+    Rat c=*--g_sp,h=*--g_sp,w=*--g_sp,y=*--g_sp,x=*--g_sp;
+    int a,b,d,e,f;
+    if(graphical_int(x,&a)&&graphical_int(y,&b)&&graphical_int(w,&d)&&
+       graphical_int(h,&e)&&graphical_int(c,&f))gfx_fillrect(a,b,d,e,(uint8_t)f);
+}
+HELPER void h_clearfb(void) {
+    if(!need(1))return;
+    Rat c=*--g_sp;int v;if(graphical_int(c,&v))gfx_clear((uint8_t)v);
+}
+HELPER void h_palette(void) {
+    if(!need(4))return;
+    Rat b=*--g_sp,g=*--g_sp,r=*--g_sp,i=*--g_sp;
+    int c,red,green,blue;
+    if(graphical_int(i,&c)&&graphical_int(r,&red)&&graphical_int(g,&green)&&
+       graphical_int(b,&blue))gfx_palette((uint8_t)c,(uint8_t)red,(uint8_t)green,(uint8_t)blue);
+}
+#ifndef FRANC_BARE_METAL
+HELPER void h_screenshot(void) {
+    if(!gfx_save_ppm("franc-frame.ppm"))fprintf(stderr,"screenshot: could not write PPM\n");
+}
+#endif
+
 HELPER void h_bye(void) { exit(0); }
 
 // ─── dictionary ──────────────────────────────────────────────────────
@@ -547,6 +599,15 @@ static void bootstrap(void) {
     add_word(".",h_dot); add_word(".s",h_dots);
     add_word("emit",h_emit); add_word("~",h_tilde);
     add_word("@",h_fetch); add_word("!",h_store);
+    add_word("pixel",h_pixel);
+    add_word("pixel@",h_pixel_fetch);
+    add_word("line",h_line);
+    add_word("fillrect",h_fillrect);
+    add_word("clearfb",h_clearfb);
+    add_word("palette",h_palette);
+#ifndef FRANC_BARE_METAL
+    add_word("screenshot",h_screenshot);
+#endif
     add_word("bye",h_bye);
     add_word("type",h_type); add_word("print",h_type); add_word("key",h_key);
     add_word("byte@",h_s2_byte_fetch);
@@ -617,6 +678,9 @@ int main(void) {
                   MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
     if (g_exec == MAP_FAILED) { perror("mmap"); return 1; }
     g_exec_used = 0;
+#ifndef FRANC_BARE_METAL
+    gfx_init();
+#endif
     bootstrap();
 
 #ifdef FRANC_EMBED_LIBS
