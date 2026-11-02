@@ -2,7 +2,7 @@ CC = gcc
 AS = as
 LD = ld
 OBJCOPY = objcopy
-CFLAGS = -std=gnu11 -O2 -Wall -Wextra -ffreestanding -fno-stack-protector -fno-pic -fno-pie -fno-builtin -mno-red-zone -mcmodel=large -DFRANC_BARE_METAL -Iinclude
+CFLAGS = -std=gnu11 -O2 -Wall -Wextra -ffreestanding -fno-stack-protector -fno-pic -fno-pie -fno-builtin -mno-red-zone -mgeneral-regs-only -mcmodel=large -DFRANC_BARE_METAL -Iinclude
 LDFLAGS = -nostdlib -no-pie -Wl,--build-id=none -Wl,-T,kernel.ld
 .PHONY: all clean run run-gui
 all: fracos.img
