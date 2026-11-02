@@ -43,7 +43,10 @@ try:
            (b'0 clearfb\n',b'Frac> '),
            (b'10 20 14 pixel\n',b'Frac> '),
            (b'10 20 pixel@ .\n',b'14'),
-           (b'1 2 1 3 tangent? .\n',b'1')]
+           (b'1 2 1 3 tangent? .\n',b'1'),
+           (b'os-main\n',b'FrancOS shell (Franc-written)'),
+           (b'1/3 1/6 +\n',b'1/2'),
+           (b'\x1b',b'Frac> ')]
     for command,result in tests:
         position=len(transcript)
         p.stdin.write(command);p.stdin.flush()

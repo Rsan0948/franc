@@ -1,0 +1,7 @@
+\ Stage 3 experimental Franc-owned REPL/shell.
+\ Runtime services (keyboard, eval, memory, console) are still implemented in C.
+\ This is a partial Stage 3 boundary, NOT a self-hosted kernel.
+\ Requires lib/calc.frac's editor, plus core eval / depth / key-mode words.
+def os-help "Franc shell: Frac expressions, def, load, files; Esc returns" type 10 emit ;
+def os-evaluate calc-len if0 exit then depth :os-old-depth calc-buffer eval depth os-old-depth - ifnz . then ;
+def os-main 1 key-mode "FrancOS shell (Franc-written)" type 10 emit os-help begin "Frac> " type calc-read ifnz 0 key-mode exit then os-evaluate again ;

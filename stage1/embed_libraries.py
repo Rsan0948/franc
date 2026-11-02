@@ -9,6 +9,10 @@ for lib in LIBS:
     data=(ROOT/'lib'/f'{lib}.frac').read_text()
     for part in data.splitlines(keepends=True):
         lines.append('  '+json.dumps(part, ensure_ascii=True))
+for path in [ROOT/'stage3'/'shell.frac']:
+    data=path.read_text()
+    for part in data.splitlines(keepends=True):
+        lines.append('  '+json.dumps(part, ensure_ascii=True))
 lines+=['  "";', '#endif', '']
 output=ROOT/'stage1'/'library_bundle.h'
 output.write_text('\n'.join(lines))
