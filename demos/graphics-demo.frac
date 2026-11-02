@@ -1,0 +1,3 @@
+\ Run: cat lib/fixpt.frac lib/cf.frac lib/approx.frac lib/iv.frac lib/trans.frac lib/graphics.frac lib/ford.frac lib/spiro.frac demos/graphics-demo.frac | ./frac
+20 fordland
+screenshot
