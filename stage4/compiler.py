@@ -20,10 +20,8 @@ OPS = { '+':'fr_add','-':'fr_sub','*':'fr_mul','/':'fr_div',
     'io8@':'fr_inb','io8!':'fr_outb',
     'io16@':'fr_inw','io16!':'fr_outw','band':'fr_band',
     'sector-byte@':'fr_sector_bfetch','sector-byte!':'fr_sector_bstore',
-    'sector-buffer':'fr_sector_buf','source-buffer':'fr_source_buffer',
+    'sector-buffer':'fr_sector_buf','source-buffer':'fr_source_buffer', 'font-base':'fr_font_base',
     'source-byte!':'fr_source_bstore','byte@':'fr_bfetch','%':'fr_mod',
-    'frame@':'fr_frame_read','frame!':'fr_frame_write',
-    'font-row':'fr_font_row','^':'fr_pow','host-emit':'fr_emit',
 }
 
 class CompilerError(Exception): pass
@@ -96,7 +94,7 @@ def compile_program(sources):
     for ts,_,_ in main:
         for kind,v in ts:
             if kind=='word' and v.startswith(':'):usedregs[v[1:]]=None
-    chunks=['.code64','.text','.global franc_entry','franc_entry:', '  call f_init','  call f_boot','  ret']
+    chunks=['.code64','.text','.global franc_entry','franc_entry:', '  call f_boot','  ret']
     literal_strings=[]; counter=[0]
     def uid(): counter[0]+=1;return counter[0]
     def make(lines, toks, filename, number):
@@ -157,11 +155,7 @@ def compile_program(sources):
         body=[line.replace('.Lreturn_'+str(number),f'.Lreturn_{ident(name)}') for line in body]
         body.extend([f'.Lreturn_{ident(name)}:', '  popq %rbp','  ret'])
         chunks.extend(body)
-    chunks.extend(['f_init:', '  pushq %rbp', '  movq %rsp,%rbp'])
-    for toks,filename,number in main:
-        pre=[];make(pre,toks,filename,number)
-        chunks.extend(pre)
-    chunks.extend(['  popq %rbp','  ret'])
+    if main:raise CompilerError('top-level expressions unsupported in kernel AOT; put them in boot')
     chunks.append('.section .rodata')
     for name,st in literal_strings:
         chunks.append(f'{name}:')
