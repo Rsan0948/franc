@@ -11,9 +11,9 @@
 - Decimal repeating-cycle `~`, base `~`, unary-percent/binary-modulo `%`, hex `$`, binary `#`, and mixed-base fraction literals.
 - String literals (`"hello"`) with `type`, registers `a`–`z`, `:a`–`:z`, and dynamically allocated named global registers such as `:angle` / `angle`, and byte-level JIT memory access via `@`/`!`.
 - `floor` primitive; rational fixed-point rounding, continued fractions, approximations, intervals, and elementary transcendental functions defined in five `.frac` libraries.
-- Automated black-box tests running the actual generated code (62 core tests + 28 library checks).
+- Automated black-box tests running the actual generated code (62 core tests + 28 library checks + 19 Stage 2 compiler checks).
 
-**Not yet confirmed by actual boot execution:** Stage 1 boot image runs correctly under QEMU. A compiler written in Frac and a self-hosted Frac kernel are also not implemented.
+**Not yet confirmed by actual boot execution:** whether the Stage 1 boot image runs correctly under QEMU. A partial compiler is now written in Franc (`stage2/compiler.frac`), but full self-hosting and a kernel in Franc have not been achieved.
 
 ## Build and run
 
@@ -106,7 +106,7 @@ MIT. See [LICENSE](LICENSE).
 
 ## Stage 1 — in progress (private development)
 
-`stage1/` contains the first freestanding **x86-64 BIOS boot image** implementation: a 512-byte bootloader, identity-mapped long mode, minimal VGA/serial/PS2 console and memory allocator, and a kernel that compiles the Stage 0 JIT against a small freestanding libc shim. The original hosted Stage 0 remains usable, and all 90 host-side checks pass. Five rational math libraries are compiled into the Stage 1 kernel as source strings and loaded into the JIT before entering its REPL.
+`stage1/` contains the first freestanding **x86-64 BIOS boot image** implementation: a 512-byte bootloader, identity-mapped long mode, minimal VGA/serial/PS2 console and memory allocator, and a kernel that compiles the Stage 0 JIT against a small freestanding libc shim. The original hosted Stage 0 remains usable, and all 109 host-side checks pass. Five rational math libraries are compiled into the Stage 1 kernel as source strings and loaded into the JIT before entering its REPL.
 
 ```sh
 make -C stage1
@@ -169,3 +169,15 @@ not lexical locals, so concurrent/reentrant definitions should avoid collisions.
 
 Tests: `make test` runs the original 62 Stage 0 tests plus 28 library smoke tests.
 QEMU boot remains separate; static kernel-image checks are not proof of boot.
+
+## Stage 2 — partial Franc-authored compiler
+
+`stage2/compiler.frac` is a working native-code compiler **written in Franc**,
+bootstrapped by the Stage 0 C JIT. It tokenizes source, walks the dictionary,
+parses base-prefixed fraction literals, emits x86-64 bytes through `!`, and
+registers native word definitions. Nineteen execution checks compare its
+results to the expected values. Run `make test` or see [stage2/README.md](stage2/README.md).
+
+It does **not** yet compile conditional words, loops, or its own source; do not
+call Stage 2 fully self-hosted until a compiler built by the Franc compiler
+successfully compiles Franc's compiler again.
