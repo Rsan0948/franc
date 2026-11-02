@@ -1,0 +1,4 @@
+\ edit.frac -- RAM source edit path, using FracCalc line editing.
+\ "name" edit-line lets you replace a single-line source file, then load it.
+\ Edits survive in the current session only. No disk or full-screen editor yet.
+def edit-line :edit-name "Edit RAM source: " type edit-name type 10 emit "Current: " type edit-name source :edit-current edit-current ifnz edit-current type then 10 emit "> " type calc-read ifnz exit then edit-name calc-buffer save ;
