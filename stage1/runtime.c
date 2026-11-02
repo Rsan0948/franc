@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include <limits.h>
+#include "../gfx.h"
 #include "include/stdio.h"
 #include "include/stdlib.h"
 #include "include/string.h"
@@ -16,7 +17,7 @@ static FILE in_file={0},out_file={1},err_file={2};
 FILE *stdin=&in_file,*stdout=&out_file,*stderr=&err_file;
 static inline void outb(uint16_t p,uint8_t v){ __asm__ volatile("outb %0,%1"::"a"(v),"Nd"(p)); }
 static inline uint8_t inb(uint16_t p){uint8_t v;__asm__ volatile("inb %1,%0":"=a"(v):"Nd"(p));return v;}
-static volatile uint16_t *const vga=(uint16_t*)0xb8000;
+/* Mode 13h: 320x200x8; glyphs render into the pixel framebuffer. */
 static unsigned row,col;
 static int serial_ok;
 static void serial_init(void){
@@ -26,8 +27,7 @@ static void serial_init(void){
 }
 static void screen_scroll(void){
     if(row<25)return;
-    for(unsigned r=1;r<25;r++)for(unsigned c=0;c<80;c++)vga[(r-1)*80+c]=vga[r*80+c];
-    for(unsigned c=0;c<80;c++)vga[24*80+c]=0x0700|' ';
+    gfx_scroll_up(8,0);
     row=24;
 }
 static void console_raw(int ch){
@@ -38,13 +38,13 @@ static void console_raw(int ch){
     if(ch=='\n'){col=0;row++;screen_scroll();return;}
     if(ch=='\r'){col=0;return;}
     if(ch=='\b'){
-        if(col){col--;vga[row*80+col]=0x0700|' ';}
+        if(col){col--;gfx_glyph(' ',(int)col*8,(int)row*8,15,0);}
         return;
     }
     if(ch=='\t'){do{console_raw(' ');}while(col%4);return;}
     if(ch<32||ch>126)ch='?';
-    vga[row*80+col]=0x0f00|(uint8_t)ch;
-    if(++col==80){col=0;row++;screen_scroll();}
+    gfx_glyph((uint8_t)ch,(int)col*8,(int)row*8,15,0);
+    if(++col==40){col=0;row++;screen_scroll();}
 }
 int putchar(int ch){console_raw(ch);return ch;}
 int fputs(const char *s,FILE* f){(void)f;while(*s)putchar((unsigned char)*s++);return 0;}
@@ -192,10 +192,10 @@ _Noreturn void exit(int status){
 extern int frac_main(void);
 void kernel_main(void){
     serial_init();
-    for(unsigned i=0;i<80*25;i++)vga[i]=0x0700|' ';
+    gfx_init();
     row=col=0;
     printf("FracOS Stage 1 | 64-bit bare metal | Frac JIT\n");
-    printf("VGA + COM1 serial | booted without Linux\n\n");
+    printf("Mode 13h 320x200 | COM1 serial\n\n");
     (void)frac_main();
     exit(0);
 }
