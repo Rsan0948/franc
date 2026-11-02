@@ -1,0 +1,21 @@
+\ FracCalc: a calculator UI written in Frac, using shared eval + mutable dictionary.
+\ All definitions are one physical line because Stage 0 compiles lines independently.
+\ Type 'calc-main' at the REPL to start. Esc exits; enter evaluates, up recalls.
+\ Registers prefixed calc- to avoid collisions with mathematical libraries.
+0 :calc-ans
+0 :calc-len
+0 :calc-saved
+0 :calc-prev
+\ Insert character at the end; bounded to 127 bytes plus terminator.
+def calc-ins :calc-char calc-len 127 - if calc-buffer calc-len + calc-char b! calc-len 1 + :calc-len calc-buffer calc-len + 0 b! calc-char emit then ;
+def calc-backspace calc-len ifnz calc-len 1 - :calc-len calc-buffer calc-len + 0 b! 8 emit 32 emit 8 emit then ;
+\ One history record per 128-byte slot, 16 slots, modulo circular indexing.
+def calc-save calc-saved 16 % 128 * history-buffer + :calc-ptr 0 :calc-i begin calc-i calc-len - while calc-buffer calc-i + b@ calc-ptr calc-i + swap b! calc-i 1 + :calc-i repeat calc-ptr calc-i + 0 b! calc-saved 1 + :calc-saved ;
+def calc-recall calc-saved if0 exit then calc-prev calc-saved - if calc-saved calc-prev - 1 - 16 % 128 * history-buffer + :calc-ptr 0 :calc-len begin calc-len 127 - while calc-ptr calc-len + b@ :calc-char calc-char if0 exit then calc-buffer calc-len + calc-char b! calc-len 1 + :calc-len repeat calc-buffer calc-len + 0 b! then ;
+def calc-redraw 13 emit 0 :calc-i begin calc-i 39 - while 32 emit calc-i 1 + :calc-i repeat 13 emit "> " type calc-buffer type ;
+\ Read a line using key events: ASCII, 1001=up arrow, Esc=27.
+\ Returns 1 for Esc, 0 for Enter. Backspace and history are handled here.
+def calc-read 0 :calc-len 0 :calc-prev calc-buffer 0 b! begin key :calc-key calc-key 27 - if0 1 exit then calc-key 10 - if0 10 emit 0 exit then calc-key 13 - if0 10 emit 0 exit then calc-key 8 - if0 calc-backspace else calc-key 127 - if0 calc-backspace else calc-key 1001 - if0 calc-prev 1 + :calc-prev calc-recall calc-redraw else 31 calc-key - if calc-key 127 - if calc-key calc-ins then then then then then again ;
+def calc-calculate calc-len if0 exit then calc-save depth :calc-start calc-buffer eval depth calc-start - ifnz :calc-ans then ;
+def ans calc-ans ;
+def calc-main 1 key-mode "FracCalc | Enter: eval | Up: history | Esc: exit" type 10 emit begin "ans: " type calc-ans . "> " type calc-read ifnz 0 key-mode exit then calc-calculate again ;
