@@ -1,0 +1,5 @@
+\ Simple hypotrochoid from integer gear sizes: p q color spiro.
+\ The color and drawing are discrete, intermediate angles use rational math.
+\ Registers prefixed 'sp' are disjoint from approximation library registers.
+def spiro :spcol :spq :spp spq if0 exit then spp spq - :spa spa abs spq + :spmx 75 spmx / :spsc spq 120 * :spn 0 :spi begin spi spn - while 2 pi * spi * spn / :spt spa spsc * spt cos * :spxx spq spsc * spt spa * spq / cos * spxx + 160 + :spx spa spsc * spt sin * :spyy spq spsc * spt spa * spq / sin * spyy - 100 + :spy spx spy spcol pixel spi 1 + :spi repeat ;
+def spiro-demo 0 clearfb 5 2 14 spiro ;
