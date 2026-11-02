@@ -1,0 +1,7 @@
+\ Graphics helpers; Mode 13h is 320x200 with indexed 8-bit color.
+\ pixel (x y color --), line (x0 y0 x1 y1 color --).
+\ fillrect (x y w h color --), clearfb (color --), palette (index r g b --).
+def crosshair 0 clearfb 0 100 319 100 15 line 160 0 160 199 15 line ;
+def border 0 0 319 0 14 line 319 0 319 199 14 line 319 199 0 199 14 line 0 199 0 0 14 line ;
+\ A rational-valued slope has no rounding error until raster coordinates are truncated.
+def diagonal :dc 0 :di begin 320 di - while di di 5 * 8 / dc pixel di 1 + :di repeat ;
