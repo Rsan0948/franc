@@ -36,7 +36,11 @@ static Rat canon(int64_t n, int64_t d) { return canon128(n,d); }
 
 // ─── printing ────────────────────────────────────────────────────────
 static void print_rat(Rat r) {
+#ifdef FRANC_EMBED_LIBS
+    if (r.den == 0) printf(r.num == 0 ? "NaN" : "inf");
+#else
     if (r.den == 0) printf(r.num == 0 ? "\xe2\x8a\xa5" : "\xe2\x88\x9e");
+#endif
     else if (r.den == 1) printf("%lld", (long long)r.num);
     else printf("%lld/%lld", (long long)r.num, (long long)r.den);
 }
@@ -468,6 +472,68 @@ static void compile_tokens(char tokens[][256], int ntok) {
     }
 }
 
+// Stage 2 bootstrap bridge. These primitives expose addresses and memory
+// to the Franc-language compiler; tokenization, dictionary search, number
+// parsing, and native byte emission live in stage2/compiler.frac.
+// The 64 MiB JIT arena dedicates 4 MiB for source token storage and 8 MiB+
+// for disjoint Stage 2 output blocks. Stage 1 can compile these same words.
+static size_t g_s2_code_offset=32*1024*1024+8*1024*1024;
+static int s2_pop_int(int64_t* out) {
+    if (!need(1)) return 0;
+    Rat r=*--g_sp;
+    if (r.den!=1) { fprintf(stderr,"stage2: integer argument required\n"); return 0; }
+    *out=r.num; return 1;
+}
+HELPER void h_s2_byte_fetch(void) {
+    int64_t addr;
+    if (!s2_pop_int(&addr)) return;
+    // This compiler is deliberately low-level; like `type`, a corrupt pointer
+    // from a trusted Franc program is not isolated from the host process.
+    h_push(*(unsigned char*)(uintptr_t)addr,1);
+}
+HELPER void h_s2_dict_head(void) { h_push((int64_t)(uintptr_t)g_dict,1); }
+HELPER void h_s2_dict_next(void) {
+    int64_t p; if (!s2_pop_int(&p)) return;
+    h_push(p?(int64_t)(uintptr_t)((Word*)(uintptr_t)p)->next:0,1);
+}
+HELPER void h_s2_dict_name(void) {
+    int64_t p; if (!s2_pop_int(&p)) return;
+    h_push(p?(int64_t)(uintptr_t)((Word*)(uintptr_t)p)->name:0,1);
+}
+HELPER void h_s2_dict_code(void) {
+    int64_t p; if (!s2_pop_int(&p)) return;
+    h_push(p?(int64_t)(uintptr_t)((Word*)(uintptr_t)p)->addr:0,1);
+}
+HELPER void h_s2_token_buffer(void) { h_push((int64_t)(uintptr_t)(g_exec+g_scratch_start+4*1024*1024),1); }
+HELPER void h_s2_lit_addr(void) { h_push((int64_t)(uintptr_t)h_push,1); }
+HELPER void h_s2_code(void) {
+    if (g_s2_code_offset+4096>g_exec_size) { fprintf(stderr,"stage2 code arena exhausted\n"); h_push(0,1); return; }
+    size_t start=g_s2_code_offset;
+    g_s2_code_offset+=4096;
+    h_push((int64_t)(uintptr_t)(g_exec+start),1);
+}
+HELPER void h_s2_define(void) {
+    int64_t addr,name;
+    if (!s2_pop_int(&addr) || !s2_pop_int(&name)) return;
+    if ((uintptr_t)addr<(uintptr_t)(g_exec+g_scratch_start+8*1024*1024) ||
+        (uintptr_t)addr>=(uintptr_t)(g_exec+g_s2_code_offset) || !name) {
+        fprintf(stderr,"stage2: invalid word registration\n"); return;
+    }
+    const char *s=(const char*)(uintptr_t)name;
+    size_t n=strlen(s);
+    if (!n || n>=64) { fprintf(stderr,"stage2: invalid word name\n"); return; }
+    add_word(s,(void*)(uintptr_t)addr);
+}
+HELPER void h_s2_run(void) {
+    int64_t addr; if (!s2_pop_int(&addr)) return;
+    uintptr_t first=(uintptr_t)(g_exec+g_scratch_start+8*1024*1024);
+    uintptr_t last=(uintptr_t)(g_exec+g_s2_code_offset);
+    if ((uintptr_t)addr<first || (uintptr_t)addr>=last) {
+        fprintf(stderr,"stage2: invalid code address\n"); return;
+    }
+    ((void(*)(void))(uintptr_t)addr)();
+}
+
 // ─── bootstrap ───────────────────────────────────────────────────────
 static void bootstrap(void) {
     add_word("+",h_add); add_word("-",h_sub); add_word("*",h_mul); add_word("/",h_div);
@@ -483,6 +549,17 @@ static void bootstrap(void) {
     add_word("@",h_fetch); add_word("!",h_store);
     add_word("bye",h_bye);
     add_word("type",h_type); add_word("print",h_type); add_word("key",h_key);
+    add_word("byte@",h_s2_byte_fetch);
+    add_word("dict-head",h_s2_dict_head);
+    add_word("dict-next",h_s2_dict_next);
+    add_word("dict-name",h_s2_dict_name);
+    add_word("dict-code",h_s2_dict_code);
+    add_word("s2-token-buffer",h_s2_token_buffer);
+    add_word("s2-lit-addr",h_s2_lit_addr);
+    add_word("s2-code",h_s2_code);
+    add_word("s2-run",h_s2_run);
+    add_word("s2-define",h_s2_define);
+
     const char* imm[]={"def","if","if0","ifnz","else","then","begin","again","while","repeat","exit"};
     for (size_t i=0;i<sizeof(imm)/sizeof(*imm);i++) add_immediate(imm[i]);
 
