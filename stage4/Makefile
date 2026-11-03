@@ -24,15 +24,15 @@ kernel.elf: runtime.o font.o program.o kernel.ld
 kernel.bin: kernel.elf
 	$(OBJCOPY) -O binary -j .text -j .rodata -j .data $< $@
 # GNU binary tools package the 512-sector image; no Python packager.
-# Kernel=1..127, 200..255, 256..382; FRANCFS1=128..199.
+# Kernel=1..127, 200..263, 264..390; FRANCFS1=128..199.
 franos-aot.img: boot.bin kernel.bin
 	@test "$(shell wc -c < boot.bin)" -eq 512
-	@test "$(shell wc -c < kernel.bin)" -le 158720
+	@test "$(shell wc -c < kernel.bin)" -le 162816
 	@dd if=/dev/zero of=$@ bs=512 count=512 status=none
 	@dd if=boot.bin of=$@ conv=notrunc status=none
 	@dd if=kernel.bin of=$@ bs=512 count=127 seek=1 conv=notrunc status=none
-	@dd if=kernel.bin of=$@ bs=512 skip=127 count=56 seek=200 conv=notrunc status=none
-	@dd if=kernel.bin of=$@ bs=512 skip=183 count=127 seek=256 conv=notrunc status=none
+	@dd if=kernel.bin of=$@ bs=512 skip=127 count=64 seek=200 conv=notrunc status=none
+	@dd if=kernel.bin of=$@ bs=512 skip=191 count=127 seek=264 conv=notrunc status=none
 	@printf FRANCFS1 | dd of=$@ bs=512 seek=128 conv=notrunc status=none
 verify: franos-aot.img kernel.elf
 	python3 verify.py
