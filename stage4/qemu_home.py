@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """FrancOS Wave 1 UX acceptance in a real BIOS QEMU guest.
 
+This check uses the newly pinned Franc-generated seed and validates the
+actual VGA raster after guest navigation; UART markers alone are insufficient.
+
 Tests keyboard-only Home, lazy native apps, bounded file lifecycle, cold
 reboot persistence and framebuffer evidence. Python orchestrates the host;
 all guest UI/file/application logic runs in Franc + assembly. No green
