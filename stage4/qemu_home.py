@@ -94,6 +94,9 @@ class Guest:
         return result
 
     def screenshot(self, name):
+        # Allow the foreground Franc glyph raster to finish before taking
+        # an HMP framebuffer snapshot (UART output precedes VGA drawing).
+        time.sleep(0.7)
         target = CAPTURE / f"{name}.ppm"
         self.hmp(f"screendump {target}")
         deadline = time.monotonic() + 12
