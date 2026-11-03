@@ -4,6 +4,7 @@ on:
     branches: [stage4-roadmap-foundations]
     paths:
       - 'stage4/interrupts.S'
+      - 'stage4/scheduler.S'
       - 'stage4/runtime.S'
       - 'stage4/aot.frac'
       - 'stage4/bootstrap_seed.S'
@@ -16,6 +17,7 @@ on:
   pull_request:
     paths:
       - 'stage4/interrupts.S'
+      - 'stage4/scheduler.S'
       - 'stage4/qemu_irq.py'
       - 'stage4/runtime.S'
       - 'stage4/aot.frac'
@@ -41,6 +43,8 @@ jobs:
         run: python3 -m franctxt.build verify-image --image stage4/native_seed.img --kernel stage4/native_seed.bin
       - name: Timer-driven switching among host and two never-yielding CPU workers
         run: FRANC_TEST_PREEMPT=1 python3 stage4/qemu_irq.py stage4/native_seed.img
+      - name: Timer-preempt two never-yielding Franc JIT functions with private Rat stacks
+        run: FRANC_TEST_JIT_PREEMPT=1 python3 stage4/qemu_irq.py stage4/native_seed.img
       - name: Publish tested IRQ image identity
         run: python3 -m franctxt.build record --image stage4/native_seed.img --kernel stage4/native_seed.bin --passed native --output stage4/preempt-tested.franctxt
       - uses: actions/upload-artifact@v4

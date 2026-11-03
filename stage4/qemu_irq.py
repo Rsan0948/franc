@@ -86,6 +86,13 @@ with tempfile.TemporaryDirectory(prefix="franc-timer-") as tmp:
             assert number(line("ring3-probe .")) == 0, "Ring 3 must reject entry before protected IDT/TSS setup"
         if os.getenv("FRANC_TEST_PREEMPT") == "1":
             assert number(line("preempt-asm-demo .")) == 0, "Preempt demo without IRQ must fail closed"
+        if os.getenv("FRANC_TEST_JIT_PREEMPT") == "1":
+            line("def task-one 17 99 begin 1 + task-inc-a again ;")
+            line("def task-two 23 199 begin 2 + task-inc-b again ;")
+            line("def task-short 1 task-inc-a ;")
+            assert number(line("'task-one 'task-two task-preempt-run .")) == 0, (
+                "Native JIT scheduling must reject launch before IRQ initialization"
+            )
         line("irq-start .", b"1\nFrac> ")
         time.sleep(0.6)
         first = number(line("irq-ticks ."))
@@ -108,6 +115,33 @@ with tempfile.TemporaryDirectory(prefix="franc-timer-") as tmp:
             post_tick = number(line("irq-ticks ."))
             assert post_tick - prior_tick >= 120, (prior_tick, post_tick)
             print(f"PASS: CPU and private Franc Rat stack pointers were preempted and restored ({a}, {b} verified push/pop iterations)", flush=True)
+        if os.getenv("FRANC_TEST_JIT_PREEMPT") == "1":
+            line("0 0 task-preempt-run .", b"0\nFrac> ")
+            line("'task-one 'task-one task-preempt-run .", b"0\nFrac> ")
+            start_tick = number(line("irq-ticks ."))
+            # Both functions are compiled by the Franc Stage 2 JIT INSIDE QEMU,
+            # perform arithmetic on distinct rational stacks, never yield and
+            # increment independent native counters.
+            result = line("101 202 'task-one 'task-two task-preempt-run . . .", timeout=170)
+            assert b"1\n202\n101\nFrac> " in result, (
+                f"Native Franc JIT preemption or host Rat stack preservation failed: {result!r}"
+            )
+            a = number(line("preempt-a ."))
+            b = number(line("preempt-b ."))
+            assert a > 100 and b > 100, (a, b)
+            assert number(line("task-state-a .")) == 3
+            assert number(line("task-state-b .")) == 3
+            assert number(line("task-generation .")) == 1
+            assert number(line("irq-ticks .")) - start_tick >= 120
+            print(f"PASS: two independently stacked never-yielding Franc JIT words ran under IRQ0 ({a}, {b} iterations)", flush=True)
+            # A normally returning Franc JIT word must retire safely;
+            # the other worker continues until the fixed timer budget expires.
+            line("'task-short 'task-two task-preempt-run .", b"0\nFrac> ", timeout=170)
+            assert number(line("task-state-a .")) == 2
+            assert number(line("task-state-b .")) == 3
+            assert number(line("task-generation .")) == 2
+            assert number(line("2 3 + .")) == 5
+            print("PASS: returned Franc JIT task retires without an invalid IRET; host REPL resumes", flush=True)
         if os.getenv("FRANC_TEST_RING3") == "1":
             value = number(line("ring3-probe ."))
             assert value == 1, f"Expected a valid user syscall and protected page fault, got {value}"

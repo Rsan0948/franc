@@ -120,3 +120,12 @@ This is **not** a production Ring 3 process manager. It does not implement gener
 5. Later, integrate timer scheduling with process boundaries and the CPL3 fault/syscall experiment. No process/Ring 3 guarantees should be inferred from this ring-0 proof.
 
 The current change does not introduce a new Franc primitive because editing the compiler's `stage4/aot.frac` requires atomically regenerating and pinning the Franc-generated bootstrap seed and Franctxt seed lock. Keep that as a separately verified integration step, rather than bypass the reproducible bootstrap contract.
+
+
+### Native Franc JIT preemption — integration candidate (pending independent CI)
+
+Development branch: `stage4-franc-jit-preemption` atop `stage4-udp-scheduler-integration`. This increment registers a bounded native `task-preempt-run` dictionary primitive at boot without modifying the committed Franc-generated AOT seed. The primitive accepts two distinct, exact dictionary-registered Stage 2 JIT entrypoints, requires a started hardware PIT and dispatches them with IRET-based timer switching among host and two 16 KiB private CPU/rational stacks. Every normal task return marks its slot complete; a 120-tick budget retires remaining runnable slots. Native stack push/pop bounds and cooperative host state restoration are checked.
+
+Dedicated integration gate: `.github/workflows/preempt.yml` runs `FRANC_TEST_JIT_PREEMPT=1` to compile **two never-yielding Franc definitions inside QEMU** using `s2-eval`, verify both independent counters advance, ensure the host rational stack survives preemption, reject uninitialized/invalid/same-function launch, and test a third Franc word that returns normally. The old assembly-only proof remains separately exercised. These are implementation details, **not yet claims of verified behavior until CI passes**.
+
+**Remaining limits:** only one CPU and two trusted ring-0 JIT workers; a fixed 120-tick batch instead of a permanently running scheduler; no per-task Franc named-register state, secure syscall boundary, FPU/SIMD context, guarded CPU stacks, arbitrary task cancellation or recoverable general CPU faults. Task code must avoid JIT compilation, shared named-register mutation and unsafe native primitives. Do **not** claim a general multi-process OS scheduler based on this proof.
