@@ -144,7 +144,7 @@ def compile_program(sources):
                     raise CompilerError('then without if')
                 _,target=control.pop();lines.append(f'{target}:')
             elif token=='again':
-                if not control or control[-1][0]!='begin':raise CompilerError('again without begin')
+                if not control or control[-1][0]!='begin':raise CompilerError(f'{filename}:{number}: again without begin, stack={control!r}')
                 _,start=control.pop();lines.append(f'  jmp {start}')
             elif token=='repeat':
                 if len(control)<2 or control[-1][0]!='while' or control[-2][0]!='begin':
