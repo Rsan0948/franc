@@ -790,43 +790,6 @@ fr_s2_define:
     movq %rax,%r12
     call fr_pop
     movq %rax,%r13
-    /* TEMP: serial diagnostics for IDE definition names. */
-    testq %r13,%r13
-    jz .Ldebug_end
-    /* Include every JIT definition to locate the first missing symbol. */
-    pushq %rsi
-    pushq %rdi
-    pushq %rdx
-    pushq %rcx
-    movq %r13,%rsi
-.Ldebug_name:
-    movb (%rsi),%al
-    testb %al,%al
-    jz .Ldebug_newline
-    movb %al,%cl
-.Ldebug_ready:
-    movw $0x3fd,%dx
-    inb %dx,%al
-    testb $0x20,%al
-    jz .Ldebug_ready
-    movb %cl,%al
-    movw $0x3f8,%dx
-    outb %al,%dx
-    incq %rsi
-    jmp .Ldebug_name
-.Ldebug_newline:
-    movw $0x3fd,%dx
-    inb %dx,%al
-    testb $0x20,%al
-    jz .Ldebug_newline
-    movb $10,%al
-    movw $0x3f8,%dx
-    outb %al,%dx
-    popq %rcx
-    popq %rdx
-    popq %rdi
-    popq %rsi
-.Ldebug_end:
     cmpq $0x400000,%r12
     jb .Ldef_done
     cmpq s2_code_next(%rip),%r12
