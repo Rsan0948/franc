@@ -1,0 +1,44 @@
+name: FrancOS v1 Wave 4 — bounded services and shared VGA/serial UI
+on:
+  push:
+    branches: [francos-v1-wave4-services-ui]
+  pull_request:
+    paths:
+      - 'lib/ui.frac'
+      - 'lib/services.frac'
+      - 'lib/pkg.frac'
+      - 'stage4/app_sources.list'
+      - 'stage4/qemu_net.py'
+      - 'stage4/qemu_home.py'
+      - '.github/workflows/wave4-starter.yml'
+permissions:
+  contents: read
+jobs:
+  wave4-start:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify pinned seed and memory reservation authority
+        run: python3 -m franctxt.build preflight
+      - name: Verify Wave4 native JIT dependency and release UI contract
+        run: python3 -m unittest discover -s franctxt/tests -p 'test_wave4_contract.py' -v
+      - name: Install software QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Build pinned native kernel and app image
+        run: make -f stage4/Makefile.native native-seed
+      - name: Check exact source, kernel and disk manifest identities
+        run: python3 -m franctxt.build verify-image --image stage4/native_seed.img --kernel stage4/native_seed.bin
+      - name: Independent reusable UDP DNS exchange with bounded bad-input and timeout contracts
+        run: FRANC_TEST_UDP=1 FRANC_TEST_WAVE4=1 python3 stage4/qemu_net.py stage4/native_seed.img
+      - name: Keyboard native home/files/packages/IDE and uniform package VGA frame
+        env:
+          FRANC_TEST_WAVE4: "1"
+          FRANC_CAPTURE_DIR: stage4/screenshots-wave4
+        run: python3 stage4/qemu_home.py stage4/native_seed.img
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: francos-wave4-initial-vga-screens
+          path: stage4/screenshots-wave4/*.ppm
+          if-no-files-found: warn

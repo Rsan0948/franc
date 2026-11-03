@@ -1,0 +1,51 @@
+name: FrancOS v1 Wave 4 — one-image full OS release journey
+on:
+  push:
+    branches: [francos-v1-wave4-services-ui]
+  pull_request:
+    paths:
+      - 'stage4/**'
+      - 'lib/**'
+      - 'franctxt/**'
+      - '.github/workflows/wave4-completion.yml'
+      - 'docs/FRANCOS_V1_DUAL_TRACK_ROADMAP.md'
+permissions:
+  contents: read
+jobs:
+  integrated-v1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Franctxt seed provenance and static address reservations
+        run: python3 -m franctxt.build preflight
+      - name: Franc IDE/manifest/network native contracts
+        run: |
+          python3 -m unittest discover -s franctxt/tests -p 'test_ide_contract.py' -v
+          python3 -m unittest discover -s franctxt/tests -p 'test_wave4_contract.py' -v
+          python3 -m unittest discover -s franctxt/tests -p 'test_package_manifest.py' -v
+          python3 -m unittest discover -s franctxt/tests -p 'test_user_aot_contract.py' -v
+          python3 -m unittest discover -s franctxt/tests -p 'test_sha256_native.py' -v
+      - name: Install software x86-64 QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Rebuild exact native Franc/assembly-only integrated image
+        run: make -f stage4/Makefile.native native-seed
+      - name: Verify image and embedded bundle/registry/disk source identity
+        run: python3 -m franctxt.build verify-image --image stage4/native_seed.img --kernel stage4/native_seed.bin
+      - name: Execute actual keyboard/screen/disk/CPL3/network v1 journey through four cold boots
+        env:
+          FRANC_CAPTURE_DIR: stage4/v1-integrated-captures
+        run: python3 stage4/qemu_v1_journey.py stage4/native_seed.img
+      - name: Record exact tested v1 acceptance image (not a release tag)
+        run: |
+          python3 -m franctxt.build record --image stage4/native_seed.img --kernel stage4/native_seed.bin --passed native --passed apps --output stage4/v1-wave4-tested.franctxt
+          sha256sum stage4/native_seed.bin stage4/native_seed.img > stage4/v1-wave4-sha256.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: francos-v1-integrated-user-journey
+          path: |
+            stage4/v1-integrated-captures/*.ppm
+            stage4/v1-wave4-tested.franctxt
+            stage4/v1-wave4-sha256.txt
+          if-no-files-found: warn
