@@ -16,6 +16,7 @@ stage4/apps/native-programs.frac
 lib/bignum.frac
 lib/float.frac
 lib/litetofrac.frac
+lib/ui.frac
 lib/ide.frac
 lib/user_aot.frac
 lib/franctxt.frac
@@ -25,4 +26,5 @@ stage4/tasks.frac
 stage4/net.frac
 stage4/ip.frac
 stage4/udp.frac
+lib/services.frac
 stage4/fibers.frac
