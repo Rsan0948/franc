@@ -57,9 +57,11 @@ with tempfile.TemporaryDirectory(prefix="franc-roadmap-") as tmp:
             expect(bytes([c]), before, 12)
             time.sleep(0.11)
         os.write(guest.stdin.fileno(), b"\n")
-        text = expect(marker or b"Frac> ", pos, timeout)
+        text = expect(b"Frac> ", pos, timeout)
         if b"stage2: unsupported token" in text:
             raise AssertionError(f"Compiler rejected {command}: {text[-1200:]!r}")
+        if marker is not None and marker not in text:
+            raise AssertionError(f"Unexpected result for {command}: {text[-1200:]!r}")
         return text
 
     try:
