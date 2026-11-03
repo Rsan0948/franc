@@ -117,7 +117,7 @@ with tempfile.TemporaryDirectory(prefix='franc-selfhost-') as tmp:
         next_poll.register(next_guest.stdout,selectors.EVENT_READ)
         try:
             deadline=time.monotonic()+180
-            while time.monotonic()<deadline and b'AOT BOOT OK' not in next_output:
+            while time.monotonic()<deadline and b'Franc> ' not in next_output:
                 if next_guest.poll() is not None:break
                 if next_poll.select(0.2):
                     data=os.read(next_guest.stdout.fileno(),65536)
