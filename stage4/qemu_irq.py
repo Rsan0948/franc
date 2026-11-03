@@ -78,7 +78,8 @@ with tempfile.TemporaryDirectory(prefix="franc-timer-") as tmp:
 
     try:
         until(b"Franc> ", timeout=160)
-        key(b"l", b"APPS READY")
+        loaded = key(b"l", b"APPS READY")
+        assert b"stage2: unsupported token" not in loaded, loaded[-1200:]
         key(b"r", b"Frac> ")
         assert number(line("irq-ticks .")) == 0
         line("irq-start .", b"1\nFrac> ")

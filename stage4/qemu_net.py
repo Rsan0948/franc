@@ -75,7 +75,8 @@ with tempfile.TemporaryDirectory(prefix="franc-net-") as tmp:
 
     try:
         until(b"Franc> ", timeout=180)
-        key(b"l", b"APPS READY", timeout=310)
+        loaded = key(b"l", b"APPS READY", timeout=310)
+        assert b"stage2: unsupported token" not in loaded, loaded[-1200:]
         key(b"r", b"Frac> ")
         # Independent in-guest checksum and bounded-length tests before DMA.
         line("net-frame 2 net-zero net-frame 8 b! net-frame 2 ip-checksum .",
