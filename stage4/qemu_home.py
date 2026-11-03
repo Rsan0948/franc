@@ -100,15 +100,21 @@ class Guest:
         while not target.exists() and time.monotonic() < deadline:
             time.sleep(0.1)
         content = target.read_bytes()
-        assert content.startswith(b"P6\n"), (name, content[:128])
-        assert b"320 200" in content[:60], (name, content[:80])
-        assert len(content) > 192000, (name, len(content))
-        # A screenshot showing only a uniform color is not a usable screen.
-        pixels = content[-192000:]
-        assert len({pixels[i:i+3] for i in range(0, len(pixels), 1503)}) >= 2, (
+        import re
+        header = re.match(rb"P6\\s+(\\d+)\\s+(\\d+)\\s+255\\s", content)
+        assert header, (name, content[:100])
+        width, height = map(int, header.groups())
+        # QEMU screendump often doubles BIOS mode 13h to 640x400 while
+        # guest pixel coordinates remain the real 320x200 framebuffer.
+        assert (width, height) in ((320, 200), (640, 400)), (name, width, height)
+        size = width * height * 3
+        assert len(content) - header.end() == size, (name, len(content), size)
+        pixels = content[-size:]
+        stride = max(3, (size // 600) // 3 * 3)
+        assert len({pixels[i:i+3] for i in range(0, len(pixels), stride)}) >= 2, (
             "Framebuffer was blank or uniform", name
         )
-        print(f"PASS: captured nonblank 320x200 VGA {name} screenshot", flush=True)
+        print(f"PASS: captured nonblank mode-13h VGA {name} screenshot ({width}x{height})", flush=True)
 
     def close(self):
         if self.monitor:
