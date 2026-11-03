@@ -140,3 +140,18 @@ preemptive multitasking; the PCI probe does **not** transmit Ethernet frames,
 load a NIC driver, or implement TCP/IP. Userland and kernel remain a
 single trusted x86-64 address space. QEMU CI supplies an explicit RTL8139
 device and checks its identification.
+
+### Raw Ethernet transmission (experimental)
+
+The additional `stage4/apps/net.frac` module initializes a PCI RTL8139
+with programmed I/O, a guest-physical receive ring and a transmit DMA buffer.
+`net-send-demo` sends one 60-byte broadcast Ethernet frame with the
+experimental EtherType `0x88B5` and payload `FRANCOS-ETHER-TEST`. Native
+menu key `m` runs the test and prints success/failure. QEMU CI must prove
+the actual transmitted Ethernet frame is visible in a host-side PCAP captured
+with `filter-dump`, not only that the NIC's TX status bit was set.
+
+This is **raw Ethernet only**. It is not an IP stack, DHCP client, internet
+connection, socket API or general-purpose networking capability. The NIC
+buffer addresses are fixed assumptions of the QEMU 128 MiB test machine;
+do not use this experimental code on real hardware.

@@ -93,3 +93,14 @@ The fixed RAM assumptions (IDE at 0x06900000, tasks at 0x06a00000)
 are suitable only for the current 128 MiB QEMU identity-mapped test guest.
 The 32-bit port I/O helpers are architecture-specific **assembly**,
 not C, preserving the C-free kernel build.
+
+### Increment 2b: RTL8139 raw Ethernet frame (QEMU only)
+
+`stage4/apps/net.frac` performs PCI I/O/bus-master enablement, power-on,
+software reset with bounded polling, configures a fixed RX ring, then
+transmits one 60-byte Ethernet broadcast using TX descriptor zero.
+`stage4/qemu_net.py` captures the outgoing frame through QEMU's
+`filter-dump` object and checks both the Ethernet header and payload.
+No receive packet processing, ARP, IPv4/IPv6, UDP/TCP, DHCP, interrupts,
+or user-facing sockets are implemented. Network RAM assumptions remain
+architecture-specific, unisolated and unsuitable for physical devices.

@@ -1,0 +1,11 @@
+\ Franc RTL8139 raw Ethernet TX, polled and QEMU-only.
+\ Requires pci.frac, io32@/io32!, 128 MiB identity-mapped guest RAM.
+\ RX ring is reserved at 0x06c00000; TX frame at 0x06c10000.
+\ No IP, ARP, TCP/UDP, RX parser, interrupts or network security yet.
+\ NEVER run this experimental DMA code on unverified physical hardware.
+def net-rx-base $6c00000 ;
+def net-tx-base $6c10000 ;
+def net-enable-pci :ne-slot 0 ne-slot 0 4 pci-cfg@ 65535 band :ne-cmd ne-cmd 1 band if0 ne-cmd 1 + :ne-cmd then ne-cmd 4 band if0 ne-cmd 4 + :ne-cmd then 0 ne-slot 0 4 pci-address $CF8 swap io32! $CFC ne-cmd io16! 0 ne-slot 0 4 pci-cfg@ 5 band 5 - if0 1 else 0 then ;
+def net-init pci-rtl8139-slot :ni-slot ni-slot 0 - if 0 exit then ni-slot pci-rtl8139-bar :net-base net-base if0 0 exit then ni-slot net-enable-pci if0 0 exit then net-base 82 + 0 io8! net-base 55 + 16 io8! 0 :ni-count begin ni-count 20000 - while net-base 55 + io8@ 16 band if0 net-base 48 + net-rx-base io32! net-base 60 + 0 io16! net-base 68 + 15 io32! net-base 55 + 12 io8! 1 exit then ni-count 1 + :ni-count repeat 0 ;
+def net-frame 0 :nf-i begin nf-i 60 - while net-tx-base nf-i + 0 b! nf-i 1 + :nf-i repeat 0 :nf-i begin nf-i 6 - while net-tx-base nf-i + 255 b! net-tx-base nf-i 6 + + net-base nf-i + io8@ b! nf-i 1 + :nf-i repeat net-tx-base 12 + 136 b! net-tx-base 13 + 181 b! "FRANCOS-ETHER-TEST" :nf-message 0 :nf-i begin nf-message nf-i + b@ :nf-char nf-char if0 1 exit then net-tx-base 14 nf-i + + nf-char b! nf-i 1 + :nf-i again ;
+def net-send-demo net-init if0 0 exit then net-frame drop net-base 32 + net-tx-base io32! net-base 16 + 60 io32! 0 :ns-count begin ns-count 100000 - while net-base 16 + io32@ 32768 band ifnz 1 exit then ns-count 1 + :ns-count repeat 0 ;
