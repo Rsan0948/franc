@@ -14,6 +14,10 @@
 .Ltask_local_write_name: .asciz "task-local!"
 .Ltask_local_a_name: .asciz "task-local-a0"
 .Ltask_local_b_name: .asciz "task-local-b0"
+.Le820_count_name: .asciz "e820-count"
+.Le820_base_name: .asciz "e820-base"
+.Le820_length_name: .asciz "e820-length"
+.Le820_type_name: .asciz "e820-type"
 .section .data
 .balign 8
 /* Linked dictionary nodes: next, name, code. First next is set at boot. */
@@ -26,7 +30,11 @@ fr_task_dict_localread: .quad fr_task_dict_stateb, .Ltask_local_read_name, fr_ta
 fr_task_dict_localwrite: .quad fr_task_dict_localread, .Ltask_local_write_name, fr_task_local_write
 fr_task_dict_locala: .quad fr_task_dict_localwrite, .Ltask_local_a_name, fr_task_local_a0
 fr_task_dict_localb: .quad fr_task_dict_locala, .Ltask_local_b_name, fr_task_local_b0
-fr_task_dict_top: .quad fr_task_dict_localb, .Ltask_generation_name, fr_task_generation_word
+fr_task_dict_generation: .quad fr_task_dict_localb, .Ltask_generation_name, fr_task_generation_word
+fr_task_dict_e820_count: .quad fr_task_dict_generation, .Le820_count_name, fr_e820_count
+fr_task_dict_e820_base: .quad fr_task_dict_e820_count, .Le820_base_name, fr_e820_base
+fr_task_dict_e820_length: .quad fr_task_dict_e820_base, .Le820_length_name, fr_e820_length
+fr_task_dict_top: .quad fr_task_dict_e820_length, .Le820_type_name, fr_e820_type
 .section .bss
 .balign 8
 /* 0:host, 1:worker A, 2:worker B.

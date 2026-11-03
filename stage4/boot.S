@@ -29,6 +29,12 @@ _start:
   movb boot_drive,%dl
   int $0x13
   jc disk_error
+  /* BIOS E820 inventory before switching to protected/long mode.
+   * Store at low memory 0x5000 (up to 48 x 24-byte entries), with
+   * a signature/count at 0x4ff0/0x4ff4. Failed discovery is represented
+   * as an absent map, never as an assumption that RAM is available.
+   */
+  call e820_capture
   /* BIOS VGA mode 13h must be set before protected/long mode. */
   movw $0x0013,%ax
   int $0x10
@@ -41,6 +47,52 @@ _start:
   orl $1,%eax
   movl %eax,%cr0
   ljmp $0x08,$protected
+
+/* E820 24-byte entries. ES:DI = 0000:5000, EBX continuation.
+ * BIOS may return a 20-byte record; the 24-byte slot is always zero
+ * initialized and extended flags initialized to 1 before the call.
+ * Bounded to 48 entries to avoid all reserved loader/runtime regions.
+ */
+e820_capture:
+  pushw %es
+  pushw %di
+  pushw %bp
+  xorw %ax,%ax
+  movw %ax,%es
+  movl $0,0x4ff0
+  movw $0,0x4ff4
+  movw $0x5000,%di
+  xorw %bp,%bp
+  xorl %ebx,%ebx
+.e820_next:
+  movl $0,0(%di)
+  movl $0,4(%di)
+  movl $0,8(%di)
+  movl $0,12(%di)
+  movl $0,16(%di)
+  movl $1,20(%di)
+  movl $0xe820,%eax
+  movl $0x534d4150,%edx
+  movl $24,%ecx
+  int $0x15
+  jc .e820_exit
+  cmpl $0x534d4150,%eax
+  jne .e820_exit
+  cmpw $20,%cx
+  jb .e820_exit
+  incw %bp
+  cmpw $48,%bp
+  ja .e820_exit
+  addw $24,%di
+  testl %ebx,%ebx
+  jne .e820_next
+  movw %bp,0x4ff4
+  movl $0x30323845,0x4ff0    /* little-endian ASCII E820 */
+.e820_exit:
+  popw %bp
+  popw %di
+  popw %es
+  ret
 
 disk_error:
   movw $err_msg,%si
