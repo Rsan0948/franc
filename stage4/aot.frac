@@ -64,7 +64,7 @@ def aot-string :astr-text aot-id :astr-id ".section .rodata" type cr astr-id aot
 \ The Stage 2 line scratch buffer is available during AOT compilation.
 def aot-reg-end :are-pos begin s2-line-buffer are-pos + byte@ if0 are-pos 1 + exit then are-pos 1 + :are-pos again ;
 def aot-reg-find :arf-name 0 :arf-pos begin arf-pos aot-reg-used - if0 0 exit then s2-line-buffer arf-pos + arf-name s2-eq ifnz 1 exit then arf-pos aot-reg-end :arf-pos again ;
-def aot-reg-remember :arr-name arr-name aot-reg-find ifnz exit then aot-reg-used :arr-pos begin arr-name byte@ :arr-byte arr-pos 4095 - if0 exit then s2-line-buffer arr-pos + arr-byte b! arr-pos 1 + :arr-pos arr-name 1 + :arr-name arr-byte if0 arr-pos :aot-reg-used exit then again ;
+def aot-reg-remember :arr-name arr-name aot-reg-find ifnz exit then aot-reg-used :arr-pos begin arr-name byte@ :arr-byte arr-pos 16383 - if0 exit then s2-line-buffer arr-pos + arr-byte b! arr-pos 1 + :arr-pos arr-name 1 + :arr-name arr-byte if0 arr-pos :aot-reg-used exit then again ;
 def aot-reg-scan :ars-source 0 :aot-reg-used ars-source :s2p begin aot-next :ars-token ars-token if0 exit then ars-token byte@ 58 - if0 ars-token 1 + aot-reg-remember then again ;
 def aot-reg-label :arl-name "reg_" type arl-name aot-name ;
 def aot-reg-addr :ara-name "  leaq " type ara-name aot-reg-label "(%rip), %rdi" type cr ;
