@@ -46,6 +46,19 @@ targets. The Stage 1/3 C-backed kernel remains an intentionally separate fallbac
 Security limitations: no isolation, no privilege separation, no stack checks
 in the assembly primitives. Fixed, single-user x86-64/BIOS demonstration only.
 
+## Native application suite (development branch)
+
+Stage 4 now ships the **existing** 12 Franc source libraries on a separate disk
+bundle, not as additional AOT kernel code. Press **l** in the FrancOS console to
+compile the suite via the native Franc JIT, then choose **1–8** for the
+application menu. An independent QEMU test boots from the pinned Franc-generated
+assembly seed and verifies source compilation, factorial, rational arithmetic,
+Stern-Brocot navigation and the interactive FracCalc. Native app sources are
+loaded from LBA 1024 and higher; LBA 512 remains available for the kernel's
+self-bootstrap source bundle. No C or Python is invoked to construct the native
+OS or the app bundle. See [the full native app inventory](apps/README.md)
+for entries, compatibility adapters and caveats.
+
 ## Native console and keyboard migration (experimental)
 
 The next standalone image links the DejaVu-derived bitmap font as assembly data
