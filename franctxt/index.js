@@ -140,7 +140,7 @@ function validateKernel(entries) {
   if (!["none", "e1000"].includes(entries.get("network.driver"))) reject("bad network.driver");
   if (entries.get("network.enabled") && entries.get("network.driver") === "none")
     reject("network.enabled with no driver");
-  const parent = entries.get("history.parent");
+  const parent = entries.has("history.parent") ? entries.get("history.parent") : null;
   if (parent !== null && (typeof parent !== "string" ||
       !/^sha256:[0-9a-f]{64}$/.test(parent))) reject("invalid parent digest");
 }
