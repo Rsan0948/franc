@@ -227,6 +227,11 @@ with tempfile.TemporaryDirectory(prefix="franc-v1-journey-") as dirname:
         g.key(b"\x1b", b"Franc> ", timeout=120)
         print("PASS: normal calculator route returns to Home", flush=True)
         g.enter_repl()
+        for word in ("user-compile", "user-code-stage", "ide-run-user",
+                     "ide-main", "pkg-ui", "pkg-run-pair", "ui-frame",
+                     "svc-net-info", "svc-dns-request"):
+            assert g.value(f'"{word}" s2-find if0 0 else 1 then .') == 1, word
+        print("PASS: every required JIT UI/ABI entrypoint resolved after full native app bundle load", flush=True)
         g.line("20 fordland", b"Frac> ", timeout=170)
         g.screenshot("v1-02-graphics")
         g.leave_repl()
