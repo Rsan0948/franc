@@ -59,6 +59,6 @@ jobs:
       - name: Build native C/Python-free FrancOS with embedded Franctxt
         run: make -f stage4/Makefile.native native-seed
       - name: Validate raw persistent FRANCFS1 manifest and kernel binary digest
-        run: python3 franctxt/tests/test_native_disk.py stage4/native_seed.img stage4/native_seed.bin
+        run: PYTHONPATH=. python3 franctxt/tests/test_native_disk.py stage4/native_seed.img stage4/native_seed.bin
       - name: Boot guest, read native Franctxt, persist state and cold reboot
         run: python3 franctxt/tests/qemu_native.py stage4/native_seed.img
