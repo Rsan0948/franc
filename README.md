@@ -1,24 +1,44 @@
 # Franc — native-compiled rational language and miniature OS
 
-**Development status (November 2026):** The experimental `stage4-cfree-aot` branch
-now boots an assembly/Franc-only runtime in QEMU, self-recompiles its resident
-native compiler, and executes saved Franc startup source after cold reboot.
-The **initial AOT image build still uses Python**, so FrancOS is not yet
-fully self-building without outside high-level languages. See
-[`stage4/README.md`](stage4/README.md) for the verified scope and limitations.
+**Development status (November 2026):** The experimental
+[`stage4-franc-native-bootstrap`](https://github.com/Rsan0948/franc/tree/stage4-franc-native-bootstrap)
+branch now builds and boots FrancOS from a **committed, Franc-generated x86-64
+assembly compiler seed**, then compiles the complete operating-system kernel
+using Franc itself. Two successive native rebuilds are byte-identical to the
+seed kernel. This production build invokes **no Python, C compiler, libc, or
+C runtime**. A separate historical Python seed build is retained for regression
+testing. See [Stage 4](stage4/README.md) for architecture and limitations.
 
-Historical Stage 0–3 status: Stage 0 native JIT passes host tests;
-Stage 1 BIOS kernel has previously booted in QEMU; Stage 2 demonstrates
-*two-generation compiler self-compilation* in Franc; Stage 3 now includes a
-Franc-recompiled native interactive shell. The current Stage 3 boot path must
-pass QEMU CI before it is treated as verified. The OS intentionally retains
-C/ASM hardware drivers and low-level numeric/allocator primitives.
+### Build FrancOS with Franc and x86-64 assembly (development branch)
 
-Run `make test` for hosted checks, `make -C stage1` to build the BIOS image,
-and (on a QEMU-capable machine) `python3 stage1/qemu_smoke.py` to boot-test it.
+```sh
+# Requires GNU as/ld/objcopy, make, bash, dd, and QEMU x86-64.
+make -C stage4
 
-See [Stage 2](stage2/README.md) and [Stage 3](stage3/README.md) for current
-implementation details and explicit remaining limitations.
+# Equivalent explicit clean-source bootstrap:
+make -f stage4/Makefile.native native-proof
+
+# Historical Python AOT comparison only:
+make -C stage4 legacy-all
+```
+
+The verified native source seed is `stage4/bootstrap_seed.S` (520,642 bytes).
+The independent clean-checkout test blocks Python and C compiler invocations,
+assembles that seed, boots QEMU, recompiles all ten FrancOS source files twice,
+and compares assembly sources and kernel binaries. All three resulting kernels
+are **102,016 bytes**, with SHA-256
+`0944adba3bf6c524f43cade682ec8fcd5a778de1c6e7301a1afe6696bd2f67d5`.
+A fixed bootstrap seed is a trusted artifact, not a proof against compiler
+backdoors; reproducibility verifies consistency, not absolute correctness.
+
+Historical Stage 0–3 still has C-backed hosted and legacy operating-system
+paths for regression and comparison. Those are **not** dependencies of the
+native Stage 4 build. The project remains a miniature experimental OS, not a
+full TempleOS replacement, and Stage 0 semantic parity, peripheral coverage
+and hardened security boundaries are still incomplete.
+
+To run historical hosted checks, use `make test`. Stage 1 can still be built
+with `make -C stage1` and tested with its separate Python/QEMU scripts.
 
 ---
 
