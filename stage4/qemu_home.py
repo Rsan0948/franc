@@ -160,6 +160,8 @@ with tempfile.TemporaryDirectory(prefix="franc-wave1-") as temp:
         start = len(g.out)
         g.hmp("sendkey down")
         g.expect(b"> 2  Notes", start, 35)
+        # UART emits before VGA glyph rasterization; finish full redraw.
+        g.expect(b"Franc> ", start, 65)
         g.screenshot("home-selection")
         print("PASS: PS/2 Down changes native Home focus", flush=True)
 
