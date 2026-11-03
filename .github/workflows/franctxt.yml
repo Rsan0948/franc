@@ -36,6 +36,8 @@ jobs:
         run: python3 -m pip install cryptography
       - name: Python Franctxt 1 conformance, profiles and signatures
         run: python3 -m unittest discover -s franctxt/tests -p 'test_conformance.py' -v
+      - name: Compare freestanding x86-64 SHA-256 with hashlib at block boundaries
+        run: python3 -m unittest discover -s franctxt/tests -p 'test_sha256_native.py' -v
       - name: Independent JavaScript Franctxt 1 implementation
         run: node franctxt/tests/test_cross_language.cjs
       - name: Byte-for-byte Python/Node normalized fixture and hash equality
