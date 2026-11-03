@@ -80,7 +80,28 @@ with tempfile.TemporaryDirectory(prefix="franc-net-") as tmp:
         line("net-init .", b"1\nFrac> ")
         print("PASS: e1000 IO BAR and DMA descriptor initialization", flush=True)
         line("net-active .", b"1\nFrac> ")
-        line("net-arp-request .", b"1\nFrac> ")
+        transmission = line("net-arp-request .")
+        # Gather register and DMA evidence even when the TX command fails.
+        # This separates descriptor problems from PCI BAR and link issues.
+        diagnostics = {}
+        for register in (
+            "net-iobase .",
+            "$400 net-reg@ .",
+            "$3800 net-reg@ .",
+            "$3808 net-reg@ .",
+            "$3810 net-reg@ .",
+            "$3818 net-reg@ .",
+            "net-txdesc 8 + b@ .",
+            "net-txdesc 11 + b@ .",
+            "net-txdesc 12 + b@ .",
+            "net-sent .",
+        ):
+            diagnostics[register] = line(register).decode("ascii", errors="replace").strip()
+        print("e1000 TX result:", transmission, flush=True)
+        print("e1000 native registers:", diagnostics, flush=True)
+        if b"1\nFrac> " not in transmission:
+            raise AssertionError("e1000 failed to complete TX; see register snapshot above")
+
         time.sleep(1.5)
         line("net-rx-ready? .", b"1\nFrac> ")
         line("net-rx-ethertype .", b"2054\nFrac> ")
