@@ -166,6 +166,17 @@ def compile_program(sources):
         body.extend([f'.Lreturn_{ident(name)}:', '  popq %rbp','  ret'])
         chunks.extend(body)
     if main:raise CompilerError('top-level expressions unsupported in kernel AOT; put them in boot')
+    # Stage 2's Franc compiler resolves named registers through its mutable
+    # dictionary. Generate entry stubs for all AOT-declared registers so the
+    # compiler can recompile its own source without a C registration layer.
+    for reg in usedregs:
+        label = ident(reg)
+        chunks.extend([f'franc_reg_get_{label}:',
+                       f'  leaq reg_{label}(%rip), %rdi',
+                       '  jmp fr_reg_get',
+                       f'franc_reg_set_{label}:',
+                       f'  leaq reg_{label}(%rip), %rdi',
+                       '  jmp fr_reg_set'])
     chunks.append('.section .rodata')
     for name,st in literal_strings:
         chunks.append(f'{name}:')
@@ -174,6 +185,8 @@ def compile_program(sources):
     # Mutable definitions prepend to this static linked list at boot.
     entries = [(name, target) for name, target in OPS.items()]
     entries += [(name, labels[name]) for name, _, _, _ in defs]
+    entries += [(reg, f'franc_reg_get_{ident(reg)}') for reg in usedregs]
+    entries += [(f':{reg}', f'franc_reg_set_{ident(reg)}') for reg in usedregs]
     chunks.append('.section .rodata')
     for idx, (name, _) in enumerate(entries):
         chunks.append(f'franc_word_name_{idx}:')

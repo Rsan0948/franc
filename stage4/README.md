@@ -83,3 +83,8 @@ The smoke test checks both generation counts, executes a resulting native
 program, and requires a `SELFHOST OK` marker. This establishes runtime JIT
 compiler self-compilation only; producing a new bootable disk image still
 uses the host-side Python `compiler.py` and assembler/linker.
+
+The AOT compiler generates primitive dictionary entries for each named register
+referenced in its Franc sources. These assembly accessors let the native Stage 2
+compiler resolve register reads and writes while recompiling itself. Arbitrary
+new register names entered at runtime still need dynamic registration support.
