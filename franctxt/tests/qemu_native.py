@@ -74,7 +74,8 @@ with tempfile.TemporaryDirectory(prefix="franctxt-native-") as temp:
 
         try:
             until(b"Franc> ", timeout=160)
-            key(b"l", b"APPS READY")
+            loaded = key(b"l", b"APPS READY")
+            assert b"stage2: unsupported token" not in loaded, loaded[-1400:]
             key(b"r", b"Frac> ")
             line("ft-config ft-header? .", b"1\nFrac> ")
             line('ft-config "memory.page-size" ft-get ft-int .', b"4096\nFrac> ")
