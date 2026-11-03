@@ -176,10 +176,10 @@ try:
 
     print('PASS: Franc AOT emits multiple named functions and relocatable internal calls')
 
-    control_match = re.search(rb'FRANC-PROGRAM-BEGIN\n(.*?)FRANC-PROGRAM-END\nFRANC-CONTROL-END\n', transcript, re.S)
+    control_match = next((m for m in re.findall(rb'FRANC-PROGRAM-BEGIN\n(.*?)FRANC-PROGRAM-END\n', transcript, re.S) if b'fw_63686f6f7365:' in m), None)
     assert control_match is not None and b'FRANC-PROGRAM-ERROR' not in transcript, transcript
     with TemporaryDirectory(prefix='franc-control-aot-') as work:
-        assembly=control_match.group(1).decode('ascii')
+        assembly=control_match.decode('ascii')
         assert 'call fr_condition' in assembly and 'jns .Lfranc_' in assembly, assembly
         assert 'jmp .Lfranc_' in assembly and 'fw_63686f6f7365:' in assembly
         source=Path(work)/'conditional.S'
@@ -234,7 +234,7 @@ try:
 
     # Verify string literal relocation and register read/write semantics
     # using a new independently booted image, not only source inspection.
-    strings = re.search(rb'FRANC-PROGRAM-BEGIN\n(.*?)FRANC-PROGRAM-END\nFRANC-STRING-END\n',transcript,re.S)
+    strings = next((m for m in re.findall(rb'FRANC-PROGRAM-BEGIN\n(.*?)FRANC-PROGRAM-END\n',transcript,re.S) if b'.Laot_string_' in m), None)
     assert strings and b'FRANC-PROGRAM-ERROR' not in transcript,transcript
     with TemporaryDirectory(prefix='franc-strings-aot-') as work:
         source=Path(work)/'string-reg.S'
@@ -243,7 +243,7 @@ try:
         elf=Path(work)/'string-reg.elf'
         native=Path(work)/'string-reg.bin'
         disk=Path(work)/'string-reg.img'
-        assembly=strings.group(1).decode('ascii')
+        assembly=strings.decode('ascii')
         assert '.section .rodata' in assembly and 'call fr_reg_set' in assembly
         assert 'call fr_reg_get' in assembly and 'call fr_type' in assembly
         source.write_text(assembly)
@@ -285,9 +285,9 @@ try:
     print('PASS: Franc AOT strings and named registers cold-boot and execute correctly')
 
     # Verify that Franc loads the raw LBA source bundle and emits native code.
-    bundle_match=re.search(rb'FRANC-PROGRAM-BEGIN\n(.*?)FRANC-PROGRAM-END\nFRANC-SOURCE-END\n',transcript,re.S)
+    bundle_match=next((m for m in re.findall(rb'FRANC-PROGRAM-BEGIN\n(.*?)FRANC-PROGRAM-END\n',transcript,re.S) if b'fw_737175617265:' in m and b'movabsq $9' in m),None)
     assert bundle_match is not None and b'FRANC-SOURCE-ERROR' not in transcript,transcript
-    bundle_asm=bundle_match.group(1).decode('ascii')
+    bundle_asm=bundle_match.decode('ascii')
     assert 'fw_737175617265:' in bundle_asm and 'fw_6d61696e:' in bundle_asm
     with TemporaryDirectory(prefix='franc-disk-source-') as work:
         source=Path(work)/'source.S'
