@@ -4,9 +4,14 @@
 \ Renders a 40-column header, high-contrast dividing rule and common error
 \ and footer language. No framebuffer mode probing outside vc-* primitives.
 \ (title --)
-def ui-frame 0 vc-clear vc-home "FrancOS | " vc-type vc-type vc-newline "---------------------------------------" vc-type vc-newline ;
+def ui-rule "---------------------------------------" vc-type vc-newline ;
+\ Shared headline grammar matches the pinned BIOS Home/Files AOT titles:
+\ "FrancOS HOME |..." / "FrancOS FILES |..." / "FrancOS IDE |...".
+def ui-title "FrancOS " vc-type vc-type ;
+def ui-frame 0 vc-clear vc-home ui-title vc-newline ui-rule ;
+def ui-file-label :lc-want ui-title lc-want vc-type vc-newline ui-rule ;
 \ (shortcuts --). Only one line may be used in the 40-column VGA viewport.
-def ui-help "Keys: " vc-type vc-type vc-newline ;
+def ui-help "Keys | " vc-type vc-type vc-newline ;
 \ (message --): make failure observable by serial readers and VGA users.
 def ui-error "ERROR | " vc-type vc-type vc-newline ;
 def ui-ok "OK | " vc-type vc-type vc-newline ;
