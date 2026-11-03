@@ -243,6 +243,15 @@ with tempfile.TemporaryDirectory(prefix="franc-net-") as tmp:
             line("net-sent .", b"5\nFrac> ")
             line("net-received .", b"5\nFrac> ")
             print("PASS: native UDP checksum, DNS request and validated DNS response", flush=True)
+            if os.getenv("FRANC_TEST_WAVE4") == "1":
+                line("svc-net-ready .", b"1\nFrac> ")
+                line("svc-storage-ready .", b"1\nFrac> ")
+                line("0 svc-dns-poll .", b"-4\nFrac> ")
+                line("2049 svc-dns-poll .", b"-4\nFrac> ")
+                service = line("1024 svc-dns-request .", timeout=150)
+                assert b"1\nFrac> " in service, service
+                print("PASS: bounded reusable DNS service survived a second real QEMU e1000 query", flush=True)
+
 
 
         print("PASS: native e1000 completed DMA TX and received an ARP reply", flush=True)
