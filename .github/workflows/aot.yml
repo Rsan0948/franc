@@ -20,5 +20,7 @@ jobs:
         run: python3 stage4/test_packaging.py
       - name: Install QEMU
         run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Franc full source AOT integration (experimental)
+        run: python3 stage4/qemu_selfhost.py
       - name: Cold boot C-free AOT image in software QEMU
         run: python3 stage4/qemu_aot.py

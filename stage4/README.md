@@ -195,3 +195,14 @@ respects backslash-escaped quotation marks, bounds token writes and handles
 signed 64-bit literals (except the INT64_MIN absolute-value printing edge).
 CI stages a commented source fixture containing escaped quotes and a value
 above 32 bits, then assembles the emitted native program.
+
+## Full-source Franc AOT proof gate (in development)
+
+The dedicated `qemu_selfhost.py` test stages the *entire* Franc kernel,
+source store, drivers, Stage 2 compiler, REPL and Franc AOT sources using
+`source_pack.sh` without Python source translation, then invokes the `k`
+command to ask FrancOS to emit the full kernel assembly. CI assembles the
+result and asserts the boot and native compiler symbols. This is an
+**intermediate compiler-completeness gate**, not an assertion that a rebuilt
+image boots yet. The QEMU test harness itself is Python; eventual bootstrapping
+must eliminate it from the production build path.
