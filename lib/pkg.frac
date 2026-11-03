@@ -1,11 +1,49 @@
-\ Offline package-management foundation for the 12-file FRANCFS1 source store.
-\ No HTTP, downloads, dependency resolution or signature verification yet.
-\ pkg-install (name source -- success), pkg-load (name -- compiled-line-count).
-\ A file currently holds at most 2047 bytes; caller must trust the source.
+\ FrancOS U3: bounded *offline* package lifecycle.
+\ The old pkg-install/pkg-load API remains explicitly TRUSTED development input
+\ for legacy source tests; verified packages use separate guarded entrypoints.
+\ Native FRANCFS1 allows 12 files, of which two are system identity docs.
+\ Each of two supported package IDs (app, base) has two immutable banks
+\ (source+canonical manifest), supporting verified update and rollback.
+\ This is an intentionally bounded v1 package manager, not a general solver.
 def pkg-install :pkg-source :pkg-name pkg-name pkg-source fs-save ;
 def pkg-load :pkg-name pkg-name fs-source :pkg-loaded pkg-loaded if0 0 else pkg-loaded s2-source then ;
 def pkg-list fs-files ;
 def pkg-ready fs-ready? ;
-\ Wave 1 accessible menu for existing offline source-package primitives.
-\ This is NOT a manifest/dependency/update/rollback implementation (U3).
-def pkg-ui 0 vc-clear vc-home "FrancOS PACKAGES (source slots)" vc-type vc-newline "l List | o Open/load | Esc Home" vc-type vc-newline "Trust bundled/local source only." vc-type vc-newline pkg-ready if0 "PACKAGE DISK NOT READY" vc-type vc-newline exit then begin "pkg> " vc-type dk-key :pkg-name pkg-name 27 - if0 vc-newline exit then pkg-name 108 - if0 pkg-list else pkg-name 111 - if0 "Load file> " vc-type rl-read if0 repl-buffer pkg-load if0 "PACKAGE LOAD FAILED" vc-type vc-newline else "SOURCE COMPILED" vc-type vc-newline then then else "l list | o open | Esc" vc-type vc-newline then then again ;
+
+\ The first 256 bytes of the native Franctxt reservation hold ft-get results.
+\ 0x6d00200..0x6d00a00 holds our full independent 2048-byte manifest copy.
+def pkg-manifest-buffer ft-value-buffer 512 + ;
+def pkg-cache-manifest :p-copy-source p-copy-source if0 0 exit then 0 :p-copy-i begin p-copy-i 2047 - while p-copy-source p-copy-i + byte@ :p-copy-char pkg-manifest-buffer p-copy-i + p-copy-char b! p-copy-char if0 pkg-manifest-buffer exit then p-copy-i 1 + :p-copy-i repeat pkg-manifest-buffer 2047 + 0 b! pkg-manifest-buffer ;
+\ Test all required fields against the *actual raw SHA256*, not Franctxt
+\ semantic SHA. This does not confer release trust to an unsigned manifest.
+def pkg-verify :p-payload :p-manifest p-manifest ft-header? if0 0 exit then p-manifest "schema" ft-get ft-unquote "francos.package.v1" s2-eq if0 0 exit then p-manifest "package.file-count" ft-get ft-int 1 - ifnz 0 exit then p-manifest "package.file.0.bytes" ft-get ft-int p-payload fs-len - ifnz 0 exit then p-manifest "package.file.0.sha256" ft-get ft-unquote :p-expected p-expected if0 0 exit then p-expected fs-len 71 - ifnz 0 exit then p-payload dup fs-len pkg-sha256 :p-computed p-computed if0 0 exit then p-expected 7 + p-computed s2-eq ;
+\ Two fixed bank names per ID; no arbitrary device path can be supplied.
+def pkg-names :p-side :p-id p-id "app" s2-eq ifnz p-side if0 "pkg-app0.frac" :p-bank-source "pkg-app0.franctxt" :p-bank-manifest else "pkg-app1.frac" :p-bank-source "pkg-app1.franctxt" :p-bank-manifest then 1 exit then p-id "base" s2-eq ifnz p-side if0 "pkg-base0.frac" :p-bank-source "pkg-base0.franctxt" :p-bank-manifest else "pkg-base1.frac" :p-bank-source "pkg-base1.franctxt" :p-bank-manifest then 1 exit then 0 ;
+\ Return generation >=1 iff this bank has a coherent, SHA256-verified
+\ source/manifest, matching package ID and exact bank filename.
+def pkg-bank-valid :p-side :p-id p-id p-side pkg-names if0 -1 exit then p-bank-manifest fs-source pkg-cache-manifest :p-manifest p-manifest if0 -1 exit then p-bank-source fs-source :p-payload p-payload if0 -1 exit then p-manifest p-payload pkg-verify if0 -1 exit then p-manifest "package.id" ft-get ft-unquote p-id s2-eq if0 -1 exit then p-manifest "package.file.0.name" ft-get ft-unquote p-bank-source s2-eq if0 -1 exit then p-manifest "package.generation" ft-get ft-int :p-current p-current 1 - if -1 else p-current then ;
+\ Choose the newest coherent bank, even after a torn/premature source write.
+\ A damaged latest version cannot suppress the earlier verified generation.
+def pkg-select :p-id p-id 0 pkg-bank-valid :p-g0 p-id 1 pkg-bank-valid :p-g1 p-g0 0 - if p-g1 0 - if 0 exit then 1 :p-active p-g1 :p-generation 1 exit then p-g1 p-g0 - if 0 :p-active p-g0 :p-generation else 1 :p-active p-g1 :p-generation then 1 ;
+\ Native package upload requires a *trusted offline staging manifest and
+\ source* already on FRANCFS1, e.g. via the IDE or image installer. The
+\ manifest must name the inactive fixed bank filename and use a strictly
+\ newer generation, so the old verified bank remains rollbackable.
+\ (staging-manifest staging-source package-id -- success).
+def pkg-install-verified :p-request-id :p-manifest-name :p-source-name p-request-id pkg-select ifnz p-active if0 1 :p-target else 0 :p-target then p-generation :p-prev else 0 :p-target 0 :p-prev then p-request-id p-target pkg-names if0 0 exit then p-bank-source :p-target-source p-bank-manifest :p-target-manifest 0 :p-base-version p-request-id "app" s2-eq ifnz "base" pkg-select ifnz "base" p-active pkg-names drop p-bank-manifest fs-source :p-raw p-raw ifnz p-raw "package.version" ft-get ft-unquote s2-intern :p-base-version then then then p-manifest-name fs-source pkg-cache-manifest :p-manifest p-manifest if0 0 exit then p-source-name fs-source :p-payload p-payload if0 0 exit then p-manifest p-payload pkg-verify if0 0 exit then p-manifest "package.id" ft-get ft-unquote p-request-id s2-eq if0 0 exit then p-manifest "package.file.0.name" ft-get ft-unquote p-target-source s2-eq if0 0 exit then p-manifest "package.generation" ft-get ft-int :p-current p-current p-prev - if0 0 exit then p-current p-prev - if 0 exit then p-manifest "package.dependency-count" ft-get ft-int :p-deps p-request-id "base" s2-eq ifnz p-deps ifnz 0 exit then else p-deps 1 - ifnz 0 exit then p-base-version if0 0 exit then p-manifest "package.dependency.0.id" ft-get ft-unquote "base" s2-eq if0 0 exit then p-manifest "package.dependency.0.version" ft-get ft-unquote p-base-version s2-eq if0 0 exit then then p-target-source p-payload fs-save if0 0 exit then p-target-manifest p-manifest fs-save if0 0 exit then p-request-id p-target pkg-bank-valid p-current - ifnz 0 else 1 then ;
+\ Roll back only if the older alternate bank is still verified.
+\ (package-id -- success) removes newer manifest before its data sectors.
+def pkg-rollback :p-request-id p-request-id pkg-select if0 0 exit then p-active :p-target p-target if0 1 :p-side else 0 :p-side then p-request-id p-side pkg-bank-valid 0 - if 0 exit then p-request-id p-target pkg-names if0 0 exit then p-bank-manifest fs-delete if0 0 exit then p-bank-source fs-delete drop 1 ;
+\ Uninstall publishes no runnable manifest when complete. If a power
+\ failure interrupts multi-sector removal, previous banks may reappear;
+\ directory updates are not yet write-ahead journaled or sector-atomic.
+def pkg-uninstall :p-request-id p-request-id "base" s2-eq ifnz "app" pkg-select ifnz 0 exit then then p-request-id 0 pkg-names if0 0 exit then p-bank-manifest fs-delete drop p-bank-source fs-delete drop p-request-id 1 pkg-names if0 0 exit then p-bank-manifest fs-delete drop p-bank-source fs-delete drop p-request-id pkg-select ifnz 0 else 1 then ;
+\ Load only verified source, parse the restricted Franc CPL3 grammar,
+\ admit exact audited opcodes, then run under private CR3 using Wave 3 F3.
+\ (package-id slot -- success)
+def pkg-stage-user :p-slot :p-request-id p-request-id pkg-select if0 0 exit then p-request-id p-active pkg-names if0 0 exit then p-bank-manifest fs-source pkg-cache-manifest :p-manifest p-manifest if0 0 exit then p-bank-source fs-source :p-payload p-payload if0 0 exit then p-manifest p-payload pkg-verify if0 0 exit then p-payload user-compile :p-count p-count if0 0 exit then user-code-base p-count p-slot user-code-stage ;
+\ app=faulting task A, base=healthy task B; no privileged source JIT.
+def pkg-run-pair "app" 1 pkg-stage-user if0 0 exit then "base" 2 pkg-stage-user if0 0 exit then user-compiled-probe ;
+def pkg-show "base" pkg-select ifnz "BASE | generation " vc-type p-generation . else "BASE | not installed" vc-type vc-newline then "app" pkg-select ifnz "APP | generation " vc-type p-generation . else "APP | not installed" vc-type vc-newline then ;
+\ Full UI is keyboard driven; source files/manifests are chosen explicitly.
+def pkg-ui 0 vc-clear vc-home "FrancOS PACKAGES | SHA256 verified" vc-type vc-newline "l Status | i Install/update | b Rollback" vc-type vc-newline "u Uninstall | x Run app+base | Esc Home" vc-type vc-newline "Offline, fixed app/base bank slots" vc-type vc-newline begin "pkg> " vc-type dk-key :pkg-name pkg-name 27 - if0 vc-newline exit then pkg-name 108 - if0 pkg-show else pkg-name 105 - if0 "Manifest staging filename> " vc-type rl-read ifnz exit then repl-buffer s2-intern :p-manifest-name "Source staging filename> " vc-type rl-read ifnz exit then repl-buffer s2-intern :p-source-name "Package id (app/base)> " vc-type rl-read ifnz exit then p-manifest-name p-source-name repl-buffer pkg-install-verified ifnz "INSTALLED VERIFIED" vc-type vc-newline else "INSTALL REFUSED" vc-type vc-newline then else pkg-name 98 - if0 "Rollback app/base> " vc-type rl-read ifnz exit then repl-buffer pkg-rollback ifnz "ROLLED BACK" vc-type vc-newline else "NO VALID PREVIOUS BANK" vc-type vc-newline then else pkg-name 117 - if0 "Uninstall app/base> " vc-type rl-read ifnz exit then repl-buffer pkg-uninstall ifnz "UNINSTALLED" vc-type vc-newline else "UNINSTALL REFUSED" vc-type vc-newline then else pkg-name 120 - if0 pkg-run-pair . else "l i b u x Esc" vc-type vc-newline then then then then then again ;
