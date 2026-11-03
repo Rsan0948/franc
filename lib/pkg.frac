@@ -51,7 +51,7 @@ def pkg-stage-user :pcl-bus :pc-bus pc-bus pkg-select if0 0 exit then pc-bus ftr
 \ Before staging any code, verify the already-installed app's dependency
 \ still pins exactly the currently selected base version.
 def pkg-dependency-valid "app" pkg-select if0 0 exit then "app" ftr-p pkg-names if0 0 exit then fman-v fs-source pkg-cache-manifest :lc-sp lc-sp if0 0 exit then lc-sp "package.dependency.0.version" ft-get ft-unquote s2-intern :fib-b fib-b if0 0 exit then "base" pkg-select if0 0 exit then "base" ftr-p pkg-names if0 0 exit then fman-v fs-source pkg-cache-manifest :lc-sp lc-sp if0 0 exit then lc-sp "package.version" ft-get ft-unquote fib-b s2-eq ;
-def pkg-run-pair pkg-dependency-valid if0 0 exit then "app" 1 pkg-stage-user if0 0 exit then "base" 2 pkg-stage-user if0 0 exit then user-compiled-probe ;
+def pkg-run-pair pkg-dependency-valid if0 0 exit then "app" 1 pkg-stage-user if0 0 exit then "base" 2 pkg-stage-user if0 0 exit then irq-start drop ring3-probe drop user-compiled-probe ;
 \ Show actual manifest version as well as bank generation; never describe
 \ an invalid/corrupted bank as installed.
 def pkg-show-one :pc-bus pc-bus vc-type pc-bus pkg-select if0 " not installed" vc-type vc-newline exit then pc-bus ftr-p pkg-names if0 " invalid identity" vc-type vc-newline exit then fman-v fs-source pkg-cache-manifest :lc-sp lc-sp if0 " missing manifest" vc-type vc-newline exit then lc-sp "package.version" ft-get ft-unquote :lc-want " version " vc-type lc-want ifnz lc-want vc-type else "?" vc-type then " | generation " vc-type ftr-s . ;
