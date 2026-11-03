@@ -99,11 +99,9 @@ with tempfile.TemporaryDirectory(prefix='franc-native-apps-') as temp:
         # Execute Ford and spirograph library code, not just load their names.
         # Small deterministic scenes bound the time of this software-QEMU gate.
         send_key(b'r',b'Frac> ',timeout=45)
-        send_line('1 10 14 ford',b'Frac> ',timeout=120)
-        send_line('32 199 pixel@ .',b'14\nFrac> ',timeout=60)
+        send_line('1 2 14 ford 160 175 pixel@ .',b'14\nFrac> ',timeout=180)
         print('PASS: native Ford circle draws at its exact rational center',flush=True)
-        send_line('1 1 14 spiro',b'Frac> ',timeout=300)
-        send_line('235 100 pixel@ .',b'14\nFrac> ',timeout=60)
+        send_line('1 1 14 spiro 235 100 pixel@ .',b'14\nFrac> ',timeout=360)
         print('PASS: native spirograph renders and colors a framebuffer pixel',flush=True)
         send_key(b'\x1b',b'Franc> ',timeout=45)
         print('PASS: native Franc app suite integrated in C-free FrancOS',flush=True)
