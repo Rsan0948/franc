@@ -2378,14 +2378,14 @@ fw_76632d636c656172:
 .Lfranc_132:
   ret
 fw_76632d676c797068:
-.comm reg_fw_76672d6368,16,16
-  leaq reg_fw_76672d6368(%rip), %rdi
+.comm reg_fw_76672d79,16,16
+  leaq reg_fw_76672d79(%rip), %rdi
   call fr_reg_set
 .comm reg_fw_76672d78,16,16
   leaq reg_fw_76672d78(%rip), %rdi
   call fr_reg_set
-.comm reg_fw_76672d79,16,16
-  leaq reg_fw_76672d79(%rip), %rdi
+.comm reg_fw_76672d6368,16,16
+  leaq reg_fw_76672d6368(%rip), %rdi
   call fr_reg_set
   movabsq $0, %rdi
   movabsq $1, %rsi
@@ -26651,39 +26651,37 @@ aot_set_fw_76632d6369:
   .quad .Laot_word_name_380
   .quad aot_set_fw_76632d6369
 .section .text
-aot_get_fw_76672d6368:
-  leaq reg_fw_76672d6368(%rip), %rdi
+aot_get_fw_76672d79:
+  leaq reg_fw_76672d79(%rip), %rdi
   jmp fr_reg_get
-aot_set_fw_76672d6368:
-  leaq reg_fw_76672d6368(%rip), %rdi
+aot_set_fw_76672d79:
+  leaq reg_fw_76672d79(%rip), %rdi
   jmp fr_reg_set
 .section .rodata
 .Laot_word_name_381:
   .byte 118
   .byte 103
   .byte 45
-  .byte 99
-  .byte 104
+  .byte 121
   .byte 0
 .section .data
 .Laot_word_entry_381:
   .quad .Laot_word_entry_380
   .quad .Laot_word_name_381
-  .quad aot_get_fw_76672d6368
+  .quad aot_get_fw_76672d79
 .section .rodata
 .Laot_word_name_382:
   .byte 58
   .byte 118
   .byte 103
   .byte 45
-  .byte 99
-  .byte 104
+  .byte 121
   .byte 0
 .section .data
 .Laot_word_entry_382:
   .quad .Laot_word_entry_381
   .quad .Laot_word_name_382
-  .quad aot_set_fw_76672d6368
+  .quad aot_set_fw_76672d79
 .section .text
 aot_get_fw_76672d78:
   leaq reg_fw_76672d78(%rip), %rdi
@@ -26717,37 +26715,39 @@ aot_set_fw_76672d78:
   .quad .Laot_word_name_384
   .quad aot_set_fw_76672d78
 .section .text
-aot_get_fw_76672d79:
-  leaq reg_fw_76672d79(%rip), %rdi
+aot_get_fw_76672d6368:
+  leaq reg_fw_76672d6368(%rip), %rdi
   jmp fr_reg_get
-aot_set_fw_76672d79:
-  leaq reg_fw_76672d79(%rip), %rdi
+aot_set_fw_76672d6368:
+  leaq reg_fw_76672d6368(%rip), %rdi
   jmp fr_reg_set
 .section .rodata
 .Laot_word_name_385:
   .byte 118
   .byte 103
   .byte 45
-  .byte 121
+  .byte 99
+  .byte 104
   .byte 0
 .section .data
 .Laot_word_entry_385:
   .quad .Laot_word_entry_384
   .quad .Laot_word_name_385
-  .quad aot_get_fw_76672d79
+  .quad aot_get_fw_76672d6368
 .section .rodata
 .Laot_word_name_386:
   .byte 58
   .byte 118
   .byte 103
   .byte 45
-  .byte 121
+  .byte 99
+  .byte 104
   .byte 0
 .section .data
 .Laot_word_entry_386:
   .quad .Laot_word_entry_385
   .quad .Laot_word_name_386
-  .quad aot_set_fw_76672d79
+  .quad aot_set_fw_76672d6368
 .section .text
 aot_get_fw_76672d6779:
   leaq reg_fw_76672d6779(%rip), %rdi
