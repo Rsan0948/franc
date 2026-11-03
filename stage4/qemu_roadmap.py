@@ -153,6 +153,16 @@ with tempfile.TemporaryDirectory(prefix="franc-roadmap-") as tmp:
         line("ide-buffer type cr", b"abc\nFrac> ")
 
         print("PASS: native multiline IDE source, persistence and JIT compile", flush=True)
+        line('ide-start "def main 18 . ;" ide-add-line .', b"1\nFrac> ")
+        line("ide-run", b"18\nPROGRAM RETURNED\nFrac> ")
+        line('ide-start "abc" ide-append .', b"1\nFrac> ")
+        line("1 :ide-cursor ide-line-home ide-cursor .", b"0\nFrac> ")
+        line("ide-line-last ide-cursor .", b"3\nFrac> ")
+        line("1 :ide-cursor ide-delete-next ide-buffer type cr", b"ac\nFrac> ")
+        line("ide-reset 2047 :ide-length 2047 :ide-cursor 88 ide-type-char ide-buffer 2051 + b@ .",
+             b"1\nFrac> ")
+        line("ide-reset ide-buffer 2051 + b@ .", b"0\nFrac> ")
+        print("PASS: Wave 2 IDE fresh-main execution, cursor home/end, delete-forward and explicit full-buffer status", flush=True)
         line('ide-start "abcdef" ide-append .', b"1\nFrac> ")
         line("3 :ide-cursor ide-left ide-cursor .", b"2\nFrac> ")
         line("ide-right ide-cursor .", b"3\nFrac> ")
