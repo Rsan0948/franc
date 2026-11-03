@@ -172,10 +172,10 @@ try:
 
     print('PASS: Franc AOT emits multiple named functions and relocatable internal calls')
 
-    matches = list(re.finditer(rb'FRANC-PROGRAM-BEGIN\n(.*?)FRANC-PROGRAM-END\n', transcript, re.S))
-    assert len(matches) >= 2 and b'FRANC-PROGRAM-ERROR' not in transcript, transcript
+    control_match = re.search(rb'FRANC-PROGRAM-BEGIN\n(.*?)FRANC-PROGRAM-END\nFRANC-CONTROL-END\n', transcript, re.S)
+    assert control_match is not None and b'FRANC-PROGRAM-ERROR' not in transcript, transcript
     with TemporaryDirectory(prefix='franc-control-aot-') as work:
-        assembly=matches[-1].group(1).decode('ascii')
+        assembly=control_match.group(1).decode('ascii')
         assert 'call fr_condition' in assembly and 'jns .Lfranc_' in assembly, assembly
         assert 'jmp .Lfranc_' in assembly and 'fw_63686f6f7365:' in assembly
         source=Path(work)/'conditional.S'
