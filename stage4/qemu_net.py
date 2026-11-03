@@ -129,7 +129,32 @@ with tempfile.TemporaryDirectory(prefix="franc-net-") as tmp:
         print("PASS: two TX ring slots and two released/rearmed RX descriptors", flush=True)
         line("ip-ping .", b"1\nFrac> ")
         time.sleep(1.5)
-        line("ip-rx-valid? .", b"1\nFrac> ")
+        ipv4_result = line("ip-rx-valid? .")
+        if b"1\nFrac> " not in ipv4_result:
+            diagnostics = {}
+            for command in (
+                "net-rx-ready? .", "net-rx-size .",
+                "net-rx-ethertype .", "net-rx-err .",
+                "net-rx-ptr 14 + b@ .",
+                "net-rx-ptr 16 + ip-u16@ .",
+                "net-rx-ptr 20 + ip-u16@ .",
+                "net-rx-ptr 23 + b@ .",
+                "net-rx-ptr 26 + b@ .",
+                "net-rx-ptr 27 + b@ .",
+                "net-rx-ptr 28 + b@ .",
+                "net-rx-ptr 29 + b@ .",
+                "net-rx-ptr 30 + b@ .",
+                "net-rx-ptr 31 + b@ .",
+                "net-rx-ptr 32 + b@ .",
+                "net-rx-ptr 33 + b@ .",
+                "net-rx-ptr 14 + 20 ip-checksum .",
+                "net-rx-ptr 34 + b@ .",
+                "$2810 net-reg@ .", "$2818 net-reg@ .",
+            ):
+                diagnostics[command] = line(command).decode("ascii", errors="replace").strip()
+            print("IPv4 guest RX validation failed:", ipv4_result, flush=True)
+            print("IPv4 RX DMA/IP diagnostics:", diagnostics, flush=True)
+            raise AssertionError("Expected native QEMU ICMP reply; inspect captured guest packet diagnostics")
         line("ip-icmp-reply? .", b"1\nFrac> ")
         line("net-rx-ptr 22 + dup b@ 1 + 256 % b! ip-rx-valid? .", b"0\nFrac> ")
         print("PASS: invalidated IPv4 header checksum rejected in native Franc", flush=True)
