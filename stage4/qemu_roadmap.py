@@ -165,6 +165,20 @@ with tempfile.TemporaryDirectory(prefix="franc-roadmap-") as tmp:
         line("ide-buffer type cr", b"abcdef\nFrac> ")
         line("ide-files", b"wave1.frac\nFrac> ")
         print("PASS: IDE cursor insertion/backspace, on-screen file list and persisted reload", flush=True)
+
+        # Wave 2 U2: a newly compiled user-authored entrypoint can run
+        # from the IDE, but still runs as trusted native JIT code.
+        line('ide-start "def main 7 8 + . ;" ide-add-line .', b"1\nFrac> ")
+        compiled = line("ide-run", b"RUN COMPLETE\nFrac> ")
+        assert b"COMPILE OK" in compiled and b"15\n" in compiled, compiled
+        line('ide-start "def main 7 this-word-is-absent . ;" ide-add-line .', b"1\nFrac> ")
+        failed = line("ide-run", b"COMPILE FAILED | line 1\n")
+        assert b"RUN COMPLETE" not in failed, failed
+        line('ide-start "def helper 2 3 + ;" ide-add-line .', b"1\nFrac> ")
+        missing = line("ide-run", b"NO def main ENTRYPOINT\nFrac> ")
+        assert b"RUN COMPLETE" not in missing, missing
+        assert b"COMPILE OK" in missing, missing
+        print("PASS: IDE builds and runs current main, reports line failures and refuses stale entrypoints", flush=True)
         line('pci-find-network 0 - if "PCI MISSING" type cr else "PCI NETWORK PRESENT" type cr then',
              b"PCI NETWORK PRESENT\nFrac> ")
         line('pci-find-e1000 0 - if "E1000 MISSING" type cr else "E1000 PRESENT" type cr then',
