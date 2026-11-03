@@ -124,3 +124,25 @@ A separate native QEMU test runs representative bignum, floating-point,
 infix and package examples; see
 [`docs/STAGE4_PLUS_ROADMAP.md`](../../docs/STAGE4_PLUS_ROADMAP.md) for
 memory reservations, exact limitations and remaining roadmap items.
+
+## Second pass: newly implemented OS-facing facilities
+
+Press `9` after `l` to enter a Franc-native multiline source editor
+(`lib/ide.frac`). It supports bounded insertion, deletion, append-line,
+persistent open/save, compiling multiple source lines using the JIT, and
+a VGA/serial command loop. Unlike the original one-line editor, it keeps
+a whole editable source buffer of up to 2047 bytes; it is **not yet a
+cursor-addressed or syntax-highlighted full-screen IDE**.
+
+`stage4/pci.frac` accesses the x86 PCI configuration space using new
+32-bit I/O primitives and detects QEMU's emulated e1000 by vendor/device
+and class. This implements **PCI discovery, not Ethernet traffic or
+a working TCP/IP network stack**.
+
+`stage4/tasks.frac` dispatches up to four returning Franc callbacks
+in deterministic round-robin order. This is **cooperative callback
+scheduling**, not separate task stacks, preemption, interrupts, or
+process isolation.
+
+All three are exercised in the independent QEMU roadmap test while the
+prior bignum/float/FrancLite/package implementations remain unchanged.

@@ -781,3 +781,25 @@ s2_dict_names: .skip 16384
 s2_intern_data: .skip 32768
 repl_input: .skip 256
 .section .note.GNU-stack,"",@progbits
+
+/* PCI configuration mechanism #1 requires 32-bit port operations. */
+.section .text,"ax"
+.global fr_inl
+fr_inl:
+    call fr_pop
+    movw %ax,%dx
+    xorl %eax,%eax
+    inl %dx,%eax
+    movq %rax,%rdi
+    movq $1,%rsi
+    jmp fr_push
+.global fr_outl
+fr_outl:
+    call fr_pop
+    movq %rax,%r10
+    call fr_pop
+    movw %ax,%dx
+    movl %r10d,%eax
+    outl %eax,%dx
+    ret
+.section .note.GNU-stack,"",@progbits

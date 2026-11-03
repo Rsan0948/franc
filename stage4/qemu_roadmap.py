@@ -21,6 +21,7 @@ with tempfile.TemporaryDirectory(prefix="franc-roadmap-") as tmp:
     guest = subprocess.Popen(
         [qemu, "-m", "128M", "-accel", "tcg", "-display", "none",
          "-monitor", "none", "-no-reboot", "-serial", "stdio",
+         "-device", "e1000,netdev=n0", "-netdev", "user,id=n0",
          "-drive", f"file={disk},format=raw,if=ide"],
         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0,
     )
@@ -84,6 +85,26 @@ with tempfile.TemporaryDirectory(prefix="franc-roadmap-") as tmp:
         line('"x.frac" pkg-load .', b"1\nFrac> ")
         line("xnum .", b"37\nFrac> ")
         print("PASS: QEMU native bignum, f64 decode, FrancLite and offline packages", flush=True)
+        line('ide-start "def nine 9 ;" ide-add-line .', b"1\nFrac> ")
+        line('"def forty 40 ;" ide-add-line .', b"1\nFrac> ")
+        line("ide-save .", b"1\nFrac> ")
+        line('ide-reset "project.frac" ide-load .', b"1\nFrac> ")
+        line("ide-compile .", b"2\nFrac> ")
+        line("nine forty + .", b"49\nFrac> ")
+        print("PASS: native multiline IDE source, persistence and JIT compile", flush=True)
+        line('pci-find-network 0 - if "PCI NETWORK PRESENT" type cr else "PCI MISSING" type cr then',
+             b"PCI NETWORK PRESENT\nFrac> ")
+        line('pci-find-e1000 0 - if "E1000 PRESENT" type cr else "E1000 MISSING" type cr then',
+             b"E1000 PRESENT\nFrac> ")
+        print("PASS: real QEMU PCI e1000 enumerated with Franc port I/O", flush=True)
+        line("task-reset 'task-counter-a task-spawn . 'task-counter-b task-spawn .", b"1\n2\nFrac> ")
+        line("8 task-run-for . task-a . task-b .", b"8\n4\n4\nFrac> ")
+        print("PASS: Franc cooperative callback scheduler interleaves two tasks", flush=True)
+        key(b"\x1b", b"Franc> ")
+        key(b"9", b"ide> ")
+        key(b"q", b"Franc> ")
+        print("PASS: native IDE launched through new menu key 9", flush=True)
+
     finally:
         guest.kill()
         guest.wait()

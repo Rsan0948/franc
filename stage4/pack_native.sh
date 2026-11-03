@@ -27,4 +27,5 @@ FRANC_SOURCE_LBA=1024 sh stage4/source_pack.sh "$image" \
   lib/graphics.frac lib/ford.frac lib/spiro.frac \
   lib/calc.frac lib/edit.frac lib/walk.frac lib/dd.frac \
   stage4/apps/native-programs.frac \
-  lib/bignum.frac lib/float.frac lib/litetofrac.frac lib/pkg.frac
+  lib/bignum.frac lib/float.frac lib/litetofrac.frac lib/pkg.frac \
+  lib/ide.frac stage4/pci.frac stage4/tasks.frac

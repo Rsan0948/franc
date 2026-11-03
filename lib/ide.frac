@@ -1,0 +1,18 @@
+\ Native multiline source-buffer IDE. Source is limited to 2047 bytes by FRANCFS1.
+\ The UI uses the VGA text console; operations are callable from the REPL too.
+\ Address 0x6b00000 is experimental identity-mapped RAM on 128 MiB QEMU.
+def ide-buffer $6b00000 ;
+def ide-reset 0 :ide-length 0 :ide-cursor ide-buffer 0 b! ;
+def ide-start ide-reset "project.frac" :ide-file ;
+def ide-size ide-length ;
+def ide-insert :ide-text :ide-at ide-at 0 - if 0 exit then ide-at ide-length - if0 else ide-at ide-length - if 0 exit then then ide-text fs-len :ide-n ide-n ide-length + 2048 - if0 0 exit then ide-n ide-length + 2048 - if 0 :ide-i else 0 exit then ide-buffer ide-length ide-n + + 0 b! ide-length 1 - :ide-i begin ide-at ide-i 1 + - while ide-buffer ide-i ide-n + + ide-buffer ide-i + b@ b! ide-i 1 - :ide-i repeat 0 :ide-i begin ide-i ide-n - while ide-buffer ide-at ide-i + + ide-text ide-i + b@ b! ide-i 1 + :ide-i repeat ide-length ide-n + :ide-length ide-at ide-n + :ide-cursor 1 ;
+def ide-append :ide-text ide-text ide-length ide-insert ;
+def ide-add-line :ide-text ide-text ide-append if0 0 exit then "\n" ide-append ;
+def ide-delete :ide-n :ide-at ide-at 0 - if 0 exit then ide-n 0 - if0 else ide-n 0 - if 0 exit then then ide-at ide-n + ide-length - if0 else ide-at ide-n + ide-length - if 0 exit then then ide-at :ide-i begin ide-i ide-length ide-n - 1 + - while ide-buffer ide-i + ide-buffer ide-i ide-n + + b@ b! ide-i 1 + :ide-i repeat ide-length ide-n - :ide-length ide-at :ide-cursor 1 ;
+def ide-name :ide-file ide-file ;
+def ide-save ide-file if0 0 exit then ide-file ide-buffer fs-save ;
+def ide-load :ide-filename ide-filename fs-source :ide-source ide-source if0 0 exit then ide-source fs-len :ide-n ide-n 2048 - if0 0 exit then ide-reset 0 :ide-i begin ide-i ide-n - while ide-buffer ide-i + ide-source ide-i + b@ b! ide-i 1 + :ide-i repeat ide-buffer ide-n + 0 b! ide-n :ide-length ide-n :ide-cursor ide-filename :ide-file 1 ;
+def ide-compile ide-buffer s2-source ;
+def ide-show 0 vc-clear vc-home "FrancOS native IDE | " vc-type ide-file vc-type vc-newline "----- source -----" vc-type vc-newline ide-buffer vc-type vc-newline "----- end -----" vc-type vc-newline ;
+def ide-help "i insert | v view | s save | l load | c compile | x clear | q quit" vc-type vc-newline ;
+def ide-main ide-start ide-help begin "ide> " vc-type dk-key :ide-key ide-key 113 - if0 vc-newline exit then ide-key 105 - if0 "line> " vc-type rl-read if0 repl-buffer ide-add-line . then else ide-key 118 - if0 ide-show else ide-key 115 - if0 ide-save . else ide-key 108 - if0 ide-file ide-load . else ide-key 99 - if0 ide-compile . else ide-key 120 - if0 ide-reset "cleared" vc-type vc-newline else ide-help then then then then then then again ;
