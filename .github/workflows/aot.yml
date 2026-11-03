@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
       - name: Build Franc AOT kernel without C objects
         run: |
           make -C stage4
@@ -18,13 +20,17 @@ jobs:
           if nm stage4/kernel.elf | grep -Eq ' (U|T) (main|printf|malloc|free|memcpy|mmap)$'; then exit 1; fi
       - name: Verify Python-free disk packer against original reference
         run: python3 stage4/test_packaging.py
-      - name: Install QEMU
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+
       - name: Franc full source AOT integration (experimental)
         run: python3 stage4/qemu_selfhost.py
-      - name: Rebuild FrancOS with Franc itself, no Python AOT or image packaging
+      - name: Third-generation Franc-to-Franc rebuild must be deterministic
         run: |
-          sh stage4/build_selfhost.sh stage4/franos-aot.img stage4/franos-selfhost.img
-          test -f stage4/franos-selfhost.img
+          sh stage4/build_selfhost.sh stage4/franos-selfhost.img stage4/franos-selfhost.gen3.img
+          cmp stage4/franos-selfhost.img stage4/franos-selfhost.gen3.img
+          echo 'PASS: Franc-generated gen2 and gen3 BIOS images are byte-identical'
+      - name: Cold-boot third-generation FrancOS image
+        run: |
+          timeout 180 qemu-system-x86_64 -m 128M -accel tcg -display none -monitor none -no-reboot -serial stdio -drive file=stage4/franos-selfhost.gen3.img,format=raw,if=ide < /dev/null | grep -m1 'AOT BOOT OK'
+
       - name: Cold boot C-free AOT image in software QEMU
         run: python3 stage4/qemu_aot.py

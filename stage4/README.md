@@ -228,3 +228,24 @@ calling Python or a C compiler. The `SEED.img` used by the current default
 make target is still Python-generated; the next milestone is replacing that
 seed with a checked-in assembly/Franc seed so the *entire cold build* follows
 this Python-free path.
+
+## Default Python-free self-hosting build
+
+The repository contains a pinned, SHA-256-recorded **assembly seed** at
+`stage4/seed.generated.S`. It was created once from the earlier tested Franc
+compiler bridge, and is now the allowed low-level bootstrap artifact. From a
+machine with QEMU, GNU assembler, linker, objcopy, dd, sed and POSIX shell:
+
+```sh
+make -C stage4
+```
+
+The default build assembles that pinned seed (without calling Python), stages
+current Franc sources on a disposable disk, boots its Franc AOT compiler,
+emits a new complete kernel in Franc, links that code with the x86-64 assembly
+runtime, and produces `stage4/franos-selfhost.img`. The CI additionally
+uses that Franc-built image as the compiler for *another* kernel generation
+and compares both images byte-for-byte. Python remains in optional test and
+historical tooling, **not in the active bootstrap**. Historical C source is
+also not used in this path. The pinned seed is a trusted bootstrap artifact,
+not proof of a diverse-source or formally verified compiler.
