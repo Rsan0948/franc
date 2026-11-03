@@ -35,7 +35,7 @@ with tempfile.TemporaryDirectory(prefix="franctxt-native-") as temp:
         check=True,
     )
 
-    def session(persist=False):
+    def session(persist=False, tampered=False):
         guest = subprocess.Popen(
             ["qemu-system-x86_64", "-m", "128M", "-accel", "tcg",
              "-display", "none", "-monitor", "none", "-no-reboot",
@@ -90,8 +90,9 @@ with tempfile.TemporaryDirectory(prefix="franctxt-native-") as temp:
                  b"francos.kernel.v1\nFrac> ")
             line("ft-show-config", b"FRANCTXT CONFIG")
             line("ft-show-identity", b"FRANCTXT KERNEL IDENTITY")
-            line("ft-config ft-hash type cr", canonical_sha.encode("ascii") + bytes((10,)) + b"Frac> ")
-            line("ft-verify-config .", b"1" + bytes((10,)) + b"Frac> ")
+            target_hash = modified_sha if tampered else canonical_sha
+            line("ft-config ft-hash type cr", target_hash.encode("ascii") + bytes((10,)) + b"Frac> ")
+            line("ft-verify-config .", (b"0" if tampered else b"1") + bytes((10,)) + b"Frac> ")
             print("PASS: native FrancOS SHA-256 exactly matches independent host digest", flush=True)
 
             if persist:
@@ -107,3 +108,20 @@ with tempfile.TemporaryDirectory(prefix="franctxt-native-") as temp:
     session(persist=True)
     session(persist=False)
     print("PASS: Franctxt configuration survives a complete FrancOS cold reboot")
+    # Tamper with one character of the persistent config but leave the
+    # separately stored manifest unchanged. A third cold boot must reject
+    # the config's manifest binding and still permit the saved copy.
+    image = bytearray(disk.read_bytes())
+    start = 140 * 512
+    where = image.find(b"FrancOS", start, start + size)
+    assert where >= 0, "native config has no expected system.name"
+    image[where:where + 7] = b"FrancMX"
+    disk.write_bytes(image)
+    changed_config = bytes(image[start:start + size])
+    modified_sha = hashlib.sha256(
+        b"franctxt/1" + bytes((0,)) + changed_config
+    ).hexdigest()
+    assert modified_sha != canonical_sha
+    session(persist=False, tampered=True)
+    print("PASS: native FrancOS detects changed config against the unchanged manifest")
+
