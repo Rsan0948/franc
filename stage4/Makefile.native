@@ -25,7 +25,9 @@ stage4/native_seed.img: stage4/native_boot.bin stage4/native_seed.bin stage4/pac
 native-seed: stage4/native_seed.img
 native-proof: stage4/native_seed.img
 	bash stage4/bootstrap.sh stage4/native_seed.img stage4/native-proof
+	cmp stage4/native_seed.bin stage4/native-proof/gen2.bin
 	cmp stage4/native-proof/gen2.bin stage4/native-proof/gen3.bin
+	cmp stage4/bootstrap_seed.S stage4/native-proof/gen2.S
 	cmp stage4/native_seed.bin stage4/native-proof/gen2.bin
 	@echo "PASS: committed Franc-generated seed reproduces generation 2 and generation 3 byte for byte without Python or C"
 clean-native:

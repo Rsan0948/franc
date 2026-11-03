@@ -1,8 +1,13 @@
 AS = as
 LD = ld
 OBJCOPY = objcopy
-.PHONY: all clean verify
-all: franos-aot.img verify
+.PHONY: all clean verify native-all legacy-all
+# Production default is built entirely from Franc-generated assembly seed.
+all: native-all
+native-all:
+	$(MAKE) -C .. -f stage4/Makefile.native native-proof
+# Historical Python seed is an explicitly selected compatibility target.
+legacy-all: franos-aot.img verify
 kernel.generated.S: compiler.py kernel.frac ../stage2/compiler.frac ../stage3/ata.frac ../stage3/storage.frac display.frac keyboard.frac repl.frac upgrade.frac aot.frac bundle.frac
 	python3 compiler.py ../stage3/ata.frac ../stage3/storage.frac display.frac keyboard.frac ../stage2/compiler.frac repl.frac upgrade.frac aot.frac bundle.frac kernel.frac -o $@
 program.o: kernel.generated.S

@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build Franc AOT kernel without C objects
         run: |
-          make -C stage4
+          make -C stage4 legacy-all
           python3 stage4/test_compiler.py
           if nm stage4/kernel.elf | grep -Eq ' (U|T) (main|printf|malloc|free|memcpy|mmap)$'; then exit 1; fi
       - name: Verify Python-free disk packer against original reference
@@ -51,6 +51,8 @@ jobs:
             git push origin HEAD:refs/heads/stage4-franc-native-bootstrap
           fi
       - name: Rebuild FrancOS from assembly seed without Python or C
-        run: make -f stage4/Makefile.native native-proof
+        run: |
+          rm -f stage4/kernel.generated.S stage4/program.o stage4/kernel.bin
+          make -f stage4/Makefile.native native-proof
       - name: Cold boot C-free AOT image in software QEMU
         run: python3 stage4/qemu_aot.py

@@ -5,16 +5,19 @@ kernel compiled from `kernel.frac` to native x86-64 with **no C source, C
 object, libc, or C runtime** in the kernel binary or Stage 4 Makefile.
 
 ```sh
-cd stage4
-make
-python3 test_compiler.py
-python3 qemu_aot.py   # requires qemu-system-x86_64
+# From the repository root: production, Python/C-free native build
+make -C stage4
+# Or the direct reproducible bootstrap proof
+make -f stage4/Makefile.native native-proof
+
+# Optional historical Python seed, for regression testing only
+make -C stage4 legacy-all
 ```
 
-The loader is the existing Stage 1 BIOS `.S` file; the kernel consists of
-`runtime.S` plus assembly emitted from Franc source by `compiler.py` and linked
-at **0x10000**. Runtime services are x86-64 assembly using 16-byte rational
-stack entries and BIOS-selected Mode 13h. The OS image is the standard 256-sector
+The native default uses a separate Stage 4 assembly BIOS loader and
+`runtime.S` plus Franc-generated native AOT assembly, linked at **0x10000**.
+The old `compiler.py` is retained only in the explicit `legacy-all` target. Runtime services are x86-64 assembly using 16-byte rational
+stack entries and BIOS-selected Mode 13h. The OS image is the Stage 4 512-sector
 layout with reserved `FRANCFS1` data at LBAs 128-199. No C objects are linked.
 
 Current *working subset*: definitions, strings, rational literals, signed
@@ -26,16 +29,17 @@ Arithmetic normalizes 64-bit fractions and emits bottom on intermediate
 multiplication overflow; **this does not yet guarantee every edge case of the
 full Stage 0 arithmetic**.
 
-The **seed AOT build tools remain Python** (`compiler.py`, `make_image.py`).
+The **production Stage 4 build is now Python-free**: a tracked Franc-generated
+assembly bootstrap seed is assembled by GNU binutils and rebuilt through two
+byte-identical native Franc kernel generations. The historical Python AOT
+bridge remains available only via `legacy-all` for comparison.
 However, the standalone C-free image now runs a Franc-native JIT compiler,
 a mutable dictionary, a Franc interactive REPL, Franc ATA/source storage,
 framebuffer text output and keyboard policy. Runtime compiler self-recompilation
 through two generations and an on-disk startup file executed after cold reboot
 are verified in QEMU CI.
 
-**Still incomplete:** Franc-authored standalone AOT image emission and a
-repeatable compiler/kernel rebuild without Python; full Stage 0 primitive and
-numeric compatibility; dynamic creation of arbitrary new named registers;
+**Still incomplete:** full Stage 0 primitive and numeric compatibility; dynamic creation of arbitrary new named registers;
 hardware and corruption-edge-case tests, interrupt support and broader hardware
 targets. The Stage 1/3 C-backed kernel remains an intentionally separate fallback.
 
@@ -236,3 +240,15 @@ both rebuilt generations. It archives the three binaries and their boot logs.
 This demonstrates a C- and Python-free production bootstrap from a pinned
 Franc-generated assembly seed; the historical Python compiler remains in the
 repository solely for comparison and migration tests.
+
+## Native bootstrap verification (2026-11-02)
+
+The full FrancOS source tree is AOT-compiled by Franc running in QEMU;
+the generated 102,016-byte kernel cold-boots with native JIT, framebuffer,
+ATA storage and shell available. The source-compiled kernel then recompiles
+the same sources and emits the same binary a second time. CI freezes the
+Franc-produced assembler source as `bootstrap_seed.S` and builds it from a
+clean shell/GNU assembler toolchain through `Makefile.native`. The normal
+`make -C stage4` target now selects this native-only path. The old Python
+bridge is still testable via `make -C stage4 legacy-all` but is no longer
+required for production compilation or self-rebuilding.
