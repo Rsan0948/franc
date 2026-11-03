@@ -44,9 +44,16 @@
 .Lft_sha_output: .skip 65
 
 .section .text,"ax"
+.global ft_sha256_raw
+.type ft_sha256_raw,@function
+ft_sha256_raw:
+    xorq %r8,%r8
+    jmp .Lft_sha_entry
 .global ft_sha256_canonical
 .type ft_sha256_canonical,@function
 ft_sha256_canonical:
+    movq $11,%r8
+.Lft_sha_entry:
     testq %rdi,%rdi
     jz .Lft_sha_fail
     cmpq $2047,%rsi
@@ -59,27 +66,35 @@ ft_sha256_canonical:
     pushq %r15
     movq %rdi,%r14
     movq %rsi,%r13
+    movq %r8,%r15      /* caller-selected domain prefix (0 or 11) */
     /* Reset 2176 bytes of message workspace. */
     leaq .Lft_sha_message(%rip),%rdi
     movl $272,%ecx
     xorl %eax,%eax
     cld
     rep stosq
-    /* Prefix the 11-byte domain, including its terminating zero. */
+    /* Domain-separated Franctxt identity, or SHA256(raw bytes) for
+     * native package manifest file inventory verification. Both share
+     * the independently tested SHA-256 compression implementation.
+     */
     leaq .Lft_sha_message(%rip),%rdi
+    testq %r15,%r15
+    jz .Lft_sha_skip_domain
     leaq .Lft_sha_domain(%rip),%rsi
     movl $11,%ecx
     rep movsb
-    /* Copy canonical document as opaque bytes. */
+.Lft_sha_skip_domain:
+    /* Copy exact payload/document bytes. */
     movq %r14,%rsi
     movq %r13,%rcx
     rep movsb
     movb $0x80,(%rdi)
     /* Number of 64-byte blocks = ceil((11 + document_bytes + 9)/64). */
-    leaq 83(%r13),%r14
+    leaq 72(%r13),%r14
+    addq %r15,%r14
     shrq $6,%r14
     /* Last 64-bit message-length field is big endian, in bits. */
-    leaq 11(%r13),%rax
+    leaq (%r13,%r15),%rax
     shlq $3,%rax
     bswapq %rax
     leaq .Lft_sha_message(%rip),%r11

@@ -1,0 +1,55 @@
+name: FrancOS v1 Wave 3 — isolated Franc user code and native package lifecycle
+on:
+  push:
+    branches: [francos-v1-wave3-foundation]
+  pull_request:
+    paths:
+      - 'stage4/**'
+      - 'franctxt/**'
+      - 'lib/**'
+      - '.github/workflows/wave3-completion.yml'
+permissions:
+  contents: read
+jobs:
+  wave3-f3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate pinned source memory and build authority
+        run: python3 -m franctxt.build preflight
+      - name: Validate native audited templates, and exact SHA256 compressor
+        run: |
+          python3 -m unittest discover -s franctxt/tests -p 'test_user_aot_contract.py' -v
+          python3 -m unittest discover -s franctxt/tests -p 'test_sha256_native.py' -v
+      - name: Install x86-64 QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Build pinned assembly-only native image
+        run: make -f stage4/Makefile.native native-seed
+      - name: Verify build and disk manifest identity
+        run: python3 -m franctxt.build verify-image --image stage4/native_seed.img --kernel stage4/native_seed.bin
+      - name: Verify authentic Franc-generated user machine code in isolated CPL3, A fault + B survival and new generation
+        run: FRANC_TEST_USER_COMPILED=1 python3 stage4/qemu_irq.py stage4/native_seed.img
+      - name: Record tested F3 image identity
+        run: python3 -m franctxt.build record --image stage4/native_seed.img --kernel stage4/native_seed.bin --passed native --passed apps --output stage4/wave3-f3-tested.franctxt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: francos-wave3-compiled-ring3
+          path: stage4/wave3-f3-tested.franctxt
+          if-no-files-found: warn
+  wave3-u3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Manifest SHA256, dependencies, conflicts and generation contracts
+        run: |
+          python3 -m unittest discover -s franctxt/tests -p 'test_package_manifest.py' -v
+          python3 -m unittest discover -s franctxt/tests -p 'test_sha256_native.py' -v
+      - name: Install x86-64 QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Build pinned native Franc/assembly boot image
+        run: make -f stage4/Makefile.native native-seed
+      - name: Cold reboot native package install, dependency, upgrade, rollback, rejected tampering, uninstall and CPL3 run
+        run: python3 stage4/qemu_wave3_packages.py stage4/native_seed.img

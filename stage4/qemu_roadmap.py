@@ -71,6 +71,17 @@ with tempfile.TemporaryDirectory(prefix="franc-roadmap-") as tmp:
         match = re.search(rb"APPS LOADED (\d+)", loaded)
         assert match and int(match.group(1)) >= 130, loaded[-1800:]
         key(b"r", b"Frac> ")
+        # Fail explicitly on a missing word after loading the experimental
+        # source bundle: the legacy s2-source loader can mask a per-line
+        # compilation error while still reporting APPS READY.
+        for word in ("user-code-base", "user-emit-byte", "user-emit-u32",
+                     "user-emit-stack-ptr", "user-emit-fault",
+                     "user-emit-loop", "user-parse", "user-compile"):
+            resolved = line(f'"{word}" s2-find .')
+            assert b"\n0\nFrac> " not in resolved, (
+                f"Wave 3 native JIT failed to define {word}: {resolved!r}"
+            )
+            print(f"PASS: Wave 3 JIT registered {word}", flush=True)
         line("heap-free .", b"4194304\nFrac> ")
         line("16 alloc dup 77 b! b@ .", b"77\nFrac> ")
         line("heap-free .", b"4194288\nFrac> ")
@@ -183,6 +194,16 @@ with tempfile.TemporaryDirectory(prefix="franc-roadmap-") as tmp:
         line("ide-buffer type cr", b"abcdef\nFrac> ")
         line("ide-files", b"wave1.frac\nFrac> ")
         print("PASS: IDE cursor insertion/backspace, on-screen file list and persisted reload", flush=True)
+        # Wave 3 F3 incremental boundary: native Franc source -> bounded
+        # x86 user-code bytes.  Execution in CPL3 is NOT yet claimed.
+        line('"def main 100 count fault ;" user-compile .', b"36\nFrac> ")
+        line("user-code-base b@ .", b"72\nFrac> ")
+        line("user-code-base 1 + b@ .", b"191\nFrac> ")
+        line('"def main 2 count again ;" user-compile .', b"17\nFrac> ")
+        line("user-code-base 10 + b@ .", b"131\nFrac> ")
+        line('"def main 0 count fault ;" user-compile .', b"0\nFrac> ")
+        line('"def main 2 count syscall ;" user-compile .', b"0\nFrac> ")
+        print("PASS: Franc emits bounded user-page x86 bytes from restricted source and refuses unsafe grammar", flush=True)
         line('pci-find-network 0 - if "PCI MISSING" type cr else "PCI NETWORK PRESENT" type cr then',
              b"PCI NETWORK PRESENT\nFrac> ")
         line('pci-find-e1000 0 - if "E1000 MISSING" type cr else "E1000 PRESENT" type cr then',

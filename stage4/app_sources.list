@@ -16,12 +16,13 @@ stage4/apps/native-programs.frac
 lib/bignum.frac
 lib/float.frac
 lib/litetofrac.frac
-lib/pkg.frac
 lib/ide.frac
+lib/user_aot.frac
+lib/franctxt.frac
+lib/pkg.frac
 stage4/pci.frac
 stage4/tasks.frac
 stage4/net.frac
 stage4/ip.frac
 stage4/udp.frac
 stage4/fibers.frac
-lib/franctxt.frac

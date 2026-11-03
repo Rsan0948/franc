@@ -709,7 +709,7 @@ fr_font_base:
 
 
 /* Franc Stage 2 compiler bridge: no C objects, no libc. AOT functions and
- * primitives form the initial dictionary, with 256 mutable definitions.
+ * primitives form the initial dictionary, with 512 bounded JIT definitions.
  * JIT code lives at mapped RAM 0x400000+, not in the disk image.
  */
 .section .text,"ax"
@@ -797,7 +797,7 @@ fr_s2_define:
     testq %r13,%r13
     jz .Ldef_done
     movq s2_dict_used(%rip),%r9
-    cmpq $256,%r9
+    cmpq $512,%r9
     jae .Ldef_done
     leaq s2_dict_names(%rip),%r10
     movq %r9,%r11
@@ -869,8 +869,8 @@ s2_intern_used: .skip 8
 s2_token_buffer: .skip 1024
 s2_control_buffer: .skip 1024
 s2_line_buffer: .skip 16384
-s2_dict_nodes: .skip 6144
-s2_dict_names: .skip 16384
+s2_dict_nodes: .skip 12288 /* 512 entries x 24-byte node */
+s2_dict_names: .skip 32768 /* 512 entries x 64-byte string */
 s2_intern_data: .skip 32768
 repl_input: .skip 256
 .section .note.GNU-stack,"",@progbits
@@ -1316,6 +1316,39 @@ fr_ft_sha256:
     movq $1,%rsi
     jmp fr_push
 
+/* (byte-pointer length -- 64-char lowercase raw SHA256 digest); no domain. */
+.global fr_pkg_sha256
+fr_pkg_sha256:
+    pushq %r12
+    pushq %r13
+    pushq %rbx
+    call fr_pop
+    movq %rax,%r12
+    movq %rdx,%r13
+    call fr_pop
+    cmpq $1,%r13
+    jne .Lpkg_sha_abi_fail
+    cmpq $1,%rdx
+    jne .Lpkg_sha_abi_fail
+    cmpq $2047,%r12
+    ja .Lpkg_sha_abi_fail
+    testq %rax,%rax
+    jz .Lpkg_sha_abi_fail
+    movq %rax,%rdi
+    movq %r12,%rsi
+    call ft_sha256_raw
+    jmp .Lpkg_sha_abi_end
+.Lpkg_sha_abi_fail:
+    xorq %rax,%rax
+.Lpkg_sha_abi_end:
+    popq %rbx
+    popq %r13
+    popq %r12
+    movq %rax,%rdi
+    movq $1,%rsi
+    jmp fr_push
+
+
 /* SHA-256 compression source is shared with the independent Linux ABI test. */
 .include "franctxt/sha256_native.S"
 
@@ -1380,3 +1413,5 @@ fr_mmio32_store:
 .include "stage4/process_spaces.S"
 /* Wave 2 bounded user-IRQ scheduler is native assembly only. */
 .include "stage4/user_scheduler.S"
+/* Wave 3: copy only audited Franc-emitted CPL3 byte templates. */
+.include "stage4/user_compiled.S"

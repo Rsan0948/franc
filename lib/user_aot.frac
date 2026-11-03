@@ -1,0 +1,32 @@
+\ FrancOS Wave 3 F3: bounded Franc-authored CPL3 machine-code emitter.
+\ Distinct from privileged Stage2 JIT: never emits a call to a fr_* kernel
+\ helper. This is a STARTING compiler subset, not a general user language.
+\
+\ Accepted exact forms:
+\   def main N count fault ;
+\   def main N count again ;
+\ N is an integer 1..255. "fault" increments its private user stack N
+\ times and then deliberately faults at supervisor address 0x10000.
+\ "again" increments its private stack by N forever, preempted by IRQ0.
+\ The bytes are unprivileged x86-64 machine code, destined for an RX page.
+\
+\ A predeclared safe 256-byte scratch area occupies 0x6b00c00..0x6b00cff,
+\ inside the existing 4KiB IDE memory reservation. Editor scratch elsewhere
+\ must remain separate. The compiler only runs in trusted ring0; passing
+\ the emitted bytes into an isolated Ring3 CR3 is a future F3 integration.
+\ Shared IDE numeric register shims avoid seed changes, so call this when
+\ the foreground IDE editor is not active.
+def user-code-base ide-buffer 3072 + ;
+def user-emit-byte :ide-n user-code-base ide-i + ide-n b! ide-i 1 + :ide-i ;
+def user-emit-u32 :ide-text ide-text 256 % user-emit-byte ide-text 256 / floor 256 % user-emit-byte ide-text 65536 / floor 256 % user-emit-byte ide-text 16777216 / floor 256 % user-emit-byte ;
+\ movabs $0x40001000,%rdi (ten bytes)
+def user-emit-stack-ptr 72 user-emit-byte 191 user-emit-byte 0 user-emit-byte 16 user-emit-byte 0 user-emit-byte 64 user-emit-byte 0 user-emit-byte 0 user-emit-byte 0 user-emit-byte 0 user-emit-byte ;
+\ A: mov ecx,N; incl (%rdi); decl ecx; jnz -6;
+\    movabs $0x10000,rax; movzbl (rax),eax; ud2.
+def user-emit-fault user-emit-stack-ptr 185 user-emit-byte ide-at user-emit-u32 255 user-emit-byte 7 user-emit-byte 255 user-emit-byte 201 user-emit-byte 117 user-emit-byte 250 user-emit-byte 72 user-emit-byte 184 user-emit-byte 0 user-emit-byte 0 user-emit-byte 1 user-emit-byte 0 user-emit-byte 0 user-emit-byte 0 user-emit-byte 0 user-emit-byte 0 user-emit-byte 15 user-emit-byte 182 user-emit-byte 0 user-emit-byte 15 user-emit-byte 11 user-emit-byte ;
+\ B: addl $N,(%rdi); pause; jmp -7. No supervisor helpers.
+def user-emit-loop user-emit-stack-ptr 131 user-emit-byte 7 user-emit-byte ide-at user-emit-byte 243 user-emit-byte 144 user-emit-byte 235 user-emit-byte 249 user-emit-byte ;
+\ Validate the whole grammar and bounds BEFORE writing any executable bytes.
+def user-parse :ide-source ide-source fs-len 96 - if0 0 exit then ide-source fs-len 96 - if0 0 exit then ide-source fs-len 96 - if 0 :ide-n else 0 exit then ide-source :s2p s2-next "def" s2-eq if0 0 exit then s2-next "main" s2-eq if0 0 exit then s2-next s2-number :ide-n :ide-text :ide-at ide-n if0 0 exit then ide-text 1 - ifnz 0 exit then ide-at 1 - if 0 exit then ide-at 256 - if0 0 exit then ide-at 256 - if0 0 exit then ide-at 256 - if 0 :ide-n else 0 exit then s2-next "count" s2-eq if0 0 exit then s2-next :ide-source ide-source "fault" s2-eq ifnz 1 :ide-cursor else ide-source "again" s2-eq ifnz 2 :ide-cursor else 0 exit then then s2-next ";" s2-eq if0 0 exit then s2-next ifnz 0 exit then 1 ;
+\ Returns emitted byte count; zero means refused source.
+def user-compile :ide-source ide-source user-parse if0 0 exit then 0 :ide-i ide-cursor 1 - if0 user-emit-fault else user-emit-loop then user-code-base ide-i + 0 b! ide-i ;

@@ -28,6 +28,9 @@ class NativeSHA256(unittest.TestCase):
         cls.hash = cls.module.ft_sha256_canonical
         cls.hash.argtypes = (ctypes.c_void_p, ctypes.c_size_t)
         cls.hash.restype = ctypes.c_char_p
+        cls.raw_hash = cls.module.ft_sha256_raw
+        cls.raw_hash.argtypes = (ctypes.c_void_p, ctypes.c_size_t)
+        cls.raw_hash.restype = ctypes.c_char_p
 
     @classmethod
     def tearDownClass(cls):
@@ -45,6 +48,19 @@ class NativeSHA256(unittest.TestCase):
             with self.subTest(size=length):
                 expected = hashlib.sha256(DOMAIN + data).hexdigest()
                 self.assertEqual(self.sha_native(data), expected)
+
+    def test_raw_offline_package_source_sha256(self):
+        for length in (0, 1, 12, 43, 44, 55, 56, 64, 128, 256, 2047):
+            data = bytes((index * 11 + 7) & 255 for index in range(length))
+            with self.subTest(length=length):
+                buf = ctypes.create_string_buffer(data)
+                value = self.raw_hash(buf, length)
+                self.assertIsNotNone(value)
+                self.assertEqual(value.decode("ascii"),
+                                 hashlib.sha256(data).hexdigest())
+        self.assertIsNone(self.raw_hash(None, 6))
+        buf = ctypes.create_string_buffer(b"x" * 2048)
+        self.assertIsNone(self.raw_hash(buf, 2048))
 
     def test_real_canonical_example(self):
         payload = (ROOT / "franctxt" / "examples" / "kernel.franctxt").read_bytes()
