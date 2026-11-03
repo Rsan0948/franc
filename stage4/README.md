@@ -64,3 +64,13 @@ addresses; new compiled words are installed in a bounded mutable dictionary.
 This is **native JIT compilation inside the C-free kernel**, but not yet a
 Franc-authored AOT image compiler or completely independent rebuild path.
 The QEMU startup probe exercises dynamic expressions and a new definition.
+
+## Interactive native Franc REPL (experimental)
+
+The C-free Stage 4 console now accepts `r` to enter `repl.frac`, a line
+editor and evaluation loop implemented entirely in Franc. Each submitted line
+passes through Stage 2's Franc-written x86-64 compiler, with newly compiled
+definitions entered into the mutable dictionary. Esc returns to the original
+hardware diagnostics menu. The REPL currently accepts up to 255 input bytes
+per line and is not a general-purpose filesystem editor. The on-device native
+compiler is distinct from the Python image compiler still used at build time.

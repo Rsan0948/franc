@@ -657,6 +657,7 @@ PUSH_ADDRESS fr_s2_lit_addr,fr_push
 PUSH_ADDRESS fr_s2_sign_addr,fr_condition
 PUSH_ADDRESS fr_s2_string_addr,fr_push
 PUSH_ADDRESS fr_s2_self_source,franc_stage2_source
+PUSH_ADDRESS fr_repl_buffer,repl_input
 
 .global fr_s2_code
 fr_s2_code:
@@ -773,4 +774,5 @@ s2_line_buffer: .skip 4096
 s2_dict_nodes: .skip 6144
 s2_dict_names: .skip 16384
 s2_intern_data: .skip 32768
+repl_input: .skip 256
 .section .note.GNU-stack,"",@progbits

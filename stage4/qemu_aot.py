@@ -20,7 +20,7 @@ try:
             if not data:break
             buffer+=data
     print(buffer.decode(errors='replace'))
-    for marker in [b'FrancOS AOT | 64-bit | no C runtime',b'1/2',b'25',b'BRANCH OK',b'3\n',b'70\n',b'42\n',b'ATA WRITE READBACK DONE',b'def saved 77 ;',b'STORAGE OK',b'AOT BOOT OK']:
+    for marker in [b'FrancOS AOT | 64-bit | no C runtime',b'1/2',b'25',b'BRANCH OK',b'3\n',b'70\n',b'42\n',b'ATA WRITE READBACK DONE',b'JIT-SUM 5\n',b'JIT-DEF 36\n',b'def saved 77 ;',b'STORAGE OK',b'AOT BOOT OK']:
         assert marker in buffer, f'missing {marker!r}; QEMU output={buffer!r}'
     # Read and send one character at a time. Sending "psg\x1b" together
     # can overflow the emulated COM1 receive register while Franc redraws.
@@ -46,10 +46,31 @@ try:
         (b'p', b'1/2\nFranc> '),
         (b's', b'def saved 77 ;\nFranc> '),
         (b'g', b'GRAPHICS IN FRANC\nFranc> '),
-        (b'\x1b', b'EXIT CONSOLE')
+        (b'r', b'Franc REPL | Esc returns to menu\nFrac> ')
     ]:
         # COM1 has a single-byte receive register. Wait for the Franc
         # polling loop to re-enter input mode after drawing the prompt.
+        time.sleep(0.5)
+        offset = len(transcript)
+        os.write(p.stdin.fileno(), key)
+        transcript = read_until(expected, timeout=45, after=offset)
+    # The interactive REPL uses Franc's own Stage 2 native-code emitter.
+    # COM1 has only a single-byte receive register, so wait for echoed input.
+    for source, expected in [(b'2 3 +\\n', b'5\\nFrac> '),
+                             (b'def n 7 ;\\n', b'Frac> '),
+                             (b'n 6 *\\n', b'42\\nFrac> ')]:
+        for ch in source:
+            time.sleep(0.12)
+            offset = len(transcript)
+            os.write(p.stdin.fileno(), bytes([ch]))
+            if ch == 10:
+                transcript = read_until(expected, timeout=45, after=offset)
+            else:
+                transcript = read_until(bytes([ch]), timeout=15, after=offset)
+    for marker in [b'JIT-SUM 5\\n', b'JIT-DEF 36\\n']:
+        assert marker in transcript, f'missing {marker!r}'
+    for key, expected in [(b'\\x1b', b'Franc> '),
+                          (b'\\x1b', b'EXIT CONSOLE')]:
         time.sleep(0.5)
         offset = len(transcript)
         os.write(p.stdin.fileno(), key)

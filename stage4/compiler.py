@@ -30,7 +30,7 @@ OPS = { '+':'fr_add','-':'fr_sub','*':'fr_mul','/':'fr_div',
     's2-code':'fr_s2_code', 's2-run':'fr_s2_run',
     's2-define':'fr_s2_define', 's2-intern':'fr_s2_intern',
     's2-lit-addr':'fr_s2_lit_addr', 's2-sign-addr':'fr_s2_sign_addr',
-    's2-string-addr':'fr_s2_string_addr', 's2-self-source':'fr_s2_self_source',
+    's2-string-addr':'fr_s2_string_addr', 'repl-buffer':'fr_repl_buffer', 's2-self-source':'fr_s2_self_source',
     '!':'fr_bstore',
 }
 
