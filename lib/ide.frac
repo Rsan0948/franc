@@ -25,7 +25,7 @@ def ide-right ide-cursor ide-length - if ide-cursor 1 + :ide-cursor then ;
 def ide-up ide-cursor ide-line-start :ide-n ide-n if0 exit then ide-cursor ide-n - :ide-text ide-n 1 - ide-line-start :ide-at ide-at ide-text + :ide-i ide-n 1 - ide-i - if ide-n 1 - :ide-cursor else ide-i :ide-cursor then ;
 def ide-down ide-cursor ide-line-start :ide-n ide-cursor ide-n - :ide-text ide-cursor ide-line-end :ide-at ide-at ide-length - if0 exit then ide-at 1 + :ide-n ide-n ide-line-end :ide-at ide-n ide-text + :ide-i ide-at ide-i - if ide-at :ide-cursor else ide-i :ide-cursor then ;
 def ide-backspace ide-cursor ifnz ide-cursor 1 - 1 ide-delete drop then ;
-def ide-type-char ide-buffer 2048 + swap b! ide-buffer 2049 + 0 b! ide-cursor ide-buffer 2048 + ide-insert if0 1 ide-buffer 2051 + b! else 0 ide-buffer 2051 + b! then ;
+def ide-type-char ide-length 2046 - if 1 ide-buffer 2051 + b! drop exit then ide-buffer 2048 + swap b! ide-buffer 2049 + 0 b! ide-cursor ide-buffer 2048 + ide-insert if0 1 ide-buffer 2051 + b! else 0 ide-buffer 2051 + b! then ;
 \ Wave 2 editor semantics: line home/end and delete-forward never
 \ change bytes outside the 2047-byte persisted source cap.
 def ide-line-home ide-cursor ide-line-start :ide-cursor ;
