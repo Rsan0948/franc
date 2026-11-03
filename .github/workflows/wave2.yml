@@ -1,0 +1,58 @@
+name: FrancOS v1 Wave 2 — Ring 3 syscalls and persisted IDE
+on:
+  push:
+    branches: [francos-wave2-completion-wave3-start]
+    paths:
+      - 'stage4/**'
+      - 'stage3/**'
+      - 'lib/**'
+      - 'franctxt/**'
+      - '.github/workflows/wave2.yml'
+  pull_request:
+    paths:
+      - 'stage4/**'
+      - 'stage3/**'
+      - 'lib/**'
+      - 'franctxt/**'
+      - '.github/workflows/wave2.yml'
+permissions:
+  contents: read
+jobs:
+  wave2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify pinned compiler source and static memory authority
+        run: python3 -m franctxt.build preflight
+      - name: Validate native editor and user-scheduler assembly contracts
+        run: |
+          python3 -m unittest discover -s franctxt/tests -p 'test_ide_contract.py' -v
+          python3 -m unittest discover -s franctxt/tests -p 'test_user_scheduler_contract.py' -v
+      - name: Install software QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Build exact C-free committed Franc kernel image
+        run: make -f stage4/Makefile.native native-seed
+      - name: Check Franctxt kernel, bootloader and staged source digests
+        run: python3 -m franctxt.build verify-image --image stage4/native_seed.img --kernel stage4/native_seed.bin
+      - name: IRQ preemption and bounded user syscall exit/return/bad-pointer/fault acceptance
+        run: FRANC_TEST_USER_PREEMPT=1 python3 stage4/qemu_irq.py stage4/native_seed.img
+      - name: QEMU editor and compiler detailed regression
+        run: python3 stage4/qemu_roadmap.py stage4/native_seed.img
+      - name: Keyboard multiline IDE, middle edit, persistence, cold reboot, compile and run
+        env:
+          FRANC_CAPTURE_DIR: stage4/screenshots-wave2
+        run: python3 stage4/qemu_ide_wave2.py stage4/native_seed.img
+      - name: Wave 1 isolation and native Home UI nonregression
+        run: FRANC_TEST_PROC_ISO=1 python3 stage4/qemu_irq.py stage4/native_seed.img
+      - name: Record exact tested Wave 2 integrated image identity
+        run: python3 -m franctxt.build record --image stage4/native_seed.img --kernel stage4/native_seed.bin --passed native --passed apps --output stage4/wave2-tested.franctxt
+      - name: Upload actual VGA frames and build identity
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: francos-wave2-vga-and-image-identity
+          path: |
+            stage4/screenshots-wave2/*.ppm
+            stage4/wave2-tested.franctxt
+          if-no-files-found: warn
