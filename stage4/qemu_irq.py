@@ -93,11 +93,14 @@ with tempfile.TemporaryDirectory(prefix="franc-timer-") as tmp:
             f"Hardware timer did not interrupt the Franc JIT: {first}, {second}"
         )
         if os.getenv("FRANC_TEST_PREEMPT") == "1":
+            prior_tick = number(line("irq-ticks ."))
             success = number(line("preempt-asm-demo ."))
             assert success == 1, f"Timer-driven context switch failed: {success}"
             a = number(line("preempt-a ."))
             b = number(line("preempt-b ."))
             assert a > 100 and b > 100, (a, b)
+            post_tick = number(line("irq-ticks ."))
+            assert post_tick - prior_tick >= 120, (prior_tick, post_tick)
             print(f"PASS: independent, never-yielding assembly workers were preempted and resumed ({a}, {b} iterations)", flush=True)
         stopped = number(line("irq-stop ."))
         time.sleep(0.5)

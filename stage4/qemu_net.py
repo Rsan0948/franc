@@ -207,6 +207,15 @@ with tempfile.TemporaryDirectory(prefix="franc-net-") as tmp:
                                 "net-rx-ptr 42 + ip-u16@ .",
                                 "net-rx-ptr 44 + ip-u16@ ."):
                     snap[command] = line(command).decode("ascii", errors="replace").strip()
+                raw_udp = cap.read_bytes() if cap.is_file() else b""
+                if raw_udp.startswith(b"\\xd4\\xc3\\xb2\\xa1"):
+                    pos = 24
+                    while pos + 16 <= len(raw_udp):
+                        length = struct.unpack_from("<I", raw_udp, pos + 8)[0]
+                        frame = raw_udp[pos + 16:pos + 16 + length]
+                        if len(frame) >= 42 and frame[12:14] in (b"\\x08\\x00", b"\\x08\\x06"):
+                            print("UDP diagnostic PCAP frame:", frame[:90].hex(), flush=True)
+                        pos += 16 + length
                 raise AssertionError(f"UDP DNS reply not validated: {result!r}, {snap}")
             line("net-rx-consume .", b"1\nFrac> ")
             line("net-sent .", b"5\nFrac> ")
