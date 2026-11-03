@@ -1,0 +1,43 @@
+name: FrancOS v1 Wave 2 — preemptive Ring 3 user contexts
+on:
+  push:
+    branches: [francos-v1-wave2-ring3-scheduler-ide]
+    paths:
+      - 'stage4/**'
+      - 'franctxt/tests/test_user_scheduler_contract.py'
+      - '.github/workflows/user-preempt.yml'
+  pull_request:
+    paths:
+      - 'stage4/**'
+      - 'franctxt/tests/test_user_scheduler_contract.py'
+      - '.github/workflows/user-preempt.yml'
+permissions:
+  contents: read
+jobs:
+  user-preemption:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate pinned native seed, region ownership and kernel ABI
+        run: python3 -m franctxt.build preflight
+      - name: Assemble and inspect x86-64 user-mode interrupt contracts
+        run: python3 -m unittest discover -s franctxt/tests -p 'test_user_scheduler_contract.py' -v
+      - name: Install QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Build native FrancOS image with assembly-only runtime
+        run: make -f stage4/Makefile.native native-seed
+      - name: Verify image and exact source bundle identity
+        run: python3 -m franctxt.build verify-image --image stage4/native_seed.img --kernel stage4/native_seed.bin
+      - name: Prove two CPL3 users preempt and one faulty user does not kill B
+        run: FRANC_TEST_USER_PREEMPT=1 python3 stage4/qemu_irq.py stage4/native_seed.img
+      - name: Existing sequential CPL3 and CR3-owner regressions
+        run: FRANC_TEST_PROC_ISO=1 python3 stage4/qemu_irq.py stage4/native_seed.img
+      - name: Record bounded (assembly-only) Ring3 preemption proof
+        run: |
+          python3 -m franctxt.build record --image stage4/native_seed.img --kernel stage4/native_seed.bin --passed native --output stage4/user-preempt-tested.franctxt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: francos-user-mode-preemption-probe
+          path: stage4/user-preempt-tested.franctxt
+          if-no-files-found: error
