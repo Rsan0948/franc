@@ -22,6 +22,7 @@ jobs:
       - name: Franc IDE/manifest/network native contracts
         run: |
           python3 -m unittest discover -s franctxt/tests -p 'test_ide_contract.py' -v
+          python3 -m unittest discover -s franctxt/tests -p 'test_wave4_contract.py' -v
           python3 -m unittest discover -s franctxt/tests -p 'test_package_manifest.py' -v
           python3 -m unittest discover -s franctxt/tests -p 'test_user_aot_contract.py' -v
           python3 -m unittest discover -s franctxt/tests -p 'test_sha256_native.py' -v
