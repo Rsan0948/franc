@@ -21,6 +21,6 @@ if [ "$bytes" -gt 131071 ]; then
     exit 1
 fi
 sectors=$(( (bytes + 511) / 512 ))
-dd if=/dev/zero of="$image" bs=512 seek=256 count=$((sectors + 1)) conv=notrunc status=none
-printf FRANCSRC | dd of="$image" bs=512 seek=256 conv=notrunc status=none
-dd if="$scratch" of="$image" bs=512 seek=257 conv=notrunc status=none
+dd if=/dev/zero of="$image" bs=512 seek=512 count=$((sectors + 1)) conv=notrunc status=none
+printf FRANCSRC | dd of="$image" bs=512 seek=512 conv=notrunc status=none
+dd if="$scratch" of="$image" bs=512 seek=513 conv=notrunc status=none

@@ -181,3 +181,11 @@ persistent filesystem. ATA sector **writes remain restricted** to the original
 filesystem area. The `f` menu option and CI integration test demonstrate
 linkable code generated from disk-fed source, rather than source embedded in
 Python-generated seed assembly. Do not run untrusted bundles.
+
+## Expanded Stage 4 BIOS loader
+
+The separate Stage 4 bootloader reads 310 kernel sectors from LBAs 1–127,
+200–255 and 256–382 into contiguous RAM at 0x10000. This preserves Stage1's
+original loader and FRANCFS1 at 128–199. The base image is now 512 sectors
+(256 KiB); the Franc source staging marker is at LBA 512, source begins 513.
+Assembly/GNU binutils and dd remain the permitted toolchain.

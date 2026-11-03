@@ -143,12 +143,12 @@ try:
         assert 0 < kernel_bin.stat().st_size <= 127*512
         def dd(*args, data=None):
             subprocess.run(['dd',*args,'status=none'],input=data,check=True)
-        dd('if=/dev/zero',f'of={image}','bs=512','count=256')
+        dd('if=/dev/zero',f'of={image}','bs=512','count=512')
         dd(f'if={root/"boot.bin"}',f'of={image}','conv=notrunc')
         dd(f'if={kernel_bin}',f'of={image}','bs=512','count=127',
            'seek=1','conv=notrunc')
         dd(f'of={image}','bs=512','seek=128','conv=notrunc',data=b'FRANCFS1')
-        assert image.stat().st_size==256*512
+        assert image.stat().st_size==512*512
         guest = subprocess.Popen([
             qemu,'-m','128M','-accel','tcg','-display','none','-monitor','none',
             '-no-reboot','-serial','stdio',
@@ -201,7 +201,7 @@ try:
         subprocess.run(['objcopy','-O','binary','-j','.text','-j','.rodata',
             '-j','.data',str(elf),str(binary)],check=True)
         assert 0<binary.stat().st_size<=127*512
-        dd('if=/dev/zero',f'of={control_image}','bs=512','count=256')
+        dd('if=/dev/zero',f'of={control_image}','bs=512','count=512')
         dd(f'if={root/"boot.bin"}',f'of={control_image}','conv=notrunc')
         dd(f'if={binary}',f'of={control_image}','bs=512','count=127',
            'seek=1','conv=notrunc')
@@ -255,7 +255,7 @@ try:
         subprocess.run(['objcopy','-O','binary','-j','.text','-j','.rodata',
             '-j','.data',str(elf),str(native)],check=True)
         assert 0<native.stat().st_size<=127*512
-        dd('if=/dev/zero',f'of={disk}','bs=512','count=256')
+        dd('if=/dev/zero',f'of={disk}','bs=512','count=512')
         dd(f'if={root/"boot.bin"}',f'of={disk}','conv=notrunc')
         dd(f'if={native}',f'of={disk}','bs=512','count=127',
            'seek=1','conv=notrunc')
