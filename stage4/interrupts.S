@@ -164,6 +164,9 @@ fr_irq_timer:
     movw $0x20,%dx
     movb $0x20,%al
     outb %al,%dx
+    /* Wave 2: bounded CPL3 contexts use their own CR3 and TSS RSP0. */
+    cmpq $1,fr_user_enabled(%rip)
+    je fr_user_timer_tick
     cmpq $1,fr_preempt_enabled(%rip)
     jne .Lirq_restore
     movq fr_preempt_current(%rip),%rax
