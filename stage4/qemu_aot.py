@@ -10,6 +10,9 @@ if not qemu:sys.exit('QEMU missing: boot cannot be claimed verified')
 temporary_disk=tempfile.TemporaryDirectory(prefix='franc-aot-')
 test_image=Path(temporary_disk.name)/'franos-aot.img'
 shutil.copyfile(root/'franos-aot.img',test_image)
+# Stage source using only the repository's Python-free shell/byte tools.
+subprocess.run(['sh',str(root/'source_pack.sh'),str(test_image),
+                str(root/'source_fixture.frac')],check=True)
 cmd=[qemu,'-m','128M','-accel','tcg','-display','none',
      '-monitor','none','-no-reboot','-serial','stdio',
      '-drive',f'file={test_image},format=raw,if=ide']
@@ -81,6 +84,7 @@ try:
                           (b'c', b'FRANC-PROGRAM-END\nFranc> '),
                           (b'd', b'FRANC-CONTROL-END\nFranc> '),
                           (b'e', b'FRANC-STRING-END\nFranc> '),
+                          (b'f', b'FRANC-SOURCE-END\nFranc> '),
                           (b'b', b'SELFHOST OK\nFranc> '),
                           (b'\x1b', b'EXIT CONSOLE')]:
         time.sleep(0.5)
@@ -279,6 +283,21 @@ try:
             guest.kill()
             guest.wait()
     print('PASS: Franc AOT strings and named registers cold-boot and execute correctly')
+
+    # Verify that Franc loads the raw LBA source bundle and emits native code.
+    bundle_match=re.search(rb'FRANC-PROGRAM-BEGIN\n(.*?)FRANC-PROGRAM-END\nFRANC-SOURCE-END\n',transcript,re.S)
+    assert bundle_match is not None and b'FRANC-SOURCE-ERROR' not in transcript,transcript
+    bundle_asm=bundle_match.group(1).decode('ascii')
+    assert 'fw_737175617265:' in bundle_asm and 'fw_6d61696e:' in bundle_asm
+    with TemporaryDirectory(prefix='franc-disk-source-') as work:
+        source=Path(work)/'source.S'
+        target=Path(work)/'source.o'
+        source.write_text(bundle_asm)
+        subprocess.run(['as','--64','-o',str(target),str(source)],check=True)
+        sym=subprocess.check_output(['nm',str(target)],text=True)
+        assert 'fw_737175617265' in sym and 'franc_aot_entry' in sym,sym
+    print('PASS: Franc reads disk-staged source beyond the reserved filesystem and emits AOT object')
+
 
 
 

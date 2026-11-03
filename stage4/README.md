@@ -169,3 +169,15 @@ The Franc compiler performs a register-declaration prepass, so a register can
 be read before the first assignment. CI independently assembles, links and
 cold-boots this program, checking both text and stored values. This is still
 an incremental parity step, not a complete Python-free rebuild.
+
+## Python-free raw Franc source staging
+
+The script `stage4/source_pack.sh` uses `cat` and GNU `dd` to append
+NUL-terminated Franc source files to a disposable QEMU disk at LBA 257 onward,
+with a `FRANCSRC` signature at LBA 256. Franc's own `bundle-source` loads
+this stream into fixed RAM at 0x200000 for compilation, capped at 131071
+bytes. AOT bundle loading does not use Python or the restricted 2048-byte
+persistent filesystem. ATA sector **writes remain restricted** to the original
+filesystem area. The `f` menu option and CI integration test demonstrate
+linkable code generated from disk-fed source, rather than source embedded in
+Python-generated seed assembly. Do not run untrusted bundles.

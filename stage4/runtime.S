@@ -658,6 +658,11 @@ PUSH_ADDRESS fr_s2_sign_addr,fr_condition
 PUSH_ADDRESS fr_s2_string_addr,fr_push
 PUSH_ADDRESS fr_s2_self_source,franc_stage2_source
 PUSH_ADDRESS fr_repl_buffer,repl_input
+.global fr_aot_bundle_area
+fr_aot_bundle_area:
+    movq $0x200000,%rdi
+    movq $1,%rsi
+    jmp fr_push
 
 .global fr_s2_code
 fr_s2_code:
