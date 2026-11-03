@@ -33,6 +33,8 @@ jobs:
         run: FRANC_TEST_USER_PREEMPT=1 python3 stage4/qemu_irq.py stage4/native_seed.img
       - name: Existing sequential CPL3 and CR3-owner regressions
         run: FRANC_TEST_PROC_ISO=1 python3 stage4/qemu_irq.py stage4/native_seed.img
+      - name: Verify Wave 2 IDE navigation, bounds and fresh-main compile/run in QEMU
+        run: python3 stage4/qemu_roadmap.py stage4/native_seed.img
       - name: Record bounded (assembly-only) Ring3 preemption proof
         run: |
           python3 -m franctxt.build record --image stage4/native_seed.img --kernel stage4/native_seed.bin --passed native --output stage4/user-preempt-tested.franctxt
