@@ -4,6 +4,9 @@ on:
     branches: [stage4-roadmap-foundations]
     paths:
       - 'stage4/net.frac'
+      - 'stage4/runtime.S'
+      - 'stage4/aot.frac'
+      - 'stage4/boot.S'
       - 'stage4/pci.frac'
       - 'stage4/qemu_net.py'
       - 'stage4/bootstrap_seed.S'
@@ -16,6 +19,9 @@ on:
   pull_request:
     paths:
       - 'stage4/net.frac'
+      - 'stage4/runtime.S'
+      - 'stage4/aot.frac'
+      - 'stage4/boot.S'
       - 'stage4/pci.frac'
       - 'stage4/qemu_net.py'
       - 'stage4/bootstrap_seed.S'

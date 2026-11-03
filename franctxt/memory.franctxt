@@ -1,5 +1,8 @@
 franctxt 1
 memory.ram-bytes = 134217728
+mmio.e1000.base = 134217728
+mmio.e1000.size = 131072
+mmio.identity-limit = 268435456
 region.bignumarena.base = 100663296
 region.bignumarena.size = 4194304
 region.bignumprint.base = 105906176

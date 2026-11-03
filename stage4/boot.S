@@ -62,7 +62,9 @@ protected:
   movw %ax,%ss
   movw %ax,%fs
   movw %ax,%gs
-  /* PML4 0x9000 -> PDPT 0xA000 -> PD 0xB000, 128MB identity 2MB pages */
+  /* PML4 0x9000 -> PDPT 0xA000 -> PD 0xB000, 256MiB identity map (128 x 2MiB pages).
+     Guest RAM ends at 128MiB; the e1000 BAR0 is remapped to 0x08000000
+     in the non-RAM PCI MMIO aperture above it. */
   movl $0x9000,%edi
   movl $3072,%ecx
   xorl %eax,%eax
@@ -70,7 +72,7 @@ protected:
   movl $0xa003,0x9000
   movl $0xb003,0xa000
   movl $0xb000,%edi
-  movl $64,%ecx
+  movl $128,%ecx
   movl $0x83,%eax
 1: movl %eax,(%edi)
    addl $8,%edi

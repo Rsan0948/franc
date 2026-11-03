@@ -1201,3 +1201,51 @@ fr_ft_sha256:
 
 /* SHA-256 compression source is shared with the independent Linux ABI test. */
 .include "franctxt/sha256_native.S"
+
+
+/* Strictly 32-bit PCI BAR0 memory-mapped device registers.
+ * QEMU 82540EM legacy e1000 I/O BAR is inert; PCI MMIO is necessary.
+ * Only the 128KiB MMIO window above 128MiB guest RAM is addressable.
+ * BIOS boot pages map 256MiB; UEFI already maps low 4GiB.
+ */
+.global fr_mmio32_fetch
+fr_mmio32_fetch:
+    call fr_pop
+    cmpq $1,%rdx
+    jne .Lmmio_read_bad
+    cmpq $0x08000000,%rax
+    jb .Lmmio_read_bad
+    cmpq $0x08020000,%rax
+    jae .Lmmio_read_bad
+    testq $3,%rax
+    jne .Lmmio_read_bad
+    movl (%rax),%edi
+    movq $1,%rsi
+    jmp fr_push
+.Lmmio_read_bad:
+    xorq %rdi,%rdi
+    xorq %rsi,%rsi
+    jmp fr_push
+
+.global fr_mmio32_store
+fr_mmio32_store:
+    call fr_pop
+    cmpq $1,%rdx
+    jne .Lmmio_write_bad
+    movabsq $4294967295,%r8
+    cmpq %r8,%rax
+    ja .Lmmio_write_bad
+    movl %eax,%r10d
+    call fr_pop
+    cmpq $1,%rdx
+    jne .Lmmio_write_bad
+    cmpq $0x08000000,%rax
+    jb .Lmmio_write_bad
+    cmpq $0x08020000,%rax
+    jae .Lmmio_write_bad
+    testq $3,%rax
+    jne .Lmmio_write_bad
+    movl %r10d,(%rax)
+    mfence
+.Lmmio_write_bad:
+    ret

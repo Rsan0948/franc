@@ -35,6 +35,18 @@ def validate_layout(state: dict, root: Path | None = None) -> list[tuple[str, in
     size = state.get("memory.ram-bytes")
     if type(size) is not int or size != MAX_RAM:
         raise MemoryLayoutError("memory-map must match the current 128 MiB QEMU target")
+    mmio_base = state.get("mmio.e1000.base")
+    mmio_size = state.get("mmio.e1000.size")
+    mapped = state.get("mmio.identity-limit")
+    if (type(mmio_base) is not int or type(mmio_size) is not int or
+            mmio_base != MAX_RAM or mmio_size != 128 * 1024 or
+            mapped != 256 * 1024 * 1024 or mmio_base + mmio_size > mapped):
+        raise MemoryLayoutError("e1000 MMIO must live above RAM in the mapped PCI aperture")
+    if root:
+        net = (root / "stage4/net.frac").read_text("utf-8")
+        bios = (root / "stage4/boot.S").read_text("utf-8")
+        if "134217728 :net-mmio" not in net or "movl $128,%ecx" not in bios:
+            raise MemoryLayoutError("NIC BAR0 and BIOS MMIO identity map disagree")
     keys = set()
     for key in state:
         if key.startswith("region."):

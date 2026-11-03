@@ -85,7 +85,7 @@ with tempfile.TemporaryDirectory(prefix="franc-net-") as tmp:
         # This separates descriptor problems from PCI BAR and link issues.
         diagnostics = {}
         for register in (
-            "net-iobase .",
+            "net-mmio .",
             "$400 net-reg@ .",
             "$3800 net-reg@ .",
             "$3808 net-reg@ .",

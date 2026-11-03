@@ -32,6 +32,15 @@ class Layout(unittest.TestCase):
         with self.assertRaisesRegex(MemoryLayoutError, "invalid/out-of-bounds"):
             validate_layout(bad_alignment)
 
+    def test_nic_mmio_is_not_in_guest_ram(self):
+        state = parse((ROOT / "franctxt/memory.franctxt").read_bytes())
+        self.assertEqual(state["mmio.e1000.base"], 128 * 1024 * 1024)
+        self.assertEqual(state["mmio.identity-limit"], 256 * 1024 * 1024)
+        bad = dict(state)
+        bad["mmio.e1000.base"] = 64 * 1024 * 1024
+        with self.assertRaisesRegex(MemoryLayoutError, "MMIO must live above RAM"):
+            validate_layout(bad)
+
     def test_layout_source_change_cannot_silently_drift(self):
         base = parse((ROOT / "franctxt/memory.franctxt").read_bytes())
         changed = dict(base)
