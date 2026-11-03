@@ -189,15 +189,25 @@ fr_irq_timer:
 
 /* Build a fresh synthetic interrupt frame at the top of an isolated
  * 16 KiB kernel stack. Inputs: rdi=top-of-stack, rsi=worker RIP.
- * Outputs: rax=saved rsp pointing at 15 saved zeroed GPRs.
+ * Outputs: rax=saved rsp pointing at 15 saved zeroed GPRs,
+ * followed by RIP, CS, RFLAGS, previous RSP and SS.
  */
 fr_preempt_prepare:
-    subq $24,%rdi
+    /* IA-32e unconditionally pushes old SS:RSP on all interrupts.
+     * IRETQ unconditionally restores them, even for CPL0 -> CPL0.
+     * A synthetic 3-slot frame leaves workers on an invalid stack.
+     */
+    movq %rdi,%r8
+    subq $40,%rdi
     movq %rsi,0(%rdi)
     movw %cs,%ax
     movzwq %ax,%rax
     movq %rax,8(%rdi)
     movq $0x202,16(%rdi)
+    movq %r8,24(%rdi)
+    movw %ss,%ax
+    movzwq %ax,%rax
+    movq %rax,32(%rdi)
     subq $120,%rdi
     movq %rdi,%r9
     movl $15,%ecx
