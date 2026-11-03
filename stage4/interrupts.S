@@ -28,6 +28,7 @@ fr_preempt_ds: .skip 24  /* per-context Franc rational stack cursors */
 fr_preempt_data_stacks: .skip 32768 /* two private 16 KiB Rat stacks */
 fr_preempt_current: .skip 8
 fr_preempt_enabled: .skip 8
+fr_preempt_mode: .skip 8 /* 0=off, 1=assembly, 2=Franc JIT */
 fr_preempt_target_tick: .skip 8
 fr_preempt_a_counter: .skip 8
 fr_preempt_b_counter: .skip 8
@@ -133,6 +134,7 @@ fr_irq_stop:
     outb %al,$0x21
     outb %al,$0xa1
     movq $0,fr_preempt_enabled(%rip)
+    movq $0,fr_preempt_mode(%rip)
     movq $0,fr_irq_running(%rip)
     movq fr_irq_tick_count(%rip),%rdi
     movq $1,%rsi
@@ -175,6 +177,20 @@ fr_irq_timer:
     jb .Lirq_next_chosen
     xorq %rax,%rax
 .Lirq_next_chosen:
+    /* Skip Franc tasks that returned or failed, always retaining host. */
+    cmpq $2,fr_preempt_mode(%rip)
+    jne .Lirq_chosen
+    testq %rax,%rax
+    jz .Lirq_chosen
+    leaq fr_task_states(%rip),%r10
+    cmpq $1,(%r10,%rax,8)
+    je .Lirq_chosen
+    incq %rax
+    cmpq $3,%rax
+    jb .Lirq_next_chosen
+    xorq %rax,%rax
+    jmp .Lirq_next_chosen
+.Lirq_chosen:
     movq %rax,fr_preempt_current(%rip)
     movq (%rcx,%rax,8),%rsp
     movq (%r8,%rax,8),%r9
@@ -275,6 +291,7 @@ fr_preempt_demo:
     movq $0,fr_preempt_a_counter(%rip)
     movq $0,fr_preempt_b_counter(%rip)
     movq $0,fr_preempt_current(%rip)
+    movq $1,fr_preempt_mode(%rip)
     /* Slot 0 retains the interrupted Franc REPL stack. */
     movq ds_ptr(%rip),%rax
     movq %rax,fr_preempt_ds(%rip)
@@ -303,6 +320,7 @@ fr_preempt_demo:
     cli
     /* Host is executing, so no worker context can still be running. */
     movq $0,fr_preempt_enabled(%rip)
+    movq $0,fr_preempt_mode(%rip)
     sti
     cmpq $0,fr_preempt_a_counter(%rip)
     je .Lpreempt_bad
