@@ -96,14 +96,18 @@ with tempfile.TemporaryDirectory(prefix="franc-timer-") as tmp:
         )
         if os.getenv("FRANC_TEST_PREEMPT") == "1":
             prior_tick = number(line("irq-ticks ."))
-            success = number(line("preempt-asm-demo ."))
-            assert success == 1, f"Timer-driven context switch failed: {success}"
+            # Carry two host Rat values through 120 IRQ-driven switches;
+            # workers independently exercise fr_push/fr_pop on private stacks.
+            preserved = line("101 202 preempt-asm-demo . . .")
+            assert b"1\n202\n101\nFrac> " in preserved, (
+                f"Host rational stack was corrupted during CPU preemption: {preserved!r}"
+            )
             a = number(line("preempt-a ."))
             b = number(line("preempt-b ."))
             assert a > 100 and b > 100, (a, b)
             post_tick = number(line("irq-ticks ."))
             assert post_tick - prior_tick >= 120, (prior_tick, post_tick)
-            print(f"PASS: independent, never-yielding assembly workers were preempted and resumed ({a}, {b} iterations)", flush=True)
+            print(f"PASS: CPU and private Franc Rat stack pointers were preempted and restored ({a}, {b} verified push/pop iterations)", flush=True)
         if os.getenv("FRANC_TEST_RING3") == "1":
             value = number(line("ring3-probe ."))
             assert value == 1, f"Expected a valid user syscall and protected page fault, got {value}"

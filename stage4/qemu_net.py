@@ -217,6 +217,28 @@ with tempfile.TemporaryDirectory(prefix="franc-net-") as tmp:
                             print("UDP diagnostic PCAP frame:", frame[:90].hex(), flush=True)
                         pos += 16 + length
                 raise AssertionError(f"UDP DNS reply not validated: {result!r}, {snap}")
+            # Negative tests on the actual received UDP frame. Preserve each
+            # original field on the Franc data stack, tamper in guest memory,
+            # assert rejection, restore, and assert successful revalidation.
+            # Never release the RX descriptor until all checks pass.
+            for offset, invalid, label in (
+                (34, 53001, "unexpected UDP source port"),
+                (36, 1, "unexpected UDP destination port"),
+                (38, 7, "truncated UDP length"),
+                (40, 1, "invalid UDP checksum"),
+                (42, 4661, "wrong DNS transaction identifier"),
+                (44, 0, "DNS packet without response flag"),
+            ):
+                command = (
+                    f"net-rx-ptr {offset} + dup ip-u16@ swap {invalid} ip-u16! "
+                    f"udp-dns-reply? . net-rx-ptr {offset} + swap ip-u16! "
+                    "udp-dns-reply? ."
+                )
+                checked = line(command, timeout=140)
+                assert b"0\n1\nFrac> " in checked, (
+                    f"UDP negative/restore gate failed for {label}: {checked!r}"
+                )
+            print("PASS: UDP rejects six malformed reply fields and revalidates after restoration", flush=True)
             line("net-rx-consume .", b"1\nFrac> ")
             line("net-sent .", b"5\nFrac> ")
             line("net-received .", b"5\nFrac> ")
@@ -299,5 +321,26 @@ with tempfile.TemporaryDirectory(prefix="franc-net-") as tmp:
             pseudo = p[26:34] + bytes((0, 17)) + p[38:40]
             assert checksum16(pseudo + p[34:71]) == 0, "invalid UDP pseudoheader checksum"
         print("PASS: host PCAP verified QEMU DNS IPv4/UDP checksums and query", flush=True)
+        responses = [
+            p for p in packets if len(p) >= 54 and p[12:14] == b"\x08\x00"
+            and p[23] == 17 and p[26:30] == b"\x0a\x00\x02\x03"
+            and p[30:34] == b"\x0a\x00\x02\x0f"
+            and p[34:36] == b"\x00\x35" and p[36:38] == b"\xcf\x08"
+            and p[42:44] == b"\x12\x34" and p[44] & 0x80
+        ]
+        assert responses, "Independent host capture did not see a matching DNS response"
+        for p in responses:
+            ip_size = int.from_bytes(p[16:18], "big")
+            udp_size = int.from_bytes(p[38:40], "big")
+            assert 40 <= ip_size <= len(p) - 14, "bad captured DNS IPv4 length"
+            assert 20 <= udp_size <= 512, "bad captured DNS UDP length"
+            assert ip_size == udp_size + 20, "DNS IP/UDP length mismatch"
+            assert checksum16(p[14:34]) == 0, "bad captured DNS response IPv4 checksum"
+            if p[40:42] != b"\x00\x00":
+                pseudo = p[26:34] + bytes((0, 17)) + p[38:40]
+                assert checksum16(pseudo + p[34:34 + udp_size]) == 0, (
+                    "bad captured DNS response UDP checksum"
+                )
+        print(f"PASS: independent PCAP checked {len(responses)} DNS response packet(s)", flush=True)
 
 

@@ -50,5 +50,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: franc-ring3-isolation-tested-build
-          path: stage4/preempt-tested.franctxt
+          path: stage4/ring3-tested.franctxt
           if-no-files-found: error

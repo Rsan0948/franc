@@ -275,14 +275,20 @@ fr_ring3_probe:
     /* Only reached before GDT/TSS/entry; do not expose CPL3 on error. */
     sti
 .Lring3_probe_fail:
+    /* Rejecting entry before irq-start MUST NOT execute STI: there is
+     * no installed protected IDT and a PIT IRQ would wedge the guest.
+     * After successful initialization a failing one-shot reentry leaves
+     * the caller's IF state unchanged instead of enabling it.
+     */
     xorq %r12,%r12
-    jmp .Lring3_probe_finish_success
+    jmp .Lring3_probe_return
 
 .Lring3_probe_finish:
     xorq %r12,%r12
 .Lring3_probe_finish_success:
     movq $0,fr_ring3_active(%rip)
     sti
+.Lring3_probe_return:
     movq %r12,%rdi
     popq %r15
     popq %r14

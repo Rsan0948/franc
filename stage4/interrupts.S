@@ -14,13 +14,18 @@ fr_irq_tick_count: .skip 8
 fr_irq_running: .skip 8
 /* Single CPU, ring-0, assembly-only preemption proof. This is not a
  * general Franc fiber scheduler; threads do not touch shared ds_ptr.
- * A scheduler requires per-task rational state, FPU/SIMD and faults.
+ * This proof saves/restores ds_ptr, but a general scheduler still requires
+ * full task descriptors, rational stack limits, register ownership, FPU/SIMD
+ * state, error handling, and explicit lifecycle/critical-section controls.
  */
 .balign 16
 fr_preempt_a_stack: .skip 16384
 fr_preempt_b_stack: .skip 16384
 .balign 8
 fr_preempt_rsp: .skip 24 /* [host, asm A, asm B] interrupted RSP */
+fr_preempt_ds: .skip 24  /* per-context Franc rational stack cursors */
+.balign 16
+fr_preempt_data_stacks: .skip 32768 /* two private 16 KiB Rat stacks */
 fr_preempt_current: .skip 8
 fr_preempt_enabled: .skip 8
 fr_preempt_target_tick: .skip 8
@@ -161,7 +166,10 @@ fr_irq_timer:
     jne .Lirq_restore
     movq fr_preempt_current(%rip),%rax
     leaq fr_preempt_rsp(%rip),%rcx
+    leaq fr_preempt_ds(%rip),%r8
     movq %rsp,(%rcx,%rax,8)
+    movq ds_ptr(%rip),%r9
+    movq %r9,(%r8,%rax,8)
     incq %rax
     cmpq $3,%rax
     jb .Lirq_next_chosen
@@ -169,6 +177,8 @@ fr_irq_timer:
 .Lirq_next_chosen:
     movq %rax,fr_preempt_current(%rip)
     movq (%rcx,%rax,8),%rsp
+    movq (%r8,%rax,8),%r9
+    movq %r9,ds_ptr(%rip)
 .Lirq_restore:
     popq %r15
     popq %r14
@@ -218,17 +228,38 @@ fr_preempt_prepare:
     ret
 
 /* Never yielding, mutually preempted CPU-bound assembly workers.
- * They touch only their own counter; their instruction pointers are
- * resumed from IRQ frames, not cooperative coroutine calls.
+ * They touch only their own counter and private Franc rational stack;
+ * their instruction pointers are resumed from IRQ frames, not yields.
+ */
+/* Exercise the same rational stack primitives used by native Franc code.
+ * Each never-yielding worker pushes and pops an integer on its private
+ * Rat stack on EVERY iteration; a lost ds_ptr context is a hard failure.
+ * This is still assembly-only workload code, not arbitrary Franc JIT tasks.
  */
 fr_preempt_worker_a:
-    incq fr_preempt_a_counter(%rip)
+    movq fr_preempt_a_counter(%rip),%rdi
+    movq $1,%rsi
+    call fr_push
+    call fr_pop
+    cmpq $1,%rdx
+    jne .Lpreempt_corrupt
+    incq %rax
+    movq %rax,fr_preempt_a_counter(%rip)
     pause
     jmp fr_preempt_worker_a
 fr_preempt_worker_b:
-    incq fr_preempt_b_counter(%rip)
+    movq fr_preempt_b_counter(%rip),%rdi
+    movq $1,%rsi
+    call fr_push
+    call fr_pop
+    cmpq $1,%rdx
+    jne .Lpreempt_corrupt
+    incq %rax
+    movq %rax,fr_preempt_b_counter(%rip)
     pause
     jmp fr_preempt_worker_b
+.Lpreempt_corrupt:
+    ud2
 
 /* (-- did-both-progress). Requires irq-start first; bounded to 120 PIT
  * ticks. Host is runnable slot 0, workers are slots 1 and 2.
@@ -244,6 +275,13 @@ fr_preempt_demo:
     movq $0,fr_preempt_a_counter(%rip)
     movq $0,fr_preempt_b_counter(%rip)
     movq $0,fr_preempt_current(%rip)
+    /* Slot 0 retains the interrupted Franc REPL stack. */
+    movq ds_ptr(%rip),%rax
+    movq %rax,fr_preempt_ds(%rip)
+    leaq fr_preempt_data_stacks(%rip),%rax
+    movq %rax,fr_preempt_ds+8(%rip)
+    addq $16384,%rax
+    movq %rax,fr_preempt_ds+16(%rip)
     leaq fr_preempt_a_stack+16384(%rip),%rdi
     leaq fr_preempt_worker_a(%rip),%rsi
     call fr_preempt_prepare
