@@ -10,7 +10,7 @@ def svc-net-open net-active ifnz 1 else net-init ifnz 1 else -1 then then ;
 def svc-net-ready net-active if0 -1 exit then net-dns-ready if0 -2 exit then 1 ;
 \ (max-polls -- status). Consume malformed RX immediately; never leave a
 \ descriptor stuck waiting for UI input. All paths are strictly bounded.
-def svc-dns-poll :fib-n fib-n 1 - if 0 exit then fib-n 2049 - if0 -4 exit then 0 :fib-a 0 :fib-b begin fib-a fib-n - while net-rx-ready? ifnz udp-dns-reply? :fib-i net-rx-consume drop fib-i ifnz 1 exit then 1 :fib-b then fib-a 1 + :fib-a repeat fib-b ifnz -5 else -4 then ;
+def svc-dns-poll :fib-n fib-n 1 - if -4 exit then fib-n 2049 - if 0 :fib-a else -4 exit then 0 :fib-a 0 :fib-b begin fib-a fib-n - while net-rx-ready? ifnz udp-dns-reply? :fib-i net-rx-consume drop fib-i ifnz 1 exit then 1 :fib-b then fib-a 1 + :fib-a repeat fib-b ifnz -5 else -4 then ;
 \ (poll-budget -- status) requires explicit net initialization and DNS ARP
 \ binding; status only, NEVER blocks forever or performs implicit network I/O.
 def svc-dns-request :fib-n svc-net-ready 1 - ifnz svc-net-ready exit then udp-dns-query if0 -3 exit then fib-n svc-dns-poll ;
