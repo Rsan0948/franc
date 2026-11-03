@@ -38,6 +38,10 @@ _kstart:
     leaq franc_dict_initial(%rip),%rax
     movq (%rax),%rax
     movq %rax,fr_dict_head_ptr(%rip)
+    /* Register the kernel scheduler in the mutable native JIT dictionary. */
+    movq %rax,fr_task_dict_run(%rip)
+    leaq fr_task_dict_top(%rip),%rax
+    movq %rax,fr_dict_head_ptr(%rip)
     call franc_entry
 .hang:
     cli
@@ -122,6 +126,24 @@ fr_push:
     movq %rax,%rsi
 .write:
     movq ds_ptr(%rip),%rax
+    /* Check each task's dedicated 16 KiB rational stack before writing. */
+    cmpq $2,fr_preempt_mode(%rip)
+    jne .Ltask_push_ok
+    movq fr_preempt_current(%rip),%rcx
+    testq %rcx,%rcx
+    jz .Ltask_push_ok
+    cmpq $2,%rcx
+    ja fr_task_abort_current
+    decq %rcx
+    shlq $14,%rcx
+    leaq fr_preempt_data_stacks(%rip),%r8
+    addq %rcx,%r8
+    cmpq %r8,%rax
+    jb fr_task_abort_current
+    addq $16368,%r8
+    cmpq %r8,%rax
+    ja fr_task_abort_current
+.Ltask_push_ok:
     movq %rdi,(%rax)
     movq %rsi,8(%rax)
     addq $16,%rax
@@ -133,6 +155,20 @@ fr_push:
 fr_pop:
     movq ds_ptr(%rip),%rcx
     leaq ds_stack(%rip),%r8
+    cmpq $2,fr_preempt_mode(%rip)
+    jne .Ltask_pop_floor
+    movq fr_preempt_current(%rip),%r9
+    testq %r9,%r9
+    jz .Ltask_pop_floor
+    cmpq $2,%r9
+    ja fr_task_abort_current
+    decq %r9
+    shlq $14,%r9
+    leaq fr_preempt_data_stacks(%rip),%r8
+    addq %r9,%r8
+    cmpq %r8,%rcx
+    jbe fr_task_abort_current
+.Ltask_pop_floor:
     cmpq %r8,%rcx
     jbe .underflow
     subq $16,%rcx
@@ -1253,5 +1289,6 @@ fr_mmio32_store:
 
 /* Native C-free timer and IDT entry points. */
 .include "stage4/interrupts.S"
+.include "stage4/scheduler.S"
 /* Experimental BIOS-only CPL3 page-table and TSS isolation proof. */
 .include "stage4/ring3.S"
