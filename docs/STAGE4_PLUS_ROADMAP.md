@@ -137,3 +137,21 @@ hardware abstraction layer.
 - The first TX descriptor is deliberately one-shot. There are no
   interrupts, TCP/UDP/IP packet handlers, retransmissions, or
   network sockets yet. Only a trusted emulated NIC is supported.
+
+## Increment 5: physical pages and genuine cooperative stack switching
+
+- A separate experimental 2048-page (8 MiB) 4 KiB-aligned allocator
+  tracks physical pages at `0x07000000..0x077fffff` using a 256-byte
+  bitmap. `page-alloc` zeroes each page; `page-free` rejects unknown,
+  unaligned and double-freed addresses. `page-free-count` reports the
+  remaining slots. No real BIOS/UEFI memory-map negotiation yet.
+- Kernel assembly supplies `fiber-spawn`, `fiber-step`, `fiber-yield`
+  and `fiber-active`. Each of two cooperative fibers gets an independent
+  16 KiB CPU stack and a 16 KiB Franc rational data stack. The context
+  switch saves SysV callee-saved registers and preserves suspended
+  Franc stack values across yields.
+- `stage4/fibers.frac` provides examples that yield with values on
+  their independent Franc stacks. A native QEMU test resumes each and
+  checks the exact reconstructed outputs. Shared global Franc registers,
+  code dictionary and Ring 0 privileges remain, and there is no timer
+  preemption or process address-space separation.

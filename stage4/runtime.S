@@ -897,3 +897,267 @@ fr_rshift:
     xorq %rsi,%rsi
     jmp fr_push
 .section .note.GNU-stack,"",@progbits
+
+
+/* C-free cooperative fibers with independent CPU *and Franc data* stacks.
+ * All JIT code still shares kernel privilege, dictionary and registers.
+ * Two slots, 16 KiB CPU stacks + 16 KiB rational data stacks per slot.
+ * Switching preserves SysV callee-saved regs; no timer interrupts.
+ */
+.section .data
+.balign 8
+fr_fiber_running: .quad -1
+fr_fiber_next: .quad 0
+
+.section .bss
+.balign 16
+fr_fiber_slots: .skip 128
+fr_fiber_cpu_stacks: .skip 32768
+fr_fiber_data_stacks: .skip 32768
+fr_fiber_host_rsp: .skip 8
+fr_fiber_host_ds: .skip 8
+
+.section .text,"ax"
+/* rdi points to saved rsp, rsi points to destination rsp. */
+fr_fiber_switch:
+    pushq %rbp
+    pushq %rbx
+    pushq %r12
+    pushq %r13
+    pushq %r14
+    pushq %r15
+    movq %rsp,(%rdi)
+    movq (%rsi),%rsp
+    popq %r15
+    popq %r14
+    popq %r13
+    popq %r12
+    popq %rbx
+    popq %rbp
+    ret
+
+/* (compiled-code-address -- success). Reject non-JIT or busy address. */
+.global fr_fiber_spawn
+fr_fiber_spawn:
+    call fr_pop
+    cmpq $1,%rdx
+    jne .Lfib_spawn_bad
+    cmpq $0x400000,%rax
+    jb .Lfib_spawn_bad
+    cmpq s2_code_next(%rip),%rax
+    jae .Lfib_spawn_bad
+    cmpq $-1,fr_fiber_running(%rip)
+    jne .Lfib_spawn_bad
+    leaq fr_fiber_slots(%rip),%r8
+    movq (%r8),%rcx
+    cmpq $1,%rcx
+    jne .Lfib_slot0
+    addq $64,%r8
+    cmpq $1,(%r8)
+    je .Lfib_spawn_bad
+    movq $1,%rcx
+    jmp .Lfib_slot_ready
+.Lfib_slot0:
+    xorq %rcx,%rcx
+.Lfib_slot_ready:
+    movq $1,(%r8)
+    movq %rax,8(%r8)
+    leaq fr_fiber_cpu_stacks(%rip),%r9
+    movq %rcx,%r10
+    shlq $14,%r10
+    addq %r10,%r9
+    addq $16384-64,%r9
+    movq %r9,16(%r8)
+    movq $0,0(%r9)
+    movq $0,8(%r9)
+    movq $0,16(%r9)
+    movq $0,24(%r9)
+    movq $0,32(%r9)
+    movq $0,40(%r9)
+    leaq fr_fiber_entry(%rip),%r11
+    movq %r11,48(%r9)
+    leaq fr_fiber_data_stacks(%rip),%r9
+    addq %r10,%r9
+    movq %r9,24(%r8)
+    movq $1,%rdi
+    movq $1,%rsi
+    jmp fr_push
+.Lfib_spawn_bad:
+    xorq %rdi,%rdi
+    movq $1,%rsi
+    jmp fr_push
+
+/* (-- did-work), one cooperative dispatch. No scheduling inside a fiber. */
+.global fr_fiber_step
+fr_fiber_step:
+    cmpq $-1,fr_fiber_running(%rip)
+    jne .Lfib_step_none
+    movq fr_fiber_next(%rip),%r10
+    leaq fr_fiber_slots(%rip),%r8
+    testq %r10,%r10
+    jz .Lfib_step_first
+    addq $64,%r8
+.Lfib_step_first:
+    cmpq $1,(%r8)
+    je .Lfib_step_chosen
+    xorq $1,%r10
+    leaq fr_fiber_slots(%rip),%r8
+    testq %r10,%r10
+    jz .Lfib_step_other
+    addq $64,%r8
+.Lfib_step_other:
+    cmpq $1,(%r8)
+    jne .Lfib_step_none
+.Lfib_step_chosen:
+    movq %r10,fr_fiber_running(%rip)
+    xorq $1,%r10
+    movq %r10,fr_fiber_next(%rip)
+    movq ds_ptr(%rip),%rax
+    movq %rax,fr_fiber_host_ds(%rip)
+    movq 24(%r8),%rax
+    movq %rax,ds_ptr(%rip)
+    leaq fr_fiber_host_rsp(%rip),%rdi
+    leaq 16(%r8),%rsi
+    call fr_fiber_switch
+    movq $1,%rdi
+    movq $1,%rsi
+    jmp fr_push
+.Lfib_step_none:
+    xorq %rdi,%rdi
+    movq $1,%rsi
+    jmp fr_push
+
+/* From a fiber, resume the caller's CPU and Franc stacks. */
+.global fr_fiber_yield
+fr_fiber_yield:
+    movq fr_fiber_running(%rip),%r10
+    cmpq $-1,%r10
+    je .Lfib_yield_return
+    leaq fr_fiber_slots(%rip),%r8
+    shlq $6,%r10
+    addq %r10,%r8
+    movq ds_ptr(%rip),%rax
+    movq %rax,24(%r8)
+    movq fr_fiber_host_ds(%rip),%rax
+    movq %rax,ds_ptr(%rip)
+    movq $-1,fr_fiber_running(%rip)
+    leaq 16(%r8),%rdi
+    leaq fr_fiber_host_rsp(%rip),%rsi
+    call fr_fiber_switch
+.Lfib_yield_return:
+    ret
+
+/* Synthetic first entry. No task can return into invalid caller memory. */
+fr_fiber_entry:
+    subq $8,%rsp
+    movq fr_fiber_running(%rip),%rax
+    shlq $6,%rax
+    leaq fr_fiber_slots(%rip),%r8
+    addq %rax,%r8
+    movq 8(%r8),%rax
+    call *%rax
+    addq $8,%rsp
+    movq fr_fiber_running(%rip),%r10
+    shlq $6,%r10
+    leaq fr_fiber_slots(%rip),%r8
+    addq %r10,%r8
+    movq $2,(%r8)
+    movq ds_ptr(%rip),%rax
+    movq %rax,24(%r8)
+    movq fr_fiber_host_ds(%rip),%rax
+    movq %rax,ds_ptr(%rip)
+    movq $-1,fr_fiber_running(%rip)
+    leaq 16(%r8),%rdi
+    leaq fr_fiber_host_rsp(%rip),%rsi
+    call fr_fiber_switch
+    ud2
+
+.global fr_fiber_active
+fr_fiber_active:
+    xorq %rdi,%rdi
+    leaq fr_fiber_slots(%rip),%rax
+    cmpq $1,(%rax)
+    jne .Lfib_active_1
+    incq %rdi
+.Lfib_active_1:
+    cmpq $1,64(%rax)
+    jne .Lfib_active_end
+    incq %rdi
+.Lfib_active_end:
+    movq $1,%rsi
+    jmp fr_push
+.section .note.GNU-stack,"",@progbits
+
+
+/* Bounded physical 4KiB page allocator, 8MiB arena at 0x07000000.
+ * Identity-mapped 128MiB QEMU only. Does NOT consult BIOS/UEFI memory map.
+ * Tracks allocated pages in a 2048-bit bitmap; page-free rejects double
+ * frees/out-of-range/un-aligned pointers. Zero-fills allocated pages.
+ */
+.section .bss
+.balign 8
+fr_page_bitmap: .skip 256
+fr_pages_used: .skip 8
+.section .text,"ax"
+.global fr_page_alloc
+fr_page_alloc:
+    leaq fr_page_bitmap(%rip),%r8
+    xorq %rcx,%rcx
+.Lpage_scan:
+    cmpq $2048,%rcx
+    jae .Lpage_empty
+    btq %rcx,(%r8)
+    jc .Lpage_taken
+    btsq %rcx,(%r8)
+    incq fr_pages_used(%rip)
+    movq %rcx,%rdi
+    shlq $12,%rdi
+    addq $0x07000000,%rdi
+    pushq %rdi
+    movl $512,%ecx
+    xorq %rax,%rax
+    cld
+    rep stosq
+    popq %rdi
+    movq $1,%rsi
+    jmp fr_push
+.Lpage_taken:
+    incq %rcx
+    jmp .Lpage_scan
+.Lpage_empty:
+    xorq %rdi,%rdi
+    movq $1,%rsi
+    jmp fr_push
+
+.global fr_page_free
+fr_page_free:
+    call fr_pop
+    cmpq $1,%rdx
+    jne .Lpage_free_no
+    cmpq $0x07000000,%rax
+    jb .Lpage_free_no
+    cmpq $0x07800000,%rax
+    jae .Lpage_free_no
+    testq $4095,%rax
+    jne .Lpage_free_no
+    subq $0x07000000,%rax
+    shrq $12,%rax
+    leaq fr_page_bitmap(%rip),%r8
+    btrq %rax,(%r8)
+    jnc .Lpage_free_no
+    decq fr_pages_used(%rip)
+    movq $1,%rdi
+    movq $1,%rsi
+    jmp fr_push
+.Lpage_free_no:
+    xorq %rdi,%rdi
+    movq $1,%rsi
+    jmp fr_push
+
+.global fr_page_free_count
+fr_page_free_count:
+    movq $2048,%rdi
+    subq fr_pages_used(%rip),%rdi
+    movq $1,%rsi
+    jmp fr_push
+.section .note.GNU-stack,"",@progbits
