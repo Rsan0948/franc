@@ -65,6 +65,15 @@ with tempfile.TemporaryDirectory(prefix='franc-selfhost-') as tmp:
         subprocess.run(['as','--64','-o',str(obj),str(native)],check=True)
         sym=subprocess.check_output(['nm',str(obj)],text=True)
         assert 'T franc_aot_entry' in sym and 'fw_626f6f74' in sym,sym[-2000:]
+        # Identify unresolved AOT relocation classes if the link fails.
+        all_syms=subprocess.check_output(['nm',str(obj)],text=True)
+        native_names=[line for line in assembly.splitlines()
+                      if line.startswith('aot_get_') or line.startswith('aot_set_')]
+        print(f'DEBUG: native register shims: {len(native_names)}, '
+              f'sample={native_names[:8]}',flush=True)
+        print('DEBUG: unresolved AOT sample: '
+              +repr([line for line in all_syms.splitlines()
+                     if ' U ' in line][:18]),flush=True)
         # Link the complete Franc-generated kernel, without compiler.py or
         # any other Python language translator. The runtime and font are
         # permitted assembler-only objects.
