@@ -21,6 +21,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify pinned seed and memory reservation authority
         run: python3 -m franctxt.build preflight
+      - name: Verify Wave4 native JIT dependency and release UI contract
+        run: python3 -m unittest discover -s franctxt/tests -p 'test_wave4_contract.py' -v
       - name: Install software QEMU
         run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
       - name: Build pinned native kernel and app image
