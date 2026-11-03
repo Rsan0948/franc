@@ -177,11 +177,11 @@ def compile_program(sources):
     chunks.append('.section .rodata')
     for idx, (name, _) in enumerate(entries):
         chunks.append(f'franc_word_name_{idx}:')
-        chunks.extend(f'  .byte {byte}' for byte in name.encode('utf-8')+b'\\x00')
+        chunks.extend(f'  .byte {byte}' for byte in name.encode('utf-8')+b'\x00')
     chunks.append('.global franc_stage2_source')
     chunks.append('franc_stage2_source:')
     compiler_source = Path(__file__).resolve().parents[1] / 'stage2' / 'compiler.frac'
-    chunks.extend(f'  .byte {byte}' for byte in compiler_source.read_bytes()+b'\\x00')
+    chunks.extend(f'  .byte {byte}' for byte in compiler_source.read_bytes()+b'\x00')
     chunks.extend(['.section .data', '.balign 8', '.global franc_dict_initial', 'franc_dict_initial:'])
     chunks.append(f'  .quad franc_word_entry_{len(entries)-1}' if entries else '  .quad 0')
     for idx, (_, target) in enumerate(entries):
