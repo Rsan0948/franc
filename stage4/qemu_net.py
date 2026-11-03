@@ -78,6 +78,7 @@ with tempfile.TemporaryDirectory(prefix="franc-net-") as tmp:
         key(b"l", b"APPS READY", timeout=310)
         key(b"r", b"Frac> ")
         line("net-init .", b"1\nFrac> ")
+        print("PASS: e1000 IO BAR and DMA descriptor initialization", flush=True)
         line("net-active .", b"1\nFrac> ")
         line("net-arp-request .", b"1\nFrac> ")
         time.sleep(1.5)
