@@ -33,7 +33,12 @@ backdoors; reproducibility verifies consistency, not absolute correctness.
 
 Historical Stage 0–3 still has C-backed hosted and legacy operating-system
 paths for regression and comparison. Those are **not** dependencies of the
-native Stage 4 build. The project remains a miniature experimental OS, not a
+native Stage 4 build. The native disk image also bundles **12 original Franc libraries and eight
+application launch options** (FracCalc, source editor, Stern–Brocot, Ford
+circles, spirograph and demos). QEMU verifies live JIT loading and the main
+application/math/drawing paths. See the [native software inventory](stage4/apps/README.md).
+
+The project remains a miniature experimental OS, not a
 full TempleOS replacement, and Stage 0 semantic parity, peripheral coverage
 and hardened security boundaries are still incomplete.
 

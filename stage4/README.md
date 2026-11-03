@@ -11,14 +11,14 @@ JIT, and exercised by QEMU integration tests.
 
 The native kernel is **124,592 bytes**. The boot source's Franc-produced
 assembly is **658,558 bytes**, compared byte-for-byte with the
-committed \`bootstrap_seed.S\`. Verified kernel SHA-256:
-\`ca92072d6f649f2af4249e52123b140e0aba6295034550fce883c6a5a7cace89\`.
+committed `bootstrap_seed.S`. Verified kernel SHA-256:
+`ca92072d6f649f2af4249e52123b140e0aba6295034550fce883c6a5a7cace89`.
 
 ## Build
 
 From the repository root:
 
-\`\`\`sh
+```sh
 # Production, reproducible Franc/assembly-only build:
 make -C stage4
 
@@ -32,10 +32,10 @@ make -C stage4 legacy-all
 qemu-system-x86_64 -m 128M -accel tcg -display none \
   -monitor none -no-reboot -serial stdio \
   -drive file=stage4/native_seed.img,format=raw,if=ide
-\`\`\`
+```
 
-Tools required for the native path: GNU \`as\`, \`ld\`, \`objcopy\`,
-\`make\`, \`bash\`, \`sh\`, \`awk\`, \`dd\`, and QEMU x86-64.
+Tools required for the native path: GNU `as`, `ld`, `objcopy`,
+`make`, `bash`, `sh`, `awk`, `dd`, and QEMU x86-64.
 Python is present in the repository's **testing/historical** code,
 but never invoked by the native build. No C object files, libc,
 C runtime or C compiler are part of the native kernel or bootstrap.
@@ -43,24 +43,24 @@ This does not imply that a custom Franc assembler/linker exists yet.
 
 ## Kernel architecture
 
-- **\`boot.S\`:** 512-byte BIOS loader, kernel sector extents,
+- **`boot.S`:** 512-byte BIOS loader, kernel sector extents,
   Mode 13h setup, A20/GDT, identity-mapped paging and x86-64 long mode.
-- **\`runtime.S\`:** Assembly CPU and ABI bridge, rational stack and
+- **`runtime.S`:** Assembly CPU and ABI bridge, rational stack and
   arithmetic, native JIT allocation, mutable dictionary, low-level
   byte access, COM1 and ATA port operations.
-- **\`stage3/ata.frac\` + \`stage3/storage.frac\`:** Franc-written PIO
-  IDE read/write driver and the fixed 12-file \`FRANCFS1\` source store.
-- **\`display.frac\` + \`keyboard.frac\`:** Franc-written framebuffer
+- **`stage3/ata.frac` + `stage3/storage.frac`:** Franc-written PIO
+  IDE read/write driver and the fixed 12-file `FRANCFS1` source store.
+- **`display.frac` + `keyboard.frac`:** Franc-written framebuffer
   character console, glyphs, scrolling, COM1 and PS/2 input.
-- **\`stage2/compiler.frac\` + \`repl.frac\`:** Native x86-64
+- **`stage2/compiler.frac` + `repl.frac`:** Native x86-64
   runtime JIT, mutable dictionary, interactive source compilation.
-- **\`upgrade.frac\`:** Recompile and execute persistent \`startup.frac\`
-  when a fresh \`startup-main\` definition exists after cold boot.
-- **\`aot.frac\` + \`bundle.frac\`:** Relocatable AOT emission,
+- **`upgrade.frac`:** Recompile and execute persistent `startup.frac`
+  when a fresh `startup-main` definition exists after cold boot.
+- **`aot.frac` + `bundle.frac`:** Relocatable AOT emission,
   metadata/dictionary generation and disk-staged source input.
-- **\`apps/registry.frac\`:** Static register shims for the JIT-loaded
+- **`apps/registry.frac`:** Static register shims for the JIT-loaded
   application suite. These are metadata, not apps linked into the kernel.
-- **\`kernel.frac\`:** Boot flow, diagnostics console, application loader
+- **`kernel.frac`:** Boot flow, diagnostics console, application loader
   and Franc-specific application dispatch.
 
 The kernel is single-user and single-address-space. User definitions
@@ -71,11 +71,11 @@ arithmetic and runtime.
 
 ## Applications and packages
 
-Press **l** in the native \`Franc>\` console to compile the twelve existing
-\`lib/*.frac\` modules from disk using the native JIT. Press **1–8**
+Press **l** in the native `Franc>` console to compile the twelve existing
+`lib/*.frac` modules from disk using the native JIT. Press **1–8**
 afterwards to launch FracCalc, the source editor, Stern–Brocot
 navigator, crosshair, Ford circles, spirograph, and numerical demos.
-The \`r\` key launches the Franc REPL; any loaded library definition
+The `r` key launches the Franc REPL; any loaded library definition
 can be used from there.
 
 The **[complete native apps inventory](apps/README.md)** documents
@@ -84,9 +84,9 @@ hosted-only behavior. The independent QEMU app workflow verifies
 interactive calculator arithmetic, source editing and persistence,
 continued fractions, intervals, two-component rational values,
 trigonometry, exact powers, rational exploration and native drawing.
-The full Ford/spirograph rendering paths need additional complete
-framebuffer output coverage before we can claim those visual programs
-are exhaustively verified.
+Targeted Ford-circle and spirograph QEMU tests now execute the actual
+Franc drawing routines and verify resulting VGA pixel colors. Full-scene
+screenshots and all interactive graphics paths are not exhaustively verified.
 
 The application bundle is staged at disk LBA 1024. The kernel
 recompilation source bundle remains at LBA 512; persistent data uses
@@ -96,15 +96,15 @@ boot disk is 512 sectors; the app-bundled image extends beyond LBA 1024.
 
 ## Self-hosting proof
 
-\`stage4/bootstrap_seed.S\` is a pinned, **Franc-generated** assembly
+`stage4/bootstrap_seed.S` is a pinned, **Franc-generated** assembly
 bootstrap compiler/kernel artifact. The independent
-\`.github/workflows/native-bootstrap.yml\` workflow starts from a fresh
+`.github/workflows/native-bootstrap.yml` workflow starts from a fresh
 checkout, blocks invocations of Python and C compilers, assembles the
 seed, boots it in QEMU, recompiles the kernel from Franc sources,
 boots generation two, recompiles generation three and requires
 both binaries and regenerated assembly to match the seed.
 
-\`aot.yml\` also retains a historical seed-translation comparison test.
+`aot.yml` also retains a historical seed-translation comparison test.
 The C/Python historical toolchain is not a dependency of the
 production native build. As with any pinned compiler seed, reproducible
 binary identity is evidence of a consistent rebuild, **not a proof**
@@ -115,7 +115,7 @@ that the compiler seed is immune to malicious compiler behavior.
 No process isolation, privilege separation, networking, interrupts,
 multitasking, journaling, arbitrary device drivers, UEFI or USB boot
 support. Only trusted Franc source bundles should be compiled;
-corruption resilience and write-atomicity for \`FRANCFS1\` are limited.
+corruption resilience and write-atomicity for `FRANCFS1` are limited.
 Current hardware verification is **QEMU BIOS x86-64** with legacy
 VGA/COM1/PS2/IDE; running on arbitrary modern machines has not
 been established. Kernel-linked memory is RWX and JIT memory
