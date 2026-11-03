@@ -91,6 +91,10 @@ with tempfile.TemporaryDirectory(prefix="franc-timer-") as tmp:
             assert number(line("space-probe .")) == 0, (
                 "Independent CR3 root probe must reject setup without TSS/IRQ"
             )
+        if os.getenv("FRANC_TEST_USER_PREEMPT") == "1":
+            assert number(line("user-preempt-probe .")) == 0, (
+                "CPL3 scheduler must reject entry before IRQ/TSS setup"
+            )
         if os.getenv("FRANC_TEST_PREEMPT") == "1":
             assert number(line("preempt-asm-demo .")) == 0, "Preempt demo without IRQ must fail closed"
         if os.getenv("FRANC_TEST_JIT_PREEMPT") == "1":
@@ -203,6 +207,31 @@ with tempfile.TemporaryDirectory(prefix="franc-timer-") as tmp:
             line("9 task-local@ .", b"0\nFrac> ")
             assert number(line("2 3 + .")) == 5
             print("PASS: returned Franc JIT task retires without an invalid IRET; host REPL resumes", flush=True)
+        if os.getenv("FRANC_TEST_USER_PREEMPT") == "1":
+            assert number(line("ring3-probe .")) == 1
+            assert number(line("page-free-count .")) == 2048
+            assert number(line("user-preempt-probe .")) == 1, (
+                "Two Ring 3 user contexts did not preempt and resume"
+            )
+            a = number(line("user-preempt-a-steps ."))
+            b = number(line("user-preempt-b-steps ."))
+            swaps = number(line("user-preempt-switches ."))
+            assert a > 100 and b > 100 and swaps >= 5, (a, b, swaps)
+            assert number(line("user-preempt-a-state .")) == 3
+            assert number(line("user-preempt-b-state .")) == 3
+            assert number(line("user-preempt-reclaimed .")) == 14
+            assert number(line("page-free-count .")) == 2048
+            assert number(line("user-preempt-fault-probe .")) == 1, (
+                "User A fault must not prevent B's preemptive progress"
+            )
+            assert number(line("user-preempt-a-state .")) == 4
+            assert number(line("user-preempt-b-state .")) == 3
+            assert number(line("user-preempt-a-steps .")) >= 1000
+            assert number(line("user-preempt-b-steps .")) > 100
+            assert number(line("user-preempt-reclaimed .")) == 14
+            assert number(line("page-free-count .")) == 2048
+            assert number(line("2 3 + .")) == 5
+            print(f"PASS: CPL3 CPU preemption across private CR3 roots ({a}, {b}, {swaps} IRQ switches), A fault leaves B runnable and host intact", flush=True)
         if os.getenv("FRANC_TEST_RING3") == "1":
             value = number(line("ring3-probe ."))
             assert value == 1, f"Expected a valid user syscall and protected page fault, got {value}"
