@@ -1,6 +1,6 @@
 \ Native Intel 82540EM (QEMU e1000) legacy TX/RX ring driver via PCI IO BAR.
 \ Strictly trusted kernel-only. Uses 128MiB identity RAM and single rings.
-\ PCI BAR2 uses 32-bit port index/data; no >128MiB MMIO mapping needed.
+\ PCI BAR1 uses 32-bit port index/data; no >128MiB MMIO mapping needed.
 \ Scratch: TX descriptors 0x06c00000, RX desc 0x06c00200,
 \ TX frame 0x06c01000, RX frames 0x06c04000..0x06c07fff.
 \ Polling only; no IRQ, TCP, IP or multi-buffer queues.
@@ -13,7 +13,7 @@ def net-reg! :net-value :net-reg net-iobase net-reg io32! net-iobase 4 + net-val
 \ Add I/O-space and bus-master enables without clearing PCI status.
 def net-enable-pci 0 net-slot 0 4 pci-read :net-pcicmd net-pcicmd 1 band if0 net-pcicmd 1 + :net-pcicmd then net-pcicmd 4 band if0 net-pcicmd 4 + :net-pcicmd then 2147483648 net-slot 2048 * + 4 + $CF8 swap io32! $CFC net-pcicmd io32! ;
 def net-zero :net-size :net-ptr 0 :net-i begin net-i net-size - while net-ptr net-i + 0 b! net-i 1 + :net-i repeat ;
-def net-init pci-find-e1000 :net-slot net-slot 0 - if 0 exit then 0 net-slot 0 24 pci-read :net-bar net-bar 1 band if0 0 exit then net-bar 65532 band :net-iobase net-iobase if0 0 exit then net-enable-pci $d8 4294967295 net-reg! net-txdesc 128 net-zero net-rxdesc 128 net-zero net-frame 2048 net-zero net-rxframe 16384 net-zero 0 :net-sent 0 :net-i begin net-i 8 - while net-rxdesc net-i 16 * + net-rxframe net-i 2048 * + s2-write64 net-i 1 + :net-i repeat $2800 net-rxdesc net-reg! $2804 0 net-reg! $2808 128 net-reg! $2810 0 net-reg! $2818 7 net-reg! $100 67141634 net-reg! net-txdesc net-frame s2-write64 $3800 net-txdesc net-reg! $3804 0 net-reg! $3808 128 net-reg! $3810 0 net-reg! $3818 0 net-reg! $410 6305802 net-reg! $400 262410 net-reg! $5400 net-reg@ :net-maclo $5404 net-reg@ :net-machi 1 :net-active 1 ;
+def net-init pci-find-e1000 :net-slot net-slot 0 - if 0 exit then 0 net-slot 0 20 pci-read :net-bar net-bar 1 band if0 0 exit then net-bar 65532 band :net-iobase net-iobase if0 0 exit then net-enable-pci $d8 4294967295 net-reg! net-txdesc 128 net-zero net-rxdesc 128 net-zero net-frame 2048 net-zero net-rxframe 16384 net-zero 0 :net-sent 0 :net-i begin net-i 8 - while net-rxdesc net-i 16 * + net-rxframe net-i 2048 * + s2-write64 net-i 1 + :net-i repeat $2800 net-rxdesc net-reg! $2804 0 net-reg! $2808 128 net-reg! $2810 0 net-reg! $2818 7 net-reg! $100 67141634 net-reg! net-txdesc net-frame s2-write64 $3800 net-txdesc net-reg! $3804 0 net-reg! $3808 128 net-reg! $3810 0 net-reg! $3818 0 net-reg! $410 6305802 net-reg! $400 262410 net-reg! $5400 net-reg@ :net-maclo $5404 net-reg@ :net-machi 1 :net-active 1 ;
 \ A single descriptor is intentionally one-shot; completion status is checked.
 \ net-tx (ptr length -- 1 success, 0 on invalid/timeout).
 def net-tx :net-len :net-src net-active if0 0 exit then net-sent ifnz 0 exit then net-len 14 - if 0 exit then net-len 1515 - if0 0 exit then 0 :net-i begin net-i net-len - while net-frame net-i + net-src net-i + byte@ b! net-i 1 + :net-i repeat net-txdesc net-frame s2-write64 net-txdesc 8 + net-len 256 % b! net-txdesc 9 + net-len 256 / floor b! net-txdesc 10 + 0 b! net-txdesc 11 + 11 b! net-txdesc 12 + 0 b! $3818 1 net-reg! 0 :net-i begin net-i 200000 - while net-txdesc 12 + b@ 1 band ifnz 1 :net-sent 1 exit then net-i 1 + :net-i repeat 0 ;
