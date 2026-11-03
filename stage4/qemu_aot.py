@@ -117,6 +117,57 @@ try:
         names = subprocess.check_output(['nm', str(obj)], text=True)
         assert 'T franc_aot_entry' in names and 'fw_737175617265' in names, names
         assert ' U fw_' not in names, names
+
+        # Link a separate BIOS kernel entirely from the Franc-generated AOT
+        # object and the assembly runtime/loader. No compiler.py is used here.
+        stub = Path(work)/'aot_stub.o'
+        elf = Path(work)/'franc-native.elf'
+        kernel_bin = Path(work)/'franc-native.bin'
+        image = Path(work)/'franc-native.img'
+        subprocess.run(['as','--64','-o',str(stub),str(root/'aot_stub.S')],check=True)
+        subprocess.run([
+            'ld','-m','elf_x86_64','-nostdlib','-T',str(root/'kernel.ld'),
+            '-o',str(elf),str(root/'runtime.o'),str(root/'font.o'),
+            str(stub),str(obj)
+        ],check=True)
+        subprocess.run([
+            'objcopy','-O','binary','-j','.text','-j','.rodata','-j','.data',
+            str(elf),str(kernel_bin)
+        ],check=True)
+        assert 0 < kernel_bin.stat().st_size <= 127*512
+        def dd(*args, data=None):
+            subprocess.run(['dd',*args,'status=none'],input=data,check=True)
+        dd('if=/dev/zero',f'of={image}','bs=512','count=256')
+        dd(f'if={root/"boot.bin"}',f'of={image}','conv=notrunc')
+        dd(f'if={kernel_bin}',f'of={image}','bs=512','count=127',
+           'seek=1','conv=notrunc')
+        dd(f'of={image}','bs=512','seek=128','conv=notrunc',data=b'FRANCFS1')
+        assert image.stat().st_size==256*512
+        guest = subprocess.Popen([
+            qemu,'-m','128M','-accel','tcg','-display','none','-monitor','none',
+            '-no-reboot','-serial','stdio',
+            '-drive',f'file={image},format=raw,if=ide'
+        ],stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,
+           stderr=subprocess.STDOUT,bufsize=0)
+        test_selector=selectors.DefaultSelector()
+        test_selector.register(guest.stdout, selectors.EVENT_READ)
+        native_output=b''
+        try:
+            deadline=time.monotonic()+90
+            while time.monotonic()<deadline and b'49\n' not in native_output:
+                if guest.poll() is not None:break
+                if test_selector.select(0.2):
+                    item=os.read(guest.stdout.fileno(),8192)
+                    if not item:break
+                    native_output+=item
+            assert b'49\n' in native_output, (
+                'Franc-generated AOT standalone image did not boot and print 49: '
+                + repr(native_output))
+        finally:
+            guest.kill()
+            guest.wait()
+    print('PASS: Franc AOT program linked with assembly-only runtime and cold-booted in QEMU')
+
     print('PASS: Franc AOT emits multiple named functions and relocatable internal calls')
 
     for marker in [b'SELFHOST START\n', b'GEN 2: 29\n', b'GEN 3: 29\n', b'42\n', b'SELFHOST OK\n']:

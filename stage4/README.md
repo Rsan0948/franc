@@ -134,3 +134,14 @@ assembles the output and proves the internal symbols resolve without using
 absolute JIT addresses. This remains a restricted straight-line subset:
 control flow, runtime registration, arbitrary memory, and text/data relocations
 must be added before it can compile the FrancOS kernel.
+
+## Standalone second-generation AOT boot demonstration
+
+The CI integration test now takes assembly **emitted by running Franc inside
+the original C-free BIOS guest**, assembles its multi-function object with
+GNU `as`, links it to `runtime.S` and `aot_stub.S` (both assembly), and
+packages a *separate* boot disk using GNU `dd`. A new QEMU TCG process
+cold-boots that image and requires the example Franc program to print `49`.
+The test harness is Python, but the demonstration program's native code is
+produced by Franc, not by `compiler.py`. The full FrancOS image still has a
+Python AOT seed compiler and is not yet independently rebuilding itself.
