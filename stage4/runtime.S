@@ -1178,9 +1178,10 @@ fr_fiber_active:
 
 
 /* Bounded physical 4KiB page allocator, 8MiB arena at 0x07000000.
- * Identity-mapped 128MiB QEMU only. Does NOT consult BIOS/UEFI memory map.
- * Tracks allocated pages in a 2048-bit bitmap; page-free rejects double
- * frees/out-of-range/un-aligned pointers. Zero-fills allocated pages.
+ * BIOS E820 authorization is required before allocation. UEFI without
+ * handoff fails closed. Tracks 2048 pages and zeroes both on allocate and
+ * release. Legacy page-free rejects frames held by an active owner lease.
+ * Identity mapping is NOT process isolation.
  */
 .section .bss
 .balign 8
@@ -1237,9 +1238,23 @@ fr_page_free:
     jne .Lpage_free_no
     subq $0x07000000,%rax
     shrq $12,%rax
+    /* Do not allow the legacy free word to bypass an owner's lease. */
+    movq %rax,%r10
+    shlq $4,%r10
+    leaq fr_lease_page_tags(%rip),%r9
+    cmpq $0,(%r9,%r10)
+    jne .Lpage_free_no
     leaq fr_page_bitmap(%rip),%r8
     btrq %rax,(%r8)
     jnc .Lpage_free_no
+    /* Scrub released contents before this frame can be reused. */
+    movq %rax,%rdi
+    shlq $12,%rdi
+    addq $0x07000000,%rdi
+    movl $512,%ecx
+    xorl %eax,%eax
+    cld
+    rep stosq
     decq fr_pages_used(%rip)
     movq $1,%rdi
     movq $1,%rsi
@@ -1359,3 +1374,5 @@ fr_mmio32_store:
 .include "stage4/e820.S"
 /* Experimental BIOS-only CPL3 page-table and TSS isolation proof. */
 .include "stage4/ring3.S"
+/* Trusted-kernel generation-tagged page ownership for Wave 1. */
+.include "stage4/page_owners.S"
