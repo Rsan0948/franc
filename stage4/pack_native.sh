@@ -8,7 +8,7 @@ fi
 boot=$1; kernel=$2; image=$3
 boot_bytes=$(wc -c < "$boot")
 kernel_bytes=$(wc -c < "$kernel")
-if [ "$boot_bytes" -ne 512 ] || [ "$kernel_bytes" -le 0 ] || [ "$kernel_bytes" -gt 162816 ]; then
+if [ "$boot_bytes" -ne 512 ] || [ "$kernel_bytes" -le 0 ] || [ "$kernel_bytes" -gt 195584 ]; then
     echo "invalid FrancOS boot sector or kernel size: $boot_bytes / $kernel_bytes" >&2
     exit 1
 fi
@@ -17,6 +17,7 @@ dd if="$boot" of="$image" conv=notrunc status=none
 dd if="$kernel" of="$image" bs=512 count=127 seek=1 conv=notrunc status=none
 dd if="$kernel" of="$image" bs=512 skip=127 count=64 seek=200 conv=notrunc status=none
 dd if="$kernel" of="$image" bs=512 skip=191 count=127 seek=264 conv=notrunc status=none
+dd if="$kernel" of="$image" bs=512 skip=318 count=64 seek=391 conv=notrunc status=none
 printf FRANCFS1 | dd of="$image" bs=512 seek=128 conv=notrunc status=none
 
 # Preserve the original Franc libraries as a disk-backed native source bundle.

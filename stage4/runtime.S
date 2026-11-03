@@ -1376,3 +1376,5 @@ fr_mmio32_store:
 .include "stage4/ring3.S"
 /* Trusted-kernel generation-tagged page ownership for Wave 1. */
 .include "stage4/page_owners.S"
+/* BIOS-only E820-gated independent CPL3 address space validation. */
+.include "stage4/process_spaces.S"

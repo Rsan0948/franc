@@ -74,6 +74,23 @@ class ProcessIsolationContract(unittest.TestCase):
                            "fr_lease_free", "fr_lease_end"):
                 self.assertIn(symbol, symbols)
 
+    def test_private_cr3_roots_owned_only_from_firmware_pages(self):
+        runtime = (ROOT / "stage4/runtime.S").read_text()
+        core = (ROOT / "stage4/process_spaces.S").read_text()
+        ring = (ROOT / "stage4/ring3.S").read_text()
+        self.assertIn('.include "stage4/process_spaces.S"', runtime)
+        self.assertIn("call fr_e820_arena_usable", core)
+        self.assertIn("call fr_lease_alloc", core)
+        self.assertIn("call fr_lease_end", core)
+        self.assertIn("movq %rax,%cr3", core)
+        self.assertIn("movq $0x9000,%rax", core)
+        for name in ("fr_space_page_fault:", "fr_space_int80:",
+                     "fr_space_probe:", "fr_space_root_a:",
+                     "fr_space_root_b:", "fr_space_reclaimed_count:"):
+            self.assertIn(name, core)
+        for name in ("je fr_space_int80", "je fr_space_page_fault"):
+            self.assertIn(name, ring)
+
     def test_distinct_user_physical_frames_and_fault_recovery(self):
         ring = (ROOT / "stage4/ring3.S").read_text()
         for token in (

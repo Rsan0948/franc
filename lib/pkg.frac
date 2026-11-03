@@ -6,3 +6,6 @@ def pkg-install :pkg-source :pkg-name pkg-name pkg-source fs-save ;
 def pkg-load :pkg-name pkg-name fs-source :pkg-loaded pkg-loaded if0 0 else pkg-loaded s2-source then ;
 def pkg-list fs-files ;
 def pkg-ready fs-ready? ;
+\ Wave 1 accessible menu for existing offline source-package primitives.
+\ This is NOT a manifest/dependency/update/rollback implementation (U3).
+def pkg-ui 0 vc-clear vc-home "FrancOS PACKAGES (source slots)" vc-type vc-newline "l List | o Open/load | Esc Home" vc-type vc-newline "Trust bundled/local source only." vc-type vc-newline pkg-ready if0 "PACKAGE DISK NOT READY" vc-type vc-newline exit then begin "pkg> " vc-type dk-key :pkg-name pkg-name 27 - if0 vc-newline exit then pkg-name 108 - if0 pkg-list else pkg-name 111 - if0 "Load file> " vc-type rl-read if0 repl-buffer pkg-load if0 "PACKAGE LOAD FAILED" vc-type vc-newline else "SOURCE COMPILED" vc-type vc-newline then then else "l list | o open | Esc" vc-type vc-newline then then again ;
