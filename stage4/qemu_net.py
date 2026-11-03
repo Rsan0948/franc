@@ -106,6 +106,21 @@ with tempfile.TemporaryDirectory(prefix="franc-net-") as tmp:
         line("net-rx-ready? .", b"1\nFrac> ")
         line("net-rx-ethertype .", b"2054\nFrac> ")
         line("net-rx-size .")
+        line("net-arp-learn .", b"1\nFrac> ")
+        line("net-gw-ready .", b"1\nFrac> ")
+        line("net-rx-consume .", b"1\nFrac> ")
+        line("net-rx-ready? .", b"0\nFrac> ")
+        line("net-arp-request .", b"1\nFrac> ")
+        time.sleep(1.5)
+        line("net-rx-ready? .", b"1\nFrac> ")
+        line("net-arp-learn .", b"1\nFrac> ")
+        line("net-rx-consume .", b"1\nFrac> ")
+        line("net-sent .", b"2\nFrac> ")
+        line("net-received .", b"2\nFrac> ")
+        line("net-txnext .", b"2\nFrac> ")
+        line("net-rxnext .", b"2\nFrac> ")
+        print("PASS: two TX ring slots and two released/rearmed RX descriptors", flush=True)
+
         print("PASS: native e1000 completed DMA TX and received an ARP reply", flush=True)
     finally:
         guest.kill()
@@ -137,5 +152,5 @@ with tempfile.TemporaryDirectory(prefix="franc-net-") as tmp:
         and packet[28:32] == b"\x0a\x00\x02\x0f"
         and packet[38:42] == b"\x0a\x00\x02\x02"
     ]
-    assert arps, "QEMU capture contains no Franc-origin ARP request for 10.0.2.2"
+    assert len(arps) >= 2, "QEMU capture must contain two distinct TX ring ARP transmissions"
     print(f"PASS: QEMU PCAP captured {len(arps)} actual guest e1000 ARP request(s)", flush=True)
