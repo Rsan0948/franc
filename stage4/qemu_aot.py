@@ -56,9 +56,9 @@ try:
         transcript = read_until(expected, timeout=45, after=offset)
     # The interactive REPL uses Franc's own Stage 2 native-code emitter.
     # COM1 has only a single-byte receive register, so wait for echoed input.
-    for source, expected in [(b'2 3 +\\n', b'5\\nFrac> '),
-                             (b'def n 7 ;\\n', b'Frac> '),
-                             (b'n 6 *\\n', b'42\\nFrac> ')]:
+    for source, expected in [(b'2 3 +\n', b'5\nFrac> '),
+                             (b'def n 7 ;\n', b'Frac> '),
+                             (b'n 6 *\n', b'42\nFrac> ')]:
         for ch in source:
             time.sleep(0.12)
             offset = len(transcript)
@@ -67,10 +67,10 @@ try:
                 transcript = read_until(expected, timeout=45, after=offset)
             else:
                 transcript = read_until(bytes([ch]), timeout=15, after=offset)
-    for marker in [b'JIT-SUM 5\\n', b'JIT-DEF 36\\n']:
+    for marker in [b'JIT-SUM 5\n', b'JIT-DEF 36\n']:
         assert marker in transcript, f'missing {marker!r}'
-    for key, expected in [(b'\\x1b', b'Franc> '),
-                          (b'\\x1b', b'EXIT CONSOLE')]:
+    for key, expected in [(b'\x1b', b'Franc> '),
+                          (b'\x1b', b'EXIT CONSOLE')]:
         time.sleep(0.5)
         offset = len(transcript)
         os.write(p.stdin.fileno(), key)
