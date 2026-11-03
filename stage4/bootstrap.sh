@@ -70,7 +70,7 @@ for generation in 2 3; do
     guest_pid=""
     output="$dest/gen$generation.S"
     awk '
-      /^FRANC-PROGRAM-BEGIN$/ { inside=1; count++; next }
+      /FRANC-PROGRAM-BEGIN$/ { inside=1; count++; next }
       /^FRANC-PROGRAM-END$/ { inside=0; done++; next }
       inside { print }
       END { if(count!=1 || done!=1) exit 1 }
