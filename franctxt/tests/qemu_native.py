@@ -13,7 +13,7 @@ import sys
 import tempfile
 import time
 
-root = Path(__file__).resolve().parents[1] / "stage4"
+root = Path(__file__).resolve().parents[2] / "stage4"
 base = Path(sys.argv[1] if len(sys.argv) > 1 else root / "native_seed.img")
 assert base.is_file() and shutil.which("qemu-system-x86_64")
 
