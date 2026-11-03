@@ -6,6 +6,10 @@ on:
       - 'stage4/uefi/**'
       - 'stage4/bootstrap_seed.S'
       - 'stage4/runtime.S'
+      - 'franctxt/seed.lock.franctxt'
+      - 'franctxt/build.py'
+      - 'franctxt/memory.franctxt'
+      - 'franctxt/install_native.sh'
       - 'stage4/pack_native.sh'
       - '.github/workflows/uefi.yml'
   pull_request:
@@ -13,6 +17,10 @@ on:
       - 'stage4/uefi/**'
       - 'stage4/bootstrap_seed.S'
       - 'stage4/runtime.S'
+      - 'franctxt/seed.lock.franctxt'
+      - 'franctxt/build.py'
+      - 'franctxt/memory.franctxt'
+      - 'franctxt/install_native.sh'
       - '.github/workflows/uefi.yml'
 permissions:
   contents: read

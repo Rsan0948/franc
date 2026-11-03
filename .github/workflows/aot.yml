@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Validate Franctxt static QEMU memory reservations before native compilation
+        run: python3 -m franctxt.build check-memory
       - name: Check app/source register compatibility before expensive AOT generation
         run: python3 -m franctxt.build check-apps
       - name: Build Franc AOT kernel without C objects

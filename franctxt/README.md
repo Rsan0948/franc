@@ -205,3 +205,24 @@ and native SHA-256 verifies its configuration digest against the
 manifest. Build orchestration currently runs on the host in CI;
 live kernel enforcement and signature-authenticated secure boot
 remain separate, unfinished milestones.
+
+
+### Memory-reservation guard for networking and fibers
+
+The canonical file franctxt/memory.franctxt records the experimental
+128 MiB QEMU guest's fixed physical reservations: compiler/JIT, heap,
+big-number arithmetic and scratch buffers, Franctxt, the native IDE,
+e1000 DMA descriptors, callback scheduler, and 8 MiB page arena.
+
+    python3 -m franctxt.build check-memory
+
+Preflight rejects overlapping, unaligned or out-of-RAM regions, and
+checks that each anchored Franc/assembly source still contains its
+declared base address. The memory declaration's raw SHA-256 is bound
+to the native kernel manifest; tests cover collisions, bounds and
+source/configuration drift. This is essential before allocating new
+DMA rings, stacks or page tables.
+
+This is a static *build-time* guard. It does not probe physical
+memory, enforce page permissions or replace E820/UEFI firmware memory
+maps. Do not assume these physical addresses are safe on a real PC.

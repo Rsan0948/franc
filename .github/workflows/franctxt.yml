@@ -40,6 +40,8 @@ jobs:
         run: python3 -m unittest discover -s franctxt/tests -p 'test_sha256_native.py' -v
       - name: Franctxt build lock and stale-seed negative tests
         run: python3 -m unittest discover -s franctxt/tests -p 'test_build_authority.py' -v
+      - name: QEMU memory reservations, collisions and code-address anchors
+        run: python3 -m unittest discover -s franctxt/tests -p 'test_memory.py' -v
       - name: Independent JavaScript Franctxt 1 implementation
         run: node franctxt/tests/test_cross_language.cjs
       - name: Byte-for-byte Python/Node normalized fixture and hash equality

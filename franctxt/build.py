@@ -13,6 +13,7 @@ import re
 import sys
 
 from . import FranctxtError, canonical, digest, parse, validate_kernel
+from .memory import check_memory_map
 
 ROOT = Path(__file__).resolve().parents[1]
 SEED_SOURCE_LIST = "stage4/seed_sources.list"
@@ -188,6 +189,7 @@ def disk_files(image: bytes) -> dict[str, bytes]:
 def verify_image(root: Path, image_file: Path, kernel_file: Path) -> dict:
     check_seed(root)
     check_app_registers(root)
+    check_memory_map(root)
     image = image_file.read_bytes()
     kernel = kernel_file.read_bytes()
     files = disk_files(image)
@@ -206,6 +208,7 @@ def verify_image(root: Path, image_file: Path, kernel_file: Path) -> dict:
         "system.name": "FrancOS",
         "build.kernel-sha256": sha256(kernel),
         "build.config-sha256": digest(config),
+        "build.memory-map-sha256": sha256(full_path(root, "franctxt/memory.franctxt").read_bytes()),
         "build.registry-sha256": sha256(full_path(root, REGISTRY_PATH).read_bytes()),
         "build.seed-assembly-sha256": sha256(full_path(root, SEED_PATH).read_bytes()),
         "build.runtime-sha256": sha256(full_path(root, "stage4/runtime.S").read_bytes()),
@@ -251,7 +254,7 @@ def build_report(root: Path, image: Path, kernel: Path,
 def main(argv=None):
     cli = argparse.ArgumentParser(prog="python3 -m franctxt.build")
     cli.add_argument("command", choices=(
-        "pin-seed", "check-seed", "check-apps", "preflight", "verify-image", "record"))
+        "pin-seed", "check-seed", "check-apps", "check-memory", "preflight", "verify-image", "record"))
     cli.add_argument("--root", type=Path, default=ROOT)
     cli.add_argument("--image", type=Path)
     cli.add_argument("--kernel", type=Path)
@@ -267,10 +270,14 @@ def main(argv=None):
         elif args.command == "check-apps":
             count = len(check_app_registers(root))
             print(f"PASS: registry accounts for {count} native app register names")
+        elif args.command == "check-memory":
+            regs = check_memory_map(root)
+            print(f"PASS: {len(regs)} nonoverlapping FrancOS physical reservations")
         elif args.command == "preflight":
             ident = check_seed(root)
             regs = check_app_registers(root)
-            print(f"PASS: Franctxt build preflight, {len(regs)} registered app variables; {ident}")
+            memory = check_memory_map(root)
+            print(f"PASS: Franctxt preflight, {len(regs)} app registers and {len(memory)} safe reservations; {ident}")
         else:
             if args.image is None or args.kernel is None:
                 raise BuildAuthorityError("--image and --kernel required")

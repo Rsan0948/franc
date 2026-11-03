@@ -4,6 +4,10 @@ on:
     branches: [stage4-franc-native-bootstrap, stage4-roadmap-foundations]
     paths:
       - 'stage4/**'
+      - 'franctxt/seed.lock.franctxt'
+      - 'franctxt/build.py'
+      - 'franctxt/memory.franctxt'
+      - 'franctxt/install_native.sh'
       - 'stage2/compiler.frac'
       - 'stage3/**'
       - 'lib/**'
@@ -11,6 +15,10 @@ on:
   pull_request:
     paths:
       - 'stage4/**'
+      - 'franctxt/seed.lock.franctxt'
+      - 'franctxt/build.py'
+      - 'franctxt/memory.franctxt'
+      - 'franctxt/install_native.sh'
       - 'stage2/compiler.frac'
       - 'stage3/**'
       - 'lib/**'

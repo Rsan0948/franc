@@ -45,6 +45,7 @@ boot_hash=$(sha256sum "$boot" | cut -d ' ' -f1)
 seed_hash=$(sha256sum stage4/bootstrap_seed.S | cut -d ' ' -f1)
 registry_hash=$(sha256sum stage4/apps/registry.frac | cut -d ' ' -f1)
 runtime_hash=$(sha256sum stage4/runtime.S | cut -d ' ' -f1)
+memory_hash=$(sha256sum franctxt/memory.franctxt | cut -d ' ' -f1)
 kernel_hash=$(sha256sum "$kernel" | cut -d ' ' -f1)
 config_hash=$({ printf 'franctxt/1\000'; cat "$tmp/system.franctxt"; } | sha256sum | cut -d ' ' -f1)
 cat > "$tmp/kernel.franctxt" <<EOF
@@ -54,6 +55,7 @@ build.arch = "x86_64"
 build.boot-sha256 = "sha256:$boot_hash"
 build.config-sha256 = "sha256:$config_hash"
 build.kernel-sha256 = "sha256:$kernel_hash"
+build.memory-map-sha256 = "sha256:$memory_hash"
 build.registry-sha256 = "sha256:$registry_hash"
 build.runtime-sha256 = "sha256:$runtime_hash"
 build.seed-assembly-sha256 = "sha256:$seed_hash"

@@ -21,7 +21,7 @@ stage4/native_seed.elf: stage4/native_seed.o stage4/native_runtime.o stage4/nati
 	ld -m elf_x86_64 -nostdlib -T stage4/kernel.ld -o $@ stage4/native_runtime.o stage4/native_font.o stage4/native_seed.o
 stage4/native_seed.bin: stage4/native_seed.elf
 	objcopy -O binary -j .text -j .rodata -j .data $< $@
-stage4/native_seed.img: stage4/native_boot.bin stage4/native_seed.bin stage4/pack_native.sh franctxt/install_native.sh stage4/app_sources.list stage4/seed_sources.list franctxt/build.franctxt $(APP_SOURCES) $(wildcard franctxt/seed.lock.franctxt)
+stage4/native_seed.img: stage4/native_boot.bin stage4/native_seed.bin stage4/pack_native.sh franctxt/install_native.sh stage4/app_sources.list stage4/seed_sources.list franctxt/build.franctxt franctxt/memory.franctxt $(APP_SOURCES) $(wildcard franctxt/seed.lock.franctxt)
 	sh stage4/pack_native.sh stage4/native_boot.bin stage4/native_seed.bin $@
 native-seed: stage4/native_seed.img
 verified-native:
