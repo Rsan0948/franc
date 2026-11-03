@@ -74,3 +74,12 @@ definitions entered into the mutable dictionary. Esc returns to the original
 hardware diagnostics menu. The REPL currently accepts up to 255 input bytes
 per line and is not a general-purpose filesystem editor. The on-device native
 compiler is distinct from the Python image compiler still used at build time.
+
+## Self-recompilation proof gate (experimental)
+
+Choose `b` at the C-free diagnostics menu to load the embedded Stage 2 Franc
+compiler source and recompile it through generation two, then generation three.
+The smoke test checks both generation counts, executes a resulting native
+program, and requires a `SELFHOST OK` marker. This establishes runtime JIT
+compiler self-compilation only; producing a new bootable disk image still
+uses the host-side Python `compiler.py` and assembler/linker.

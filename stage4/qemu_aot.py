@@ -70,11 +70,14 @@ try:
     for marker in [b'JIT-SUM 5\n', b'JIT-DEF 36\n']:
         assert marker in transcript, f'missing {marker!r}'
     for key, expected in [(b'\x1b', b'Franc> '),
+                          (b'b', b'SELFHOST OK\nFranc> '),
                           (b'\x1b', b'EXIT CONSOLE')]:
         time.sleep(0.5)
         offset = len(transcript)
         os.write(p.stdin.fileno(), key)
-        transcript = read_until(expected, timeout=45, after=offset)
+        transcript = read_until(expected, timeout=150 if key == b'b' else 45, after=offset)
+    for marker in [b'SELFHOST START\n', b'GEN 2: 29\n', b'GEN 3: 29\n', b'42\n', b'SELFHOST OK\n']:
+        assert marker in transcript, f'missing {marker!r}: {transcript!r}'
     for marker in (b'FRANC FRAMEBUFFER READY', b'FRANC INTERACTIVE READY',
                    b'GRAPHICS IN FRANC', b'EXIT CONSOLE'):
         assert marker in transcript, f'missing {marker!r}: {transcript!r}'
