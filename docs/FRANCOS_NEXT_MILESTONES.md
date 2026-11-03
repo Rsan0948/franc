@@ -76,7 +76,7 @@ Baseline test evidence: [AOT self-hosting](https://github.com/Rsan0948/franc/act
 | 2026-11-03 | Franctxt build authority, fixed memory layout, seed identity | Verified foundation |
 | 2026-11-03 | e1000 DMA ARP transmission and reception | Verified foundation |
 | 2026-11-03 | Physical pages and cooperatively resumed stacks | Verified foundation |
-| 2026-11-03 | Eight-slot e1000 TX/RX and repeated ARP exchange | Partial QEMU proof passed; full network CI pending |\n| 2026-11-03 | IPv4 and ICMP echo request/reply | Implemented, QEMU receive-validation failing |\n| 2026-11-03 | UDP | Planned |
+| 2026-11-03 | Eight-slot e1000 TX/RX and repeated ARP exchange | Verified — [QEMU network run 41654048287](https://github.com/Rsan0948/franc/actions/runs/41654048287) |\n| 2026-11-03 | Bounded IPv4 and ICMP echo request/reply | Verified — [QEMU network run 41654048287](https://github.com/Rsan0948/franc/actions/runs/41654048287) |\n| 2026-11-03 | UDP | Planned |
 | 2026-11-03 | PIC/PIT timer IRQ + IDT foundation (not preemptive) | Verified QEMU — [CI run 41652092184](https://github.com/Rsan0948/franc/actions/runs/41652092184) |
 | 2026-11-03 | Ring 3 process isolation | Planned |
 
@@ -89,3 +89,7 @@ Baseline test evidence: [AOT self-hosting](https://github.com/Rsan0948/franc/act
 ### Network acceptance update (2026-11-03)
 
 The [network CI run 41652092097](https://github.com/Rsan0948/franc/actions/runs/41652092097) observed two completed e1000 TX descriptor slots, two received/released/rearmed RX descriptors, and successful basic IPv4 checksum and packet-size checks inside QEMU. **The full job failed** when the guest rejected the expected ICMP reply; packet/header diagnostics are underway. The ring proof is a partial result, not evidence that IPv4/ICMP/UDP are complete. No source-level claim substitutes for a full green network test.
+
+### IPv4/ICMP acceptance update (2026-11-03)
+
+[Network CI run 41654048287](https://github.com/Rsan0948/franc/actions/runs/41654048287) is fully green. It validates two Ethernet descriptor TX/RX cycles with ARP address learning, IPv4/ICMP checksum generation and independent packet capture, a successful native echo request/reply, rejection of a corrupted IPv4 header, and bounded packet lengths. A bug in one's-complement carry folding was identified from the host-captured ICMP frame and corrected. This is a tested **fixed 10.0.2.15 -> 10.0.2.2 QEMU path**, not DHCP/routing/fragmentation, UDP/TCP, or a general socket API.
