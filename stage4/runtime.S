@@ -793,12 +793,7 @@ fr_s2_define:
     /* TEMP: serial diagnostics for IDE definition names. */
     testq %r13,%r13
     jz .Ldebug_end
-    cmpb $'i',(%r13)
-    jne .Ldebug_end
-    cmpb $'d',1(%r13)
-    jne .Ldebug_end
-    cmpb $'e',2(%r13)
-    jne .Ldebug_end
+    /* Include every JIT definition to locate the first missing symbol. */
     pushq %rsi
     pushq %rdi
     pushq %rdx
