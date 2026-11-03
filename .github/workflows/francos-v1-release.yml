@@ -1,0 +1,97 @@
+name: FrancOS v1.0 experimental — exact-main release gate
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/francos-v1-release.yml'
+      - 'docs/FRANCOS_V1_RELEASE_CANDIDATE.md'
+      - 'docs/FRANCOS_V1_DUAL_TRACK_ROADMAP.md'
+      - 'docs/FRANCOS_WAVE4_STARTED.md'
+      - 'stage4/README.md'
+      - 'stage4/apps/README.md'
+permissions:
+  contents: write
+jobs:
+  tag-after-exact-main-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 95
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify release is based on all 14 green Wave4 suites, with source unmodified
+        shell: bash
+        run: |
+          set -euo pipefail
+          verified="a92563aca5d2b0cdc6979d53b02503c005ffb16f"
+          git merge-base --is-ancestor "$verified" HEAD
+          git diff --name-only "$verified" HEAD > /tmp/release-changes.txt
+          while IFS= read -r path; do
+            case "$path" in
+              *.md|.github/workflows/francos-v1-release.yml) ;;
+              *) echo "REJECT: unverified source change after Wave4 acceptance: $path"; exit 1 ;;
+            esac
+          done < /tmp/release-changes.txt
+          test "$GITHUB_REF" = "refs/heads/main"
+          if git ls-remote --exit-code --tags origin refs/tags/francos-v1.0-experimental >/dev/null 2>&1; then
+            echo "REJECT: experimental tag already exists; never silently move it"
+            exit 1
+          fi
+          echo "PASS: main contains the exact 14/14 Wave4 accepted program sources"
+      - name: Franctxt seed lock, memory, manifest and native code admission
+        run: |
+          python3 -m franctxt.build preflight
+          python3 -m unittest discover -s franctxt/tests -p 'test_package_manifest.py' -v
+          python3 -m unittest discover -s franctxt/tests -p 'test_user_aot_contract.py' -v
+          python3 -m unittest discover -s franctxt/tests -p 'test_sha256_native.py' -v
+          python3 -m unittest discover -s franctxt/tests -p 'test_wave4_contract.py' -v
+      - name: Install x86-64 software QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Rebuild the exact main native Franc/assembly-only image and self-hosted generations
+        run: make -f stage4/Makefile.native native-proof
+      - name: Verify exact main image and embedded native source/registry identity
+        run: python3 -m franctxt.build verify-image --image stage4/native_seed.img --kernel stage4/native_seed.bin
+      - name: Real four-boot v1 Home IDE userland package/network screenshot journey
+        env:
+          FRANC_CAPTURE_DIR: stage4/v1-release-captures
+        run: python3 stage4/qemu_v1_journey.py stage4/native_seed.img
+      - name: Regress separately scheduled Franc-generated CPL3 process fault and lease recovery
+        run: FRANC_TEST_USER_COMPILED=1 python3 stage4/qemu_irq.py stage4/native_seed.img
+      - name: Regress six-cold-boot offline SHA256 install dependency update rollback and uninstall
+        run: python3 stage4/qemu_wave3_packages.py stage4/native_seed.img
+      - name: Regress real QEMU PCAP UDP/DNS exchange, malformed data and bounded timeout
+        run: FRANC_TEST_UDP=1 FRANC_TEST_WAVE4=1 python3 stage4/qemu_net.py stage4/native_seed.img
+      - name: Record exact release image hashes and Franctxt test evidence
+        run: |
+          python3 -m franctxt.build record --image stage4/native_seed.img --kernel stage4/native_seed.bin --passed native --passed apps --output stage4/v1-release-tested.franctxt
+          sha256sum stage4/native_seed.bin stage4/native_seed.img > stage4/v1-release-sha256.txt
+          grep -F "build.source-revision = \"$(git rev-parse HEAD)\"" stage4/v1-release-tested.franctxt
+          test "$(find stage4/v1-release-captures -name 'v1-*.ppm' | wc -l)" -ge 18
+          echo "PASS: main FrancOS experimental v1 release identity and full native guest acceptance"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: francos-v1-experimental-exact-main-evidence
+          path: |
+            stage4/v1-release-captures/*.ppm
+            stage4/v1-release-tested.franctxt
+            stage4/v1-release-sha256.txt
+            stage4/native-proof/gen2.serial.log
+            stage4/native-proof/gen3.serial.log
+          if-no-files-found: warn
+      - name: Create immutable experimental v1 annotated release tag
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag=francos-v1.0-experimental
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
+            echo "Tag already exists; refusing to overwrite"
+            exit 1
+          fi
+          git config user.name 'FrancOS Release CI'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag -a "$tag" -m 'FrancOS experimental v1 | exact-main native and four-boot QEMU acceptance passed'
+          git push origin "refs/tags/$tag"
+          echo "PASS: tagged $tag at $GITHUB_SHA, after exact-main QEMU proof"

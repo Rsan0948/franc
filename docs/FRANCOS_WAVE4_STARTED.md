@@ -1,24 +1,19 @@
-# FrancOS v1 — Wave 4 initial paired implementation
+# FrancOS v1 — Wave 4 completed (F4 + U4)
 
-**Status: Started, not complete.** The complete acceptance contract is [FRANCOS_V1_DUAL_TRACK_ROADMAP.md](FRANCOS_V1_DUAL_TRACK_ROADMAP.md). Wave 3 is now accepted and merged to `main` ([PR #14](https://github.com/Rsan0948/franc/pull/14), 17/17 green suites). This Wave 4 draft [PR #15](https://github.com/Rsan0948/franc/pull/15) has been retargeted to `main` and its dedicated initial networking/VGA QEMU suite passed. The full v1 consolidation and release test have **not** been performed.
+**Accepted on November 3, 2026:** [Wave 4 PR #15](https://github.com/Rsan0948/franc/pull/15), source head `a92563aca5d2b0cdc6979d53b02503c005ffb16f`. All **14/14 GitHub Actions suites passed**; merged to `main` as `1b0d101957d8736a8910696aec53194560dbe462`. This closes all four paired waves. The exact-main release tag is gated separately; see [the release record](FRANCOS_V1_RELEASE_CANDIDATE.md).
 
-## F4 — bounded service API
+## F4: reusable native networking and persistence
 
-New `lib/services.frac` exposes bounded, explicit return-code contracts over the *existing* Franc e1000/ARP/IPv4/UDP and FRANCFS1 drivers: `svc-storage-ready`, `svc-storage-load`, `svc-net-open`, `svc-net-ready`, `svc-dns-poll`, `svc-dns-request` and `svc-net-info`.
+`lib/services.frac` provides bounded e1000/ARP/IPv4/UDP/DNS and FRANCFS1 operations with explicit error states and no infinite polling. QEMU PCAP verifies real NIC traffic, malformed replies and timeout behavior. Persisted IDE files and verified package state survive cold reboot. The test also simulates an interrupted inactive package-bank update, proving that the previous verified version remains selectable; arbitrary torn-sector writes are not claimed crash-atomic.
 
-The DNS helper may not hide network initialization or assume a peer is configured. It distinguishes invalid state, failed TX, bad response and expired poll budget. Its receive loop always consumes a ready descriptor, and refuses zero or over-limit budgets. Native QEMU test sends a second DNS request after the normal UDP/PCAP proof and verifies the response, with malformed network frames already covered by the earlier independent packet tests. No TCP/HTTP, TLS or a public package repository is claimed.
+## U4: consistent user-facing OS
 
-## U4 — shared VGA/serial interaction primitives
+`lib/ui.frac` defines a keyboard-first VGA/serial title, divider, help, error, success and status vocabulary shared by IDE, Packages and network diagnostics alongside the pinned Home/Files screens. The on-device editor supports bounded multiline cursor editing and a visible isolated-CPL3 run option. The GUI package manager offers offline install, versions, pinned dependencies, update/rollback/uninstall and fault-contained user launch. Calculator and drawing demos remain launchable without hidden REPL commands.
 
-New `lib/ui.frac` provides a common top bar and high-contrast divider, key help, error, success and status text, all through `vc-type` (so every visible string also appears on serial for headless users). The verified native package UI now uses that rendering contract, including an explicit fail-closed message rather than a numeric or silent failure. No mouse or compositor is required.
+## Single persistent-disk seven-stage acceptance — verified
 
-The first Wave 4 screenshot gate opens Home/Files/Packages/IDE by keyboard, verifies the new package header and captures the actual framebuffer. The existing editor remains fully reachable.
+The [Wave 4 QEMU journey](https://github.com/Rsan0948/franc/actions/runs/41734417319) cold-boots one BIOS image, launches Home/Calculator/graphics, edits multiline Franc in the on-screen IDE via real keyboard and PS/2 cursor movement, saves and reopens after reboot, executes audited Franc-compiled CPL3 code in independent process spaces, faults A while B survives, reclaims frames and launches a replacement. From the visible Packages UI it installs an app with dependency, runs it, upgrades and rolls it back, rejects invalid uninstall, removes both packages and verifies cold-boot persistence. It also checks bounded network failure, live DNS traffic and independent host-side PCAP evidence, and captures **18 real nonblank VGA screenshots** (all inspected).
 
-## Remaining release-blocking Wave 4 work
+The [separate Wave 3 package workflow](https://github.com/Rsan0948/franc/actions/runs/41734417375), native bootstrap, BIOS/UEFI, prior waves, apps, Franctxt and networking all passed on the same PR head. The main-branch release workflow will rebuild and retest the main-commit-specific image before publishing any experimental v1 tag.
 
-- Bring **Home, Files, IDE, Packages, status/errors and the terminal** under one consistent layout and focus/keyboard contract. Do not edit kernel-seed source without regenerating the pinned Franc bootstrap seed and its Franctxt lock and proving generations 2 and 3.
-- Complete a single end-to-end QEMU interaction journey: make/edit/reboot/run a Franc user program, offline dependency install/update/rollback/uninstall, A fault with B surviving and a replacement task, bounded network success/error and representative calculator/drawing app. Capture every named VGA screen and prove same-build digests.
-- Keep persistent package transactions/recovery robust under interruption, with precise limitations of FRANCFS1 directory-sector writes. Do not advertise crash-atomicity where it is not proven.
-- Verify BIOS framebuffer and serial fallback; UEFI GOP remains out of scope.
-
-**Boundaries:** The existing trusted JIT/REPL may still execute developer source in CPL0. The package pathway itself must use audited Franc-emitted CPL3 bytes, and it must not silently invoke CPL0 source execution on install.
+**Boundaries:** The native trusted JIT remains CPL0. Only the narrow compiler form `def main N count fault|again ;` with `N=1..255` is admitted to CPL3. Packages are two fixed IDs with small sources and trusted local manifests, not an online repository. No filesystem journaling, TCP/TLS, UEFI graphics, general hardware portability or production security is claimed.
