@@ -114,6 +114,28 @@ class Guest:
         assert len({pixels[i:i+3] for i in range(0, len(pixels), stride)}) >= 2, (
             "Framebuffer was blank or uniform", name
         )
+        if name == "home":
+            # Inspect the actual first glyph, not just a nonblank screen:
+            # a wrong Franc stack pop order formerly drew arbitrary glyphs
+            # at ASCII-code Y coordinates despite a correct UART menu.
+            import re
+            font_lines = (ROOT / "font.S").read_text().splitlines()
+            reference = next(
+                line for line in font_lines if line.rstrip().endswith("/* 70 */")
+            )
+            shape = [int(h, 16) for h in re.findall(r"0x([0-9a-fA-F]{2})", reference)]
+            assert len(shape) == 8, (reference, shape)
+            scale = width // 320
+            for y in range(8):
+                for x in range(8):
+                    pixel = ((y*scale)*width + (x*scale))*3
+                    lit = any(pixels[pixel:pixel+3])
+                    expected = bool(shape[y] & (1 << x))
+                    assert lit == expected, (
+                        "Home first glyph F mismatches actual Franc font",
+                        x, y, lit, expected
+                    )
+            print("PASS: exact Home title glyph raster matches compiled 8x8 font", flush=True)
         print(f"PASS: captured nonblank mode-13h VGA {name} screenshot ({width}x{height})", flush=True)
 
     def close(self):
