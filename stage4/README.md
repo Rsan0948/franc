@@ -26,12 +26,18 @@ Arithmetic normalizes 64-bit fractions and emits bottom on intermediate
 multiplication overflow; **this does not yet guarantee every edge case of the
 full Stage 0 arithmetic**.
 
-The AOT build tool is **Python, not yet Franc**. Also not yet migrated: full
-compiler/dictionary at runtime, the interactive REPL, the full Stage 3 storage
-and graphical console stack, PS/2 input, complete persistent source filesystem,
-interrupts, complete numeric tower, verified C-free *self-build*. These remain
-mandatory work, not optional or done by the mere fact this image cold-boots.
-The development branch retains the Stage 1/3 C-backed kernel as a fallback.
+The **seed AOT build tools remain Python** (`compiler.py`, `make_image.py`).
+However, the standalone C-free image now runs a Franc-native JIT compiler,
+a mutable dictionary, a Franc interactive REPL, Franc ATA/source storage,
+framebuffer text output and keyboard policy. Runtime compiler self-recompilation
+through two generations and an on-disk startup file executed after cold reboot
+are verified in QEMU CI.
+
+**Still incomplete:** Franc-authored standalone AOT image emission and a
+repeatable compiler/kernel rebuild without Python; full Stage 0 primitive and
+numeric compatibility; dynamic creation of arbitrary new named registers;
+hardware and corruption-edge-case tests, interrupt support and broader hardware
+targets. The Stage 1/3 C-backed kernel remains an intentionally separate fallback.
 
 Security limitations: no isolation, no privilege separation, no stack checks
 in the assembly primitives. Fixed, single-user x86-64/BIOS demonstration only.
@@ -46,14 +52,12 @@ Franc menu is started after the AOT boot checks; CI sends real COM1 key events
 (`p`, `s`, `g`, `Esc`) into the emulated machine. The immutable binary continues
 to use Franc's ATA read/write driver and source-store module.
 
-**Important limitations:** the interactive menu is not a source-code REPL. The
-compiler for this image is still `compiler.py` (build-time Python), and the
-native kernel lacks a runtime Franc source compiler, dynamic dictionary and
-multiple numerical/graphics primitives from the older JIT. There are no C
-objects in this image, but this is not a fully self-hosting no-Python build.
-The complete transition requires a Franc-authored native AOT compiler able to
-build the full OS, plus runtime dictionary and compilation support. Do not
-confuse this tested fixed-program image with that end state.
+**Important limitations:** the menu now includes a native source-code REPL
+(`r`) and compiler self-rebuild diagnostic (`b`). They run Franc's native
+JIT at runtime. The original `compiler.py` remains the *build-time* compiler
+for creating the initial bootable image. Therefore the standalone runtime is
+self-compiling but its image-generation toolchain is not yet self-hosted.
+Do not confuse runtime self-compilation with a Python-free cold image rebuild.
 
 ## Experimental runtime native compiler bridge
 

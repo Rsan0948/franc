@@ -1,6 +1,13 @@
 # Franc — native-compiled rational language and miniature OS
 
-**Development status (November 2026):** Stage 0 native JIT passes host tests;
+**Development status (November 2026):** The experimental `stage4-cfree-aot` branch
+now boots an assembly/Franc-only runtime in QEMU, self-recompiles its resident
+native compiler, and executes saved Franc startup source after cold reboot.
+The **initial AOT image build still uses Python**, so FrancOS is not yet
+fully self-building without outside high-level languages. See
+[`stage4/README.md`](stage4/README.md) for the verified scope and limitations.
+
+Historical Stage 0–3 status: Stage 0 native JIT passes host tests;
 Stage 1 BIOS kernel has previously booted in QEMU; Stage 2 demonstrates
 *two-generation compiler self-compilation* in Franc; Stage 3 now includes a
 Franc-recompiled native interactive shell. The current Stage 3 boot path must
