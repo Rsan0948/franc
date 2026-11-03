@@ -31,3 +31,5 @@ jobs:
         run: python3 stage4/qemu_apps.py stage4/native_seed.img
       - name: Verify Stage 4+ roadmap libraries in the native guest
         run: python3 stage4/qemu_roadmap.py stage4/native_seed.img
+      - name: Verify e1000 Ethernet DMA packet I/O against QEMU SLIRP
+        run: python3 stage4/qemu_net.py stage4/native_seed.img

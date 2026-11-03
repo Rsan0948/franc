@@ -121,3 +121,19 @@ and online packages are still separate milestones.
 These are building blocks, not the full allocator, lazy-GCD rational engine,
 virtual memory manager, protected user processes or production-ready
 hardware abstraction layer.
+
+## Increment 4: native e1000 Ethernet DMA rings (under validation)
+
+- `stage4/net.frac` implements QEMU Intel 82540EM PCI I/O BAR
+  register access, PCI bus-master enabling, single-descriptor
+  transmit and eight-descriptor receive rings. Descriptors and
+  Ethernet frames reside at fixed low-RAM locations
+  `0x06c00000..0x06c07fff`; this is experimental DMA,
+  not an IOMMU-protected or managed allocation.
+- `net-arp-request` constructs an Ethernet broadcast ARP who-has
+  for the QEMU SLIRP gateway `10.0.2.2`. An independent QEMU
+  test records the actual transmitted Ethernet frame with
+  `filter-dump` and verifies received ARP metadata.
+- The first TX descriptor is deliberately one-shot. There are no
+  interrupts, TCP/UDP/IP packet handlers, retransmissions, or
+  network sockets yet. Only a trusted emulated NIC is supported.
