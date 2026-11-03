@@ -14,10 +14,10 @@ from typing import Mapping
 
 from . import FranctxtError, canonical, digest, parse
 
-NAME = re.compile(r"[a-z][a-z0-9-]{0,30}\\Z", re.ASCII)
-VERSION = re.compile(r"(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\Z", re.ASCII)
-FILENAME = re.compile(r"[a-z][a-z0-9._-]{0,22}\\Z", re.ASCII)
-HASH = re.compile(r"sha256:[0-9a-f]{64}\\Z", re.ASCII)
+NAME = re.compile(r"[a-z][a-z0-9-]{0,30}\Z", re.ASCII)
+VERSION = re.compile(r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\Z", re.ASCII)
+FILENAME = re.compile(r"[a-z][a-z0-9._-]{0,22}\Z", re.ASCII)
+HASH = re.compile(r"sha256:[0-9a-f]{64}\Z", re.ASCII)
 MAX_FILES = 4
 MAX_DEPS = 4
 MAX_FILE_BYTES = 2047
@@ -136,7 +136,7 @@ def manifest_for(identifier: str, version: str, payloads: Mapping[str, bytes],
         doc[f"package.dependency.{i}.version"] = _version(depver)
     for i, (name, data) in enumerate(sorted(payloads.items())):
         _name(name, file=True)
-        if not isinstance(data, bytes) or not 1 <= len(data) <= MAX_FILE_BYTES or b"\\0" in data:
+        if not isinstance(data, bytes) or not 1 <= len(data) <= MAX_FILE_BYTES or b"\0" in data:
             raise PackageError(f"invalid source data: {name}")
         doc[f"package.file.{i}.name"] = name
         doc[f"package.file.{i}.bytes"] = len(data)
