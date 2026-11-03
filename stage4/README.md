@@ -210,3 +210,17 @@ must eliminate it from the production build path.
 ## Native two-generation shell bootstrap
 
 Run `bash stage4/bootstrap.sh PATH_TO_SEED.img OUTPUT_DIR`. This runner uses only Franc inside QEMU, x86-64 assembly objects, GNU assembler/linker/objcopy and shell disk tools. It builds a generation-2 native kernel, boots that image and attempts a generation-3 rebuild, then requires byte-for-byte kernel identity. No Python or C is called in this rebuild path. An already bootable seed image remains necessary. If that seed was originally built by Python, this is not yet a source-only initial bootstrap proof.
+
+## Clean-checkout Franc + assembly bootstrap seed
+
+The CI workflow freezes the byte-verified third-generation, Franc-emitted
+assembly as `stage4/bootstrap_seed.S`. Once the seed is pinned, run from
+repository root: `make -f stage4/Makefile.native`. The native Makefile
+assembles this Franc-generated seed with the handwritten x86-64 runtime, boots
+it, regenerates the complete FrancOS kernel in Franc, and compares second-
+and third-generation machine-code images. Python and C are not called.
+The seed's compiler provenance is the Franc compiler, and successive
+identical binary generations establish reproducibility. As with every
+compiler bootstrap, the frozen seed remains a trusted artifact and must be
+reviewed and pinned; bootstrap equality alone cannot prove absence of a
+malicious compiler backdoor.

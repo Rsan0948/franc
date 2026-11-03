@@ -1,0 +1,32 @@
+# Run from repository root: make -f stage4/Makefile.native
+# Franc + x86-64 assembly + GNU binutils only; no C/Python compile step.
+AS ?= as
+LD ?= ld
+OBJCOPY ?= objcopy
+.PHONY: all native-seed native-proof clean-native
+all: native-proof
+
+stage4/native_seed.o: stage4/bootstrap_seed.S
+	as --64 -o $@ $<
+stage4/native_runtime.o: stage4/runtime.S
+	as --64 -o $@ $<
+stage4/native_font.o: stage4/font.S
+	as --64 -o $@ $<
+stage4/native_boot.o: stage4/boot.S
+	as --64 -o $@ $<
+stage4/native_boot.bin: stage4/native_boot.o
+	ld -m elf_x86_64 --oformat binary -Ttext 0x7c00 -o $@ $<
+stage4/native_seed.elf: stage4/native_seed.o stage4/native_runtime.o stage4/native_font.o stage4/kernel.ld
+	ld -m elf_x86_64 -nostdlib -T stage4/kernel.ld -o $@ stage4/native_runtime.o stage4/native_font.o stage4/native_seed.o
+stage4/native_seed.bin: stage4/native_seed.elf
+	objcopy -O binary -j .text -j .rodata -j .data $< $@
+stage4/native_seed.img: stage4/native_boot.bin stage4/native_seed.bin stage4/pack_native.sh
+	sh stage4/pack_native.sh stage4/native_boot.bin stage4/native_seed.bin $@
+native-seed: stage4/native_seed.img
+native-proof: stage4/native_seed.img
+	bash stage4/bootstrap.sh stage4/native_seed.img stage4/native-proof
+	cmp stage4/native-proof/gen2.bin stage4/native-proof/gen3.bin
+	@echo "PASS: clean-checkout Franc/assembly source seed rebuilt native kernel twice without Python"
+clean-native:
+	rm -f stage4/native_seed.o stage4/native_runtime.o stage4/native_font.o stage4/native_boot.o
+	rm -f stage4/native_boot.bin stage4/native_seed.elf stage4/native_seed.bin stage4/native_seed.img

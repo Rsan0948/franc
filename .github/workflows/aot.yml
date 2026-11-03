@@ -6,6 +6,8 @@ on:
     paths:
       - 'stage4/**'
       - '.github/workflows/aot.yml'
+permissions:
+  contents: write
 jobs:
   aot-kernel:
     runs-on: ubuntu-latest
@@ -37,5 +39,18 @@ jobs:
             stage4/native-build/gen2.bin
             stage4/native-build/gen3.S
             stage4/native-build/gen3.bin
+      - name: Freeze verified Franc-native bootstrap seed on development branch
+        if: github.ref == 'refs/heads/stage4-franc-native-bootstrap'
+        run: |
+          cp stage4/native-build/gen3.S stage4/bootstrap_seed.S
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add stage4/bootstrap_seed.S
+          if ! git diff --cached --quiet; then
+            git commit -m 'Pin reproducible Franc-generated bootstrap assembly seed'
+            git push origin HEAD:refs/heads/stage4-franc-native-bootstrap
+          fi
+      - name: Rebuild FrancOS from assembly seed without Python or C
+        run: make -f stage4/Makefile.native native-proof
       - name: Cold boot C-free AOT image in software QEMU
         run: python3 stage4/qemu_aot.py
