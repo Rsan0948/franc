@@ -155,3 +155,8 @@ branch labels and Stage 2's bounded control-frame stack. The integration test
 assembles a conditional example and checks `fr_condition` relocations.
 This is not yet parity with the Python AOT compiler: full string/data section
 emission and register handling are outstanding.
+
+The control-flow CI check now also links its generated assembly against
+`runtime.S` and cold-boots a second independent QEMU disk image. It requires
+one negative and one positive input to produce `11` and `22` in order,
+proving the conditional branches execute correctly rather than merely assemble.

@@ -183,7 +183,49 @@ try:
         subprocess.run(['as','--64','-o',str(native),str(source)],check=True)
         names=subprocess.check_output(['nm',str(native)],text=True)
         assert 'fw_6d61696e' in names and 'U fr_condition' in names, names
-    print('PASS: Franc AOT lowers symbolic conditionals and nested function calls')
+
+        # Prove conditional branches execute correctly on an independent BIOS boot.
+        stub=Path(work)/'stub.o'
+        elf=Path(work)/'control.elf'
+        binary=Path(work)/'control.bin'
+        control_image=Path(work)/'control.img'
+        subprocess.run(['as','--64','-o',str(stub),str(root/'aot_stub.S')],check=True)
+        subprocess.run(['ld','-m','elf_x86_64','-nostdlib','-T',str(root/'kernel.ld'),
+            '-o',str(elf),str(root/'runtime.o'),str(root/'font.o'),
+            str(stub),str(native)],check=True)
+        subprocess.run(['objcopy','-O','binary','-j','.text','-j','.rodata',
+            '-j','.data',str(elf),str(binary)],check=True)
+        assert 0<binary.stat().st_size<=127*512
+        dd('if=/dev/zero',f'of={control_image}','bs=512','count=256')
+        dd(f'if={root/"boot.bin"}',f'of={control_image}','conv=notrunc')
+        dd(f'if={binary}',f'of={control_image}','bs=512','count=127',
+           'seek=1','conv=notrunc')
+        dd(f'of={control_image}','bs=512','seek=128','conv=notrunc',
+           data=b'FRANCFS1')
+        guest=subprocess.Popen([qemu,'-m','128M','-accel','tcg','-display','none',
+            '-monitor','none','-no-reboot','-serial','stdio',
+            '-drive',f'file={control_image},format=raw,if=ide'],
+            stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,bufsize=0)
+        out=b''
+        try:
+            monitor=selectors.DefaultSelector()
+            monitor.register(guest.stdout,selectors.EVENT_READ)
+            deadline=time.monotonic()+90
+            while time.monotonic()<deadline and b'11\n22\n' not in out:
+                if guest.poll() is not None:break
+                if monitor.select(0.2):
+                    chunk=os.read(guest.stdout.fileno(),8192)
+                    if not chunk:break
+                    out+=chunk
+            assert b'11\n22\n' in out, (
+                'Franc AOT conditional BIOS image did not print 11 then 22: '
+                +repr(out))
+        finally:
+            guest.kill()
+            guest.wait()
+
+    print('PASS: Franc AOT conditional program cold-booted and executed both branches correctly')
 
 
     for marker in [b'SELFHOST START\n', b'GEN 2: 29\n', b'GEN 3: 29\n', b'42\n', b'SELFHOST OK\n']:
