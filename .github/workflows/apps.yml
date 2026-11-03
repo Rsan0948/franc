@@ -1,0 +1,31 @@
+name: Franc native applications — end-to-end QEMU
+on:
+  push:
+    branches: [stage4-franc-native-bootstrap]
+    paths:
+      - 'stage4/**'
+      - 'stage2/compiler.frac'
+      - 'stage3/**'
+      - 'lib/**'
+      - '.github/workflows/apps.yml'
+  pull_request:
+    paths:
+      - 'stage4/**'
+      - 'stage2/compiler.frac'
+      - 'stage3/**'
+      - 'lib/**'
+      - '.github/workflows/apps.yml'
+permissions:
+  contents: read
+jobs:
+  native-apps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Assemble committed Franc-generated native kernel (no Python/C compiler)
+        run: make -f stage4/Makefile.native native-seed
+      - name: Check original Franc libraries and apps execute in native JIT
+        run: python3 stage4/qemu_apps.py stage4/native_seed.img
