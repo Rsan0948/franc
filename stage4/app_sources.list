@@ -18,6 +18,7 @@ lib/float.frac
 lib/litetofrac.frac
 lib/pkg.frac
 lib/ide.frac
+lib/user_aot.frac
 stage4/pci.frac
 stage4/tasks.frac
 stage4/net.frac

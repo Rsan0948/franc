@@ -1,0 +1,41 @@
+name: FrancOS v1 Wave 3 — Franc user-code emitter and offline package manifests
+on:
+  push:
+    branches: [francos-wave3-userland-packages]
+  pull_request:
+    paths:
+      - 'franctxt/packages.py'
+      - 'franctxt/tests/test_package_manifest.py'
+      - 'franctxt/tests/test_user_aot_contract.py'
+      - 'lib/user_aot.frac'
+      - 'stage4/app_sources.list'
+      - 'stage4/qemu_roadmap.py'
+      - '.github/workflows/wave3-foundation.yml'
+permissions:
+  contents: read
+jobs:
+  wave3-foundation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate canonical build identity and existing kernel trust boundary
+        run: python3 -m franctxt.build preflight
+      - name: Test offline package manifest, SHA256, dependency ordering and atomic planning
+        run: python3 -m unittest discover -s franctxt/tests -p 'test_package_manifest.py' -v
+      - name: Test bounded native Franc CPL3 emitter contract
+        run: python3 -m unittest discover -s franctxt/tests -p 'test_user_aot_contract.py' -v
+      - name: Install software QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Build exact pinned native image with experimental Wave 3 source bundle
+        run: make -f stage4/Makefile.native native-seed
+      - name: Prove Franc generates vetted x86 user-code bytes in native QEMU
+        run: python3 stage4/qemu_roadmap.py stage4/native_seed.img
+      - name: Emit Wave 3 foundation build identity (not Wave 3 acceptance)
+        run: python3 -m franctxt.build record --image stage4/native_seed.img --kernel stage4/native_seed.bin --passed native --passed apps --output stage4/wave3-foundation.franctxt
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: francos-wave3-foundation-not-acceptance
+          path: stage4/wave3-foundation.franctxt
+          if-no-files-found: error
