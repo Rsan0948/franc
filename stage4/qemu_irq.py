@@ -253,6 +253,47 @@ with tempfile.TemporaryDirectory(prefix="franc-timer-") as tmp:
                 if command == "user-preempt-syscall-probe .":
                     assert b"W" in result, result
             print("PASS: CPL3 exit, invalid syscall, checked console/ticks return, and rejected kernel pointer; B survives", flush=True)
+        if os.getenv("FRANC_TEST_USER_COMPILED") == "1":
+            # First real F3 proof: Franc source is compiled *in the kernel*
+            # by lib/user_aot.frac, audited byte-for-byte at admission,
+            # copied to individually E820-leased RX CPL3 pages and run with
+            # an IRQ-preempted independent peer. Never call privileged JIT
+            # from the user code itself.
+            assert number(line("ring3-probe .")) == 1
+            assert number(line("page-free-count .")) == 2048
+            assert number(line("user-compiled-probe .")) == 0, "Unstaged user code must fail closed"
+            assert number(line('"def main 100 count fault ;" user-compile user-code-base swap 1 user-code-stage .')) == 1
+            assert number(line("user-compiled-a-kind .")) == 1
+            assert number(line('"def main 2 count again ;" user-compile user-code-base swap 2 user-code-stage .')) == 1
+            assert number(line("user-compiled-b-kind .")) == 2
+            assert number(line("user-code-base 1 + 17 2 user-code-stage .")) == 0, (
+                "Arbitrary JIT/kernel pointers must not enter the isolated code path"
+            )
+            assert number(line("user-compiled-probe .")) == 1, (
+                "Franc-compiled user A/B failed to preempt or contain A's user #PF"
+            )
+            assert number(line("user-preempt-a-state .")) == 4
+            assert number(line("user-preempt-b-state .")) == 3
+            assert number(line("user-preempt-a-steps .")) == 100
+            assert number(line("user-preempt-b-steps .")) > 100
+            assert number(line("user-preempt-switches .")) >= 5
+            assert number(line("user-preempt-reclaimed .")) == 14
+            assert number(line("page-free-count .")) == 2048
+            assert number(line("user-preempt-fault-probe .")) == 1
+            assert number(line("page-free-count .")) == 2048
+            assert number(line('"def main 3 count again ;" user-compile user-code-base swap 1 user-code-stage .')) == 1
+            assert number(line("user-compiled-a-kind .")) == 2
+            assert number(line("user-compiled-relaunch .")) == 1, (
+                "A new generation of Franc-compiled users must launch after A's fault"
+            )
+            assert number(line("user-preempt-a-state .")) == 3
+            assert number(line("user-preempt-b-state .")) == 3
+            assert number(line("user-preempt-a-steps .")) > 100
+            assert number(line("user-preempt-b-steps .")) > 100
+            assert number(line("user-preempt-reclaimed .")) == 14
+            assert number(line("page-free-count .")) == 2048
+            assert number(line("2 3 + .")) == 5
+            print("PASS: real Franc-compiled CPL3 A faulted, B survived, and new Franc users relaunched with reclaimed pages", flush=True)
         if os.getenv("FRANC_TEST_RING3") == "1":
             value = number(line("ring3-probe ."))
             assert value == 1, f"Expected a valid user syscall and protected page fault, got {value}"
