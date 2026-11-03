@@ -50,7 +50,7 @@ with tempfile.TemporaryDirectory(prefix="franc-roadmap-") as tmp:
         os.write(guest.stdin.fileno(), c)
         return expect(marker, pos, timeout)
 
-    def line(command, marker=None, timeout=120):
+    def line(command, marker=None, timeout=120, allow_compiler_error=False):
         pos = len(out)
         for c in command.encode("ascii"):
             before = len(out)
@@ -59,7 +59,7 @@ with tempfile.TemporaryDirectory(prefix="franc-roadmap-") as tmp:
             time.sleep(0.11)
         os.write(guest.stdin.fileno(), b"\n")
         text = expect(b"Frac> ", pos, timeout)
-        if b"stage2: unsupported token" in text:
+        if b"stage2: unsupported token" in text and not allow_compiler_error:
             raise AssertionError(f"Compiler rejected {command}: {text[-1200:]!r}")
         if marker is not None and marker not in text:
             raise AssertionError(f"Unexpected result for {command}: {text[-1200:]!r}")
@@ -172,8 +172,8 @@ with tempfile.TemporaryDirectory(prefix="franc-roadmap-") as tmp:
         compiled = line("ide-run", b"RUN COMPLETE\nFrac> ")
         assert b"COMPILE OK" in compiled and b"15\n" in compiled, compiled
         line('ide-start "def main 7 this-word-is-absent . ;" ide-add-line .', b"1\nFrac> ")
-        failed = line("ide-run", b"COMPILE FAILED | line 1\n")
-        assert b"RUN COMPLETE" not in failed, failed
+        failed = line("ide-run", b"COMPILE FAILED | line 1\n", allow_compiler_error=True)
+        assert b"stage2: unsupported token" in failed and b"RUN COMPLETE" not in failed, failed
         line('ide-start "def helper 2 3 + ;" ide-add-line .', b"1\nFrac> ")
         missing = line("ide-run", b"NO def main ENTRYPOINT\nFrac> ")
         assert b"RUN COMPLETE" not in missing, missing
