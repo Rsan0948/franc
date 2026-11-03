@@ -88,6 +88,9 @@ with tempfile.TemporaryDirectory(prefix="franc-timer-") as tmp:
             assert number(line("process-fault-probe .")) == 0, (
                 "Process probe must reject access before protected IDT/TSS setup"
             )
+            assert number(line("space-probe .")) == 0, (
+                "Independent CR3 root probe must reject setup without TSS/IRQ"
+            )
         if os.getenv("FRANC_TEST_PREEMPT") == "1":
             assert number(line("preempt-asm-demo .")) == 0, "Preempt demo without IRQ must fail closed"
         if os.getenv("FRANC_TEST_JIT_PREEMPT") == "1":
@@ -129,6 +132,25 @@ with tempfile.TemporaryDirectory(prefix="franc-timer-") as tmp:
             assert number(line("process-fault-probe .")) == 0, "Process probe must be one-shot"
             assert number(line("2 3 + .")) == 5
             print("PASS: user process A faults in CPL3; isolated B page aliases execute 50000 steps, syscall and return", flush=True)
+            # F1: both CPL3 users now have different E820-owned PML4 roots.
+            assert number(line("page-free-count .")) == 2048
+            assert number(line("space-probe .")) == 1, (
+                "User A failed to fault across B's supervisor identity alias "
+                "or user B failed to complete in an independent CR3"
+            )
+            root_a = number(line("space-root-a ."))
+            root_b = number(line("space-root-b ."))
+            assert root_a != root_b and 0x07000000 <= root_a < 0x07800000
+            assert 0x07000000 <= root_b < 0x07800000
+            assert number(line("space-state-a .")) == 4
+            assert number(line("space-state-b .")) == 2
+            bad_addr = number(line("space-fault-address ."))
+            assert 0x07000000 <= bad_addr < 0x07800000
+            assert number(line("space-reclaimed .")) == 12
+            assert number(line("page-free-count .")) == 2048
+            assert number(line("space-probe .")) == 0, "Space test must be one-shot"
+            assert number(line("2 3 + .")) == 5
+            print(f"PASS: independent CPL3 CR3 roots ({root_a:#x} != {root_b:#x}), cross-owner #PF and zeroed reclamation", flush=True)
         if os.getenv("FRANC_TEST_PREEMPT") == "1":
             prior_tick = number(line("irq-ticks ."))
             # Carry two host Rat values through 120 IRQ-driven switches;
