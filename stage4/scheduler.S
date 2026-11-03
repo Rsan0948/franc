@@ -43,6 +43,10 @@
 .Luser_sb_name: .asciz "user-preempt-b-state"
 .Luser_switch_name: .asciz "user-preempt-switches"
 .Luser_reclaim_name: .asciz "user-preempt-reclaimed"
+.Luser_exit_name: .asciz "user-preempt-exit-probe"
+.Luser_invalid_name: .asciz "user-preempt-invalid-probe"
+.Luser_syscall_name: .asciz "user-preempt-syscall-probe"
+.Luser_badptr_name: .asciz "user-preempt-badptr-probe"
 .section .data
 .balign 8
 /* Linked dictionary nodes: next, name, code. First next is set at boot. */
@@ -84,7 +88,11 @@ fr_task_dict_user_b: .quad fr_task_dict_user_a, .Luser_b_name, fr_user_sched_b_s
 fr_task_dict_user_sa: .quad fr_task_dict_user_b, .Luser_sa_name, fr_user_sched_a_state
 fr_task_dict_user_sb: .quad fr_task_dict_user_sa, .Luser_sb_name, fr_user_sched_b_state
 fr_task_dict_user_switch: .quad fr_task_dict_user_sb, .Luser_switch_name, fr_user_sched_switches
-fr_task_dict_top: .quad fr_task_dict_user_switch, .Luser_reclaim_name, fr_user_sched_reclaimed
+fr_task_dict_user_reclaim: .quad fr_task_dict_user_switch, .Luser_reclaim_name, fr_user_sched_reclaimed
+fr_task_dict_user_exit: .quad fr_task_dict_user_reclaim, .Luser_exit_name, fr_user_sched_exit_probe
+fr_task_dict_user_invalid: .quad fr_task_dict_user_exit, .Luser_invalid_name, fr_user_sched_invalid_probe
+fr_task_dict_user_syscall: .quad fr_task_dict_user_invalid, .Luser_syscall_name, fr_user_sched_syscall_probe
+fr_task_dict_top: .quad fr_task_dict_user_syscall, .Luser_badptr_name, fr_user_sched_badptr_probe
 .section .bss
 .balign 8
 /* 0:host, 1:worker A, 2:worker B.
