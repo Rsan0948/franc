@@ -33,6 +33,21 @@ fr_ring3_user_cs: .skip 8
 fr_ring3_fault: .skip 8
 fr_ring3_cr2: .skip 8
 fr_ring3_pferror: .skip 8
+/* Separate physical backing pages for a restricted two-process
+ * survival probe. Each process maps ONLY its own pages at the same two
+ * virtual addresses; neither can access the other's physical frames.
+ */
+.balign 4096
+fr_proc_b_codepage: .skip 4096
+.balign 4096
+fr_proc_b_stack: .skip 4096
+.balign 8
+fr_proc_active: .skip 8
+fr_proc_done: .skip 8
+fr_proc_a_state: .skip 8  /* 4 = faulted */
+fr_proc_b_state: .skip 8  /* 2 = completed */
+fr_proc_b_syscall: .skip 8
+fr_proc_survivor: .skip 8
 
 .section .data
 .balign 16
@@ -73,6 +88,8 @@ fr_ring3_setgate:
 fr_ring3_int80:
     cmpq $1,fr_ring3_active(%rip)
     jne .Lring3_unexpected
+    cmpq $3,fr_ring3_phase(%rip)
+    je .Lproc_int80
     cmpq $1,fr_ring3_phase(%rip)
     jne .Lring3_unexpected
     movq 8(%rsp),%rax         /* interrupted CS at frame slot 1 */
@@ -83,6 +100,17 @@ fr_ring3_int80:
     movq $1,fr_ring3_good_return(%rip)
     movq fr_ring3_host_rsp(%rip),%rsp
     jmp .Lring3_after_good
+
+.Lproc_int80:
+    cmpq $1,fr_proc_active(%rip)
+    jne .Lring3_unexpected
+    movq 8(%rsp),%rax
+    andq $3,%rax
+    cmpq $3,%rax
+    jne .Lring3_unexpected
+    movq $1,fr_proc_b_syscall(%rip)
+    movq fr_ring3_host_rsp(%rip),%rsp
+    jmp .Lproc_after_success
 
 fr_ring3_page_fault:
     cmpq $1,fr_ring3_active(%rip)
@@ -103,6 +131,8 @@ fr_ring3_page_fault:
     jne .Lring3_unexpected
     movq $1,fr_ring3_fault(%rip)
     movq fr_ring3_host_rsp(%rip),%rsp
+    cmpq $1,fr_proc_active(%rip)
+    je .Lproc_after_fault
     jmp .Lring3_after_fault
 
 .Lring3_unexpected:
@@ -317,5 +347,187 @@ fr_ring3_fault_address:
 .global fr_ring3_fault_error
 fr_ring3_fault_error:
     movq fr_ring3_pferror(%rip),%rdi
+    movq $1,%rsi
+    jmp fr_push
+
+
+/* Two successive isolated CPL3 contexts, NOT concurrent user processes.
+ * First A deliberately faults reading supervisor memory; kernel records
+ * #PF and unmaps A's user pages, switches PTEs to B's distinct physical
+ * code/stack pages, reloads CR3 and launches B at the SAME user VAs.
+ * B executes a private write loop and makes a restricted INT80 syscall.
+ * Both executions run at CPL3; kernel and host REPL must survive.
+ */
+fr_proc_b_code:
+    movabsq $0x40001000,%rdi
+    movl $0,(%rdi)
+    movl $50000,%ecx
+.Lproc_b_loop:
+    incl (%rdi)
+    decl %ecx
+    jnz .Lproc_b_loop
+    movl $0x40,%eax
+    int $0x80
+    ud2
+fr_proc_b_code_end:
+
+.global fr_proc_probe
+fr_proc_probe:
+    pushq %rbx
+    pushq %rbp
+    pushq %r12
+    pushq %r13
+    pushq %r14
+    pushq %r15
+    cmpq $1,fr_irq_running(%rip)
+    jne .Lproc_probe_bad
+    cmpq $1,fr_ring3_done(%rip)
+    jne .Lproc_probe_bad
+    cmpq $0,fr_ring3_active(%rip)
+    jne .Lproc_probe_bad
+    cmpq $0,fr_preempt_enabled(%rip)
+    jne .Lproc_probe_bad
+    cmpq $0,fr_proc_done(%rip)
+    jne .Lproc_probe_bad
+    movq %cr3,%rax
+    andq $-4096,%rax
+    cmpq $0x9000,%rax
+    jne .Lproc_probe_bad
+    cli
+    /* B's physical pages remain supervisor-only under the kernel's low
+     * identity mapping and will be aliased exclusively when B starts.
+     */
+    leaq fr_proc_b_codepage(%rip),%rdi
+    movl $512,%ecx
+    xorl %eax,%eax
+    cld
+    rep stosq
+    leaq fr_proc_b_stack(%rip),%rdi
+    movl $512,%ecx
+    rep stosq
+    leaq fr_proc_b_code(%rip),%rsi
+    leaq fr_proc_b_codepage(%rip),%rdi
+    movl $(fr_proc_b_code_end-fr_proc_b_code),%ecx
+    rep movsb
+    movq $1,fr_proc_done(%rip)
+    movq $1,fr_proc_active(%rip)
+    movq $1,fr_proc_a_state(%rip)
+    movq $0,fr_proc_b_state(%rip)
+    movq $0,fr_proc_b_syscall(%rip)
+    movq $0,fr_proc_survivor(%rip)
+    movq $0,fr_ring3_fault(%rip)
+    movq $0,fr_ring3_cr2(%rip)
+    movq $0,fr_ring3_pferror(%rip)
+    movq $1,fr_ring3_active(%rip)
+    movq $2,fr_ring3_phase(%rip)
+    /* Reinstall A-only aliases. The 0x40001000 stack slot and code page
+     * cannot expose any of B's physical frames during A's execution.
+     */
+    leaq fr_ring3_user_codepage(%rip),%rax
+    orq $5,%rax
+    movq %rax,fr_ring3_pt(%rip)
+    leaq fr_ring3_user_stack(%rip),%rax
+    orq $7,%rax
+    movq %rax,fr_ring3_pt+8(%rip)
+    movq %cr3,%rax
+    movq %rax,%cr3
+    movq %rsp,fr_ring3_host_rsp(%rip)
+    pushq $0x2b
+    pushq $0x40002000
+    pushq $0x202
+    pushq $0x23
+    pushq $0x40000080       /* process A's deliberate #PF snippet */
+    iretq
+
+/* Entered on the host CPU stack by the A-only page-fault gate. */
+.Lproc_after_fault:
+    movw $0x10,%ax
+    movw %ax,%ss
+    cmpq $1,fr_ring3_fault(%rip)
+    jne .Lproc_abort
+    cmpq $0x10000,fr_ring3_cr2(%rip)
+    jne .Lproc_abort
+    movq $4,fr_proc_a_state(%rip)
+    movq $1,fr_proc_b_state(%rip)
+    /* Revoke A's virtual aliases and map B's independent code/stack.
+     * Explicit reload is essential to invalidate the old A translations.
+     */
+    leaq fr_proc_b_codepage(%rip),%rax
+    orq $5,%rax
+    movq %rax,fr_ring3_pt(%rip)
+    leaq fr_proc_b_stack(%rip),%rax
+    orq $7,%rax
+    movq %rax,fr_ring3_pt+8(%rip)
+    movq %cr3,%rax
+    movq %rax,%cr3
+    movq $3,fr_ring3_phase(%rip)
+    movq %rsp,fr_ring3_host_rsp(%rip)
+    pushq $0x2b
+    pushq $0x40002000
+    pushq $0x202
+    pushq $0x23
+    pushq $0x40000000
+    iretq
+
+/* Restricted INT80 completion from B: inspect its private physical page
+ * and check the loop actually completed before declaring survival.
+ */
+.Lproc_after_success:
+    movw $0x10,%ax
+    movw %ax,%ss
+    cmpq $1,fr_proc_b_syscall(%rip)
+    jne .Lproc_abort
+    cmpl $50000,fr_proc_b_stack(%rip)
+    jne .Lproc_abort
+    movq $2,fr_proc_b_state(%rip)
+    movq $1,fr_proc_survivor(%rip)
+    movq $1,%r12
+    jmp .Lproc_finish
+.Lproc_abort:
+    xorq %r12,%r12
+    jmp .Lproc_finish
+.Lproc_probe_bad:
+    xorq %r12,%r12
+    jmp .Lproc_return
+.Lproc_finish:
+    /* Both user aliases are revoked after exit. No stale B mapping is
+     * left in the address space to be accessed by another user context.
+     */
+    movq $0,fr_ring3_pt(%rip)
+    movq $0,fr_ring3_pt+8(%rip)
+    movq %cr3,%rax
+    movq %rax,%cr3
+    movq $0,fr_ring3_active(%rip)
+    movq $0,fr_proc_active(%rip)
+    sti
+.Lproc_return:
+    movq %r12,%rdi
+    popq %r15
+    popq %r14
+    popq %r13
+    popq %r12
+    popq %rbp
+    popq %rbx
+    movq $1,%rsi
+    jmp fr_push
+
+.global fr_proc_state_a
+fr_proc_state_a:
+    movq fr_proc_a_state(%rip),%rdi
+    movq $1,%rsi
+    jmp fr_push
+.global fr_proc_state_b
+fr_proc_state_b:
+    movq fr_proc_b_state(%rip),%rdi
+    movq $1,%rsi
+    jmp fr_push
+.global fr_proc_b_steps
+fr_proc_b_steps:
+    movl fr_proc_b_stack(%rip),%edi
+    movq $1,%rsi
+    jmp fr_push
+.global fr_proc_survivor_ok
+fr_proc_survivor_ok:
+    movq fr_proc_survivor(%rip),%rdi
     movq $1,%rsi
     jmp fr_push

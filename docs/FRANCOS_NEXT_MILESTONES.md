@@ -12,8 +12,8 @@
 | --- | --- | --- |
 | Kernel / build | Native Franc self-hosting, repeatable generation-2/3 output, BIOS/OVMF QEMU boot | Relocation and real hardware |
 | Franctxt | Portable typed configuration, SHA-256, native persisted manifest, build source inventories, seed lock and static reservation checks | Authenticated secure boot and live policy enforcement |
-| Memory | 4 KiB checked bitmap arena, zeroed allocation, bounded heap | Firmware memory discovery and process page tables |
-| Scheduler | QEMU-verified IRQ0 preemption of two native Franc JIT workers, private rational stacks, explicit scalar task locals, bounded retirement | General task API, transparent named-register isolation, FPU/SIMD save, CPU-stack guard pages, Ring 3 integration |
+| Memory | BIOS E820 bounded inventory, firmware-gated 8 MiB/4 KiB page arena, zeroed allocation and bounded heap | General firmware-driven physical allocator, independent process page-table roots, UEFI GetMemoryMap |
+| Scheduler | QEMU-verified IRQ0 preemption of two native Franc JIT workers, private rational stacks, explicit scalar task locals, bounded retirement | General task API, named-register isolation, FPU/SIMD save, guard pages, **concurrent** CPL3 scheduling |
 | Networking | e1000 DMA rings, ARP, IPv4/ICMP, and one QEMU-verified UDP/DNS request/reply | Reusable UDP/DNS APIs, TCP, routing, sockets and production network handling |
 | UEFI | OVMF boot through C-only firmware adapter to C-free kernel | GOP graphics, full firmware map and real hardware |
 | Userland | Native IDE, twelve original apps, partial float/bignum/FrancLite/offline packages | Full arithmetic, language, package resolver and online install |
@@ -83,6 +83,9 @@ Baseline test evidence: [AOT self-hosting](https://github.com/Rsan0948/franc/act
 | 2026-11-03 | BIOS CPL3/INT80/supervisor page-fault one-shot experiment | Verified — [Ring 3 QEMU run 41664139626](https://github.com/Rsan0948/franc/actions/runs/41664139626) on commit `16e4777`; no general process isolation yet |
 | 2026-11-03 | Real Franc JIT CPU preemption, two independent scalar-local/Rat-stack contexts, normal return/timeout | Verified — [QEMU integration run 41672001629](https://github.com/Rsan0948/franc/actions/runs/41672001629) on commit `e0e8bab`; bounded trusted ring-0 experiment, not a general scheduler |
 
+| 2026-11-03 | BIOS E820 memory discovery, fixed allocator usable/reserved firmware gate | Verified — [QEMU run 41677382606](https://github.com/Rsan0948/franc/actions/runs/41677382606) on commit `4f9dec8`; UEFI memory-map handoff not implemented |
+| 2026-11-03 | Two distinct sequential CPL3 user mappings with faulted A and survivor B | Verified — [QEMU run 41677382606](https://github.com/Rsan0948/franc/actions/runs/41677382606) on commit `4f9dec8`; **not** concurrent Franc Ring 3 process execution |
+
 **Status definitions:** planned = no implementation; implemented/pending = code exists, gate unresolved; verified = successful relevant CI/QEMU test at that commit; partial = a subset works; blocked = a known failing gate. Update this log with test links and the exact result as work proceeds.
 
 ## Increment in progress: first native hardware timer
@@ -135,3 +138,12 @@ Dedicated integration gate: `.github/workflows/preempt.yml` runs `FRANC_TEST_JIT
 ### Explicit task-local scalar slots (verified in QEMU)
 
 The JIT scheduler now exposes `task-local@` and `task-local!` for eight bounded 64-bit integer slots per worker. They reject indices outside 0..7 and host/unowned access; the 2x8 slots are cleared at each launch generation. Two QEMU-compiled never-yielding Franc workers separately increment their own slot zero and the host reads `task-local-a0` / `task-local-b0` for independent-state validation. This is explicit opt-in local state, **not** a transparent conversion of Franc's existing `:named-registers` into task-local values. The augmented [QEMU preemption run 41672001629](https://github.com/Rsan0948/franc/actions/runs/41672001629) passed on commit `e0e8bab`, including independent state, counters, generation resets, and invalid host access checks. Existing named registers still share their original storage; these new slots are the supported explicit task-local path for this restricted proof.
+
+
+### P3 increment verified: BIOS E820 and sequential Ring 3 fault containment
+
+The [isolated QEMU run 41677382606](https://github.com/Rsan0948/franc/actions/runs/41677382606) on commit `4f9dec8` verified a **real BIOS INT15h E820 map (seven entries)**, bound-checked read-only native memory inventory, and a 4KiB page allocator gate that requires its fixed eight MiB arena to be entirely covered by usable firmware RAM and not overlapped by reserved descriptors. The loader remains 512 bytes using a separate real-mode helper embedded at native kernel +5 and a precise 318-sector packed kernel layout. Franctxt's seed reservation and historical reference packers were updated accordingly.
+
+The same run executed two **sequential assembly CPL3 contexts** backed by different physical code/stack pages at the same user virtual addresses. A faults on a supervisor-only read; the #PF handler records the fault and replaces both user PTEs, reloads CR3, then B executes 50,000 private-memory writes, completes through INT80, and the native Franc REPL resumes. The full proof is documented in [FRANCOS_PROCESS_ISOLATION.md](FRANCOS_PROCESS_ISOLATION.md).
+
+This **does not complete the advertised general multi-process acceptance**. Real concurrent fault tolerance needs a separate TCB and CR3 per Ring 3 process, TSS RSP0 switching, timer-IRQ handoff through user/kernel privilege transitions, a restricted Franc runtime/syscall ABI for user code, and fault isolation for arbitrary user tasks. UEFI GetMemoryMap, guarded stacks and FPU/SIMD state are also still pending. Preserve this distinction in project status.

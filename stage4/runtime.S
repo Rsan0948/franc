@@ -9,6 +9,58 @@
 .extern __bss_end
 .extern franc_entry
 _kstart:
+    /* Exactly five bytes: JMP rel32 over the real-mode BIOS helper.
+     * The Stage 1 boot sector far-calls 0x1000:0005 while still in
+     * real mode; UEFI/BIOS 64-bit entry continues at this JMP target.
+     */
+    .byte 0xe9
+    .long .Lkstart64 - . - 4
+    .code16
+.Lbios_e820_entry:
+    pushw %ds
+    pushw %es
+    pushw %di
+    pushw %bp
+    xorw %ax,%ax
+    movw %ax,%ds
+    movw %ax,%es
+    movl $0,0x4ff0
+    movw $0,0x4ff4
+    movw $0x5000,%di
+    xorw %bp,%bp
+    xorl %ebx,%ebx
+.Lbios_e820_next:
+    movl $0,0(%di)
+    movl $0,4(%di)
+    movl $0,8(%di)
+    movl $0,12(%di)
+    movl $0,16(%di)
+    movl $1,20(%di)
+    movl $0xe820,%eax
+    movl $0x534d4150,%edx
+    movl $24,%ecx
+    int $0x15
+    jc .Lbios_e820_return
+    cmpl $0x534d4150,%eax
+    jne .Lbios_e820_return
+    cmpw $20,%cx
+    jb .Lbios_e820_return
+    incw %bp
+    cmpw $48,%bp
+    ja .Lbios_e820_return
+    addw $24,%di
+    testl %ebx,%ebx
+    jne .Lbios_e820_next
+    movw %bp,0x4ff4
+    movl $0x30323845,0x4ff0
+.Lbios_e820_return:
+    popw %bp
+    popw %di
+    popw %es
+    popw %ds
+    lret
+    .code64
+.Lkstart64:
     cld
     movabs $__bss_start,%rdi
     movabs $__bss_end,%rcx
@@ -1137,6 +1189,13 @@ fr_pages_used: .skip 8
 .section .text,"ax"
 .global fr_page_alloc
 fr_page_alloc:
+    /* No physical page is allocated unless firmware authorizes the
+     * entire fixed arena. In particular, a UEFI boot with no imported
+     * firmware memory map cannot borrow assumed RAM.
+     */
+    call fr_e820_arena_usable
+    testl %eax,%eax
+    jz .Lpage_empty
     leaq fr_page_bitmap(%rip),%r8
     xorq %rcx,%rcx
 .Lpage_scan:
@@ -1192,8 +1251,15 @@ fr_page_free:
 
 .global fr_page_free_count
 fr_page_free_count:
+    call fr_e820_arena_usable
+    testl %eax,%eax
+    jz .Lpage_count_none
     movq $2048,%rdi
     subq fr_pages_used(%rip),%rdi
+    movq $1,%rsi
+    jmp fr_push
+.Lpage_count_none:
+    xorq %rdi,%rdi
     movq $1,%rsi
     jmp fr_push
 .section .note.GNU-stack,"",@progbits
@@ -1290,5 +1356,6 @@ fr_mmio32_store:
 /* Native C-free timer and IDT entry points. */
 .include "stage4/interrupts.S"
 .include "stage4/scheduler.S"
+.include "stage4/e820.S"
 /* Experimental BIOS-only CPL3 page-table and TSS isolation proof. */
 .include "stage4/ring3.S"
