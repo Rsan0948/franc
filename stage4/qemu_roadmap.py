@@ -80,6 +80,7 @@ with tempfile.TemporaryDirectory(prefix="franc-roadmap-") as tmp:
         line("-8 2 shr .", b"-2\nFrac> ")
         line("7 3 << .", b"56\nFrac> ")
         line("56 3 >> .", b"7\nFrac> ")
+        line("1 62 shl .", b"4611686018427387904\nFrac> ")
         print("PASS: native bounded heap and signed bit shifts", flush=True)
         line("bn-init 1 bn-from 2 bn-from bn-add bn-print cr", b"3\nFrac> ")
         line("bn-init 1000 bn-from 1 bn-from bn-sub bn-print cr", b"999\nFrac> ")
