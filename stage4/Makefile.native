@@ -9,7 +9,7 @@ all: native-proof
 
 stage4/native_seed.o: stage4/bootstrap_seed.S
 	as --64 -o $@ $<
-stage4/native_runtime.o: stage4/runtime.S franctxt/sha256_native.S
+stage4/native_runtime.o: stage4/runtime.S franctxt/sha256_native.S stage4/interrupts.S
 	as --64 -o $@ $<
 stage4/native_font.o: stage4/font.S
 	as --64 -o $@ $<

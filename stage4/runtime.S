@@ -1250,3 +1250,6 @@ fr_mmio32_store:
     mfence
 .Lmmio_write_bad:
     ret
+
+/* Native C-free timer and IDT entry points. */
+.include "stage4/interrupts.S"

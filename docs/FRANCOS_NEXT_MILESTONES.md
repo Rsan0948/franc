@@ -77,7 +77,11 @@ Baseline test evidence: [AOT self-hosting](https://github.com/Rsan0948/franc/act
 | 2026-11-03 | e1000 DMA ARP transmission and reception | Verified foundation |
 | 2026-11-03 | Physical pages and cooperatively resumed stacks | Verified foundation |
 | 2026-11-03 | Multi-use Ethernet descriptors, IPv4, ICMP, UDP | In progress — awaiting feature tests |
-| 2026-11-03 | Hardware IRQ/IDT and preemption | Planned |
+| 2026-11-03 | PIC/PIT timer IRQ + IDT foundation (not preemptive) | Implemented; QEMU test pending |
 | 2026-11-03 | Ring 3 process isolation | Planned |
 
 **Status definitions:** planned = no implementation; implemented/pending = code exists, gate unresolved; verified = successful relevant CI/QEMU test at that commit; partial = a subset works; blocked = a known failing gate. Update this log with test links and the exact result as work proceeds.
+
+## Increment in progress: first native hardware timer
+
+`stage4/interrupts.S` installs a 256-gate x86-64 IDT, remaps PIC IRQ0 to vector 32, programs a nominal 100 Hz PIT, and exposes `irq-start`, `irq-ticks`, and `irq-stop` through the Franc native ABI. A dedicated QEMU test measures real timer progress and verifies ticks stop after disabling interrupts. **This is a hardware interrupt foundation, not a preemptive scheduler:** it does not switch tasks, preserve per-process register contexts, use a per-CPU IRQ stack, handle recoverable exceptions, or implement Ring 3. Unexpected vectors deliberately fail closed. Do not mark IRQ functionality verified until `.github/workflows/interrupts.yml` passes.
