@@ -26,6 +26,16 @@ jobs:
         run: |
           bash -n stage4/bootstrap.sh
           sh -n stage4/pack_native.sh
-          bash stage4/bootstrap.sh stage4/franos-aot.img "$RUNNER_TEMP/franc-native-bootstrap"
+          bash stage4/bootstrap.sh stage4/franos-aot.img stage4/native-build
+      - name: Archive verified Franc-native bootstrap seed and generations
+        uses: actions/upload-artifact@v4
+        with:
+          name: franc-native-bootstrap-proof
+          if-no-files-found: error
+          path: |
+            stage4/native-build/gen2.S
+            stage4/native-build/gen2.bin
+            stage4/native-build/gen3.S
+            stage4/native-build/gen3.bin
       - name: Cold boot C-free AOT image in software QEMU
         run: python3 stage4/qemu_aot.py
