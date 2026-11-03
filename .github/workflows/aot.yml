@@ -22,5 +22,10 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
       - name: Franc full source AOT integration (experimental)
         run: python3 stage4/qemu_selfhost.py
+      - name: Rebuild FrancOS twice with Franc and assembly only (no Python)
+        run: |
+          bash -n stage4/bootstrap.sh
+          sh -n stage4/pack_native.sh
+          bash stage4/bootstrap.sh stage4/franos-aot.img "$RUNNER_TEMP/franc-native-bootstrap"
       - name: Cold boot C-free AOT image in software QEMU
         run: python3 stage4/qemu_aot.py
