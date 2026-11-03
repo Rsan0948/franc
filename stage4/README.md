@@ -224,3 +224,15 @@ identical binary generations establish reproducibility. As with every
 compiler bootstrap, the frozen seed remains a trusted artifact and must be
 reviewed and pinned; bootstrap equality alone cannot prove absence of a
 malicious compiler backdoor.
+
+## Strict clean-checkout bootstrap CI
+
+The independent `.github/workflows/native-bootstrap.yml` workflow starts
+**only** from the committed `bootstrap_seed.S` in a fresh checkout. It
+prohibits invocation of Python and C compiler executables, assembles and
+boots the seed, recompiles the entire FrancOS source twice, and requires
+byte-for-byte equality between the committed seed's native kernel binary and
+both rebuilt generations. It archives the three binaries and their boot logs.
+This demonstrates a C- and Python-free production bootstrap from a pinned
+Franc-generated assembly seed; the historical Python compiler remains in the
+repository solely for comparison and migration tests.

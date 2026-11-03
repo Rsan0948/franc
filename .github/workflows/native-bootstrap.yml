@@ -1,0 +1,59 @@
+name: Franc clean source bootstrap — assembly + Franc only
+on:
+  push:
+    branches: [stage4-franc-native-bootstrap]
+    paths:
+      - 'stage4/**'
+      - 'stage2/compiler.frac'
+      - 'stage3/ata.frac'
+      - 'stage3/storage.frac'
+      - '.github/workflows/native-bootstrap.yml'
+  pull_request:
+    paths:
+      - 'stage4/**'
+      - 'stage2/compiler.frac'
+      - 'stage3/ata.frac'
+      - 'stage3/storage.frac'
+      - '.github/workflows/native-bootstrap.yml'
+permissions:
+  contents: read
+jobs:
+  assembly-franc-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Franc compiler seed is committed, not downloaded or regenerated with Python
+        shell: bash
+        run: |
+          test -s stage4/bootstrap_seed.S
+          git ls-files --error-unmatch stage4/bootstrap_seed.S
+          git status --porcelain -- stage4/bootstrap_seed.S
+          test -z "$(git status --porcelain -- stage4/bootstrap_seed.S)"
+          sha256sum stage4/bootstrap_seed.S
+      - name: Install QEMU software emulator
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Rebuild from committed Franc seed without invoking Python or C compiler
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/no-interpreters"
+          for bin in python python3 python3.12 gcc cc g++ c++ clang; do
+            printf '#!/bin/sh\necho "FORBIDDEN COMPILER INVOCATION: %s" >&2\nexit 73\n' "$bin" > "$RUNNER_TEMP/no-interpreters/$bin"
+            chmod +x "$RUNNER_TEMP/no-interpreters/$bin"
+          done
+          export PATH="$RUNNER_TEMP/no-interpreters:$PATH"
+          make -f stage4/Makefile.native native-proof
+          test "$(wc -c < stage4/native-proof/gen2.bin)" -eq "$(wc -c < stage4/native_seed.bin)"
+          sha256sum stage4/native_seed.bin stage4/native-proof/gen2.bin stage4/native-proof/gen3.bin
+      - name: Archive Franc-produced proof generations
+        uses: actions/upload-artifact@v4
+        with:
+          name: franc-clean-native-bootstrap
+          if-no-files-found: error
+          path: |
+            stage4/native_seed.bin
+            stage4/native-proof/gen2.bin
+            stage4/native-proof/gen3.bin
+            stage4/native-proof/gen2.serial.log
+            stage4/native-proof/gen3.serial.log

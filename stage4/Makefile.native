@@ -26,7 +26,8 @@ native-seed: stage4/native_seed.img
 native-proof: stage4/native_seed.img
 	bash stage4/bootstrap.sh stage4/native_seed.img stage4/native-proof
 	cmp stage4/native-proof/gen2.bin stage4/native-proof/gen3.bin
-	@echo "PASS: clean-checkout Franc/assembly source seed rebuilt native kernel twice without Python"
+	cmp stage4/native_seed.bin stage4/native-proof/gen2.bin
+	@echo "PASS: committed Franc-generated seed reproduces generation 2 and generation 3 byte for byte without Python or C"
 clean-native:
 	rm -f stage4/native_seed.o stage4/native_runtime.o stage4/native_font.o stage4/native_boot.o
 	rm -f stage4/native_boot.bin stage4/native_seed.elf stage4/native_seed.bin stage4/native_seed.img
