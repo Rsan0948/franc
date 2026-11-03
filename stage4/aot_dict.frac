@@ -1,0 +1,15 @@
+\ Franc-authored static dictionary/link metadata emission for a new BIOS kernel.
+\ Runs inside FrancOS; emits named .rodata, .data and register accessors.
+\ The linker resolves code symbols. No absolute JIT addresses are serialized.
+def aot-dict-label :adl-n ".Lfd_" type adl-n aot-dec ;
+def aot-dict-name-label :adnl-n ".Lfn_" type adnl-n aot-dec ;
+def aot-dict-write-field :adwf-p begin adwf-p byte@ :adwf-c adwf-c 124 - if0 exit then adwf-c if0 exit then adwf-c emit adwf-p 1 + :adwf-p again ;
+def aot-dict-code :adc-kind :adc-name adc-kind 1 - if0 adc-name aot-dict-write-field exit then adc-kind 2 - if0 "franc_reg_get_" type adc-name aot-name exit then adc-kind 3 - if0 "franc_reg_set_" type adc-name aot-name exit then adc-name aot-name ;
+def aot-dict-name-bytes :adnb-kind :adnb-name adnb-kind 2 - if0 58 aot-data-byte then begin adnb-name byte@ :adnb-ch adnb-ch if0 0 aot-data-byte exit then adnb-kind 1 - if0 adnb-ch 124 - if0 0 aot-data-byte exit then then adnb-ch aot-data-byte adnb-name 1 + :adnb-name again ;
+\ name, name-kind(0 NUL/1 pipe/2 colon), code, code-kind(0 fw/1 raw/2 get/3 set).
+def aot-dict-entry :ade-codekind :ade-code :ade-namekind :ade-name ".section .rodata" type cr ade-count :ade-index ".Lfn_" type ade-index aot-dec ":" type cr ade-name ade-namekind aot-dict-name-bytes ".section .data" type cr ".balign 8" type cr ade-index aot-dict-label ":" type cr "  .quad " type ade-index if0 48 emit else ade-index 1 - aot-dict-label then cr "  .quad " type ade-index aot-dict-name-label cr "  .quad " type ade-code ade-codekind aot-dict-code cr ade-index 1 + :ade-count ;
+def aot-dict-primitives :adp-pos begin adp-pos byte@ if0 exit then adp-pos :adp-name adp-name aot-field-end :adp-code adp-name 1 adp-code 1 aot-dict-entry adp-code aot-field-end :adp-pos again ;
+def aot-dict-defs :s2p begin aot-next :add-token add-token if0 exit then add-token "def" s2-eq ifnz aot-next :add-name add-name if0 exit then add-name 0 add-name 0 aot-dict-entry then again ;
+def aot-dict-regs 0 :adr-pos begin adr-pos aot-reg-used - if0 exit then s2-line-buffer adr-pos + :adr-name adr-name 0 adr-name 2 aot-dict-entry adr-name 2 adr-name 3 aot-dict-entry adr-pos aot-reg-end :adr-pos again ;
+def aot-dict-stubs ".section .text" type cr 0 :ads-pos begin ads-pos aot-reg-used - if0 exit then s2-line-buffer ads-pos + :ads-name "franc_reg_get_" type ads-name aot-name ":" type cr ads-name aot-reg-addr "  jmp fr_reg_get" type cr "franc_reg_set_" type ads-name aot-name ":" type cr ads-name aot-reg-addr "  jmp fr_reg_set" type cr ads-pos aot-reg-end :ads-pos again ;
+def aot-dict-finish :adf-source 0 :ade-count aot-ops-one aot-dict-primitives aot-ops-two aot-dict-primitives adf-source aot-dict-defs aot-dict-regs aot-dict-stubs ".section .rodata" type cr ".global franc_stage2_source" type cr "franc_stage2_source:" type cr "  .incbin \"stage2/compiler.frac\"" type cr "  .byte 0" type cr ".section .data" type cr ".global franc_dict_initial" type cr "franc_dict_initial:" type cr "  .quad " type ade-count if0 48 emit else ade-count 1 - aot-dict-label then cr ;

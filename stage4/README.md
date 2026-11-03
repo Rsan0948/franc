@@ -206,3 +206,13 @@ result and asserts the boot and native compiler symbols. This is an
 **intermediate compiler-completeness gate**, not an assertion that a rebuilt
 image boots yet. The QEMU test harness itself is Python; eventual bootstrapping
 must eliminate it from the production build path.
+
+## Franc-owned static dictionary and link sections
+
+`aot_dict.frac` now emits the full linked code dictionary, string names,
+initial head pointer, register getter/setter stubs and the embedded Franc
+Stage 2 compiler source as assembler sections. During the full-kernel proof,
+CI links Franc-generated code with the handwritten assembly runtime and
+boots it as a separate C-free image. No Python AOT translation is applied
+to the rebuilt kernel's code. The initial seed image still depends on Python;
+this does not yet establish a Python-free cold bootstrap.

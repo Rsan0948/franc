@@ -3,8 +3,8 @@ LD = ld
 OBJCOPY = objcopy
 .PHONY: all clean verify
 all: franos-aot.img verify
-kernel.generated.S: compiler.py kernel.frac ../stage2/compiler.frac ../stage3/ata.frac ../stage3/storage.frac display.frac keyboard.frac repl.frac upgrade.frac aot.frac bundle.frac
-	python3 compiler.py ../stage3/ata.frac ../stage3/storage.frac display.frac keyboard.frac ../stage2/compiler.frac repl.frac upgrade.frac aot.frac bundle.frac kernel.frac -o $@
+kernel.generated.S: compiler.py kernel.frac ../stage2/compiler.frac ../stage3/ata.frac ../stage3/storage.frac display.frac keyboard.frac repl.frac upgrade.frac aot.frac aot_dict.frac bundle.frac
+	python3 compiler.py ../stage3/ata.frac ../stage3/storage.frac display.frac keyboard.frac ../stage2/compiler.frac repl.frac upgrade.frac aot.frac aot_dict.frac bundle.frac kernel.frac -o $@
 program.o: kernel.generated.S
 	$(AS) --64 -o $@ $<
 runtime.o: runtime.S
