@@ -155,3 +155,27 @@ hardware abstraction layer.
   checks the exact reconstructed outputs. Shared global Franc registers,
   code dictionary and Ring 0 privileges remain, and there is no timer
   preemption or process address-space separation.
+
+## Increment 6: Franctxt v1 native configuration and kernel identity
+
+- `franctxt/` defines a versioned, portable ASCII typed-state format:
+  exact signed integer/rational values, canonical ordering, deterministic
+  semantic SHA-256 document IDs, parent-state pointers and an Ed25519
+  release attestation sidecar. It **cannot execute Franc source**.
+- Zero-dependency JavaScript and Python reference parsers independently
+  normalize the same documents and produce the same semantic identity,
+  with conformance and malicious-input tests in CI.
+- `lib/franctxt.frac` is an actual Franc-native kernel reader loaded from
+  the trusted application bundle. It reads keys, strings and numbers
+  from persistent `FRANCFS1` files through Franc's own storage API.
+- `franctxt/install_native.sh` embeds canonical
+  `kernel.franctxt` and `system.franctxt` into the native disk
+  using only shell, `dd` and `sha256sum`. The manifest binds exact
+  compiled kernel bytes, initial config identity and Git revision.
+- Dedicated QEMU CI tested that Franc accesses its manifest/config,
+  saves a copy, and reads it back after a real cold reboot.
+- Ed25519 verification is currently a **host/release CLI capability**.
+  The native reader does **not yet** perform SHA-256/Ed25519 verification
+  inside the running kernel, implement secure boot, or dynamically
+  apply configuration. A hash in an untrusted manifest is not evidence
+  of provenance. No release private keys are stored in the repository.

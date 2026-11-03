@@ -34,6 +34,9 @@ class Conformance(unittest.TestCase):
 
     def test_kernel_rules(self):
         validate_kernel(parse(CANON))
+        optional = parse(CANON)
+        optional.pop("history.parent")
+        validate_kernel(optional)
         bad = parse(CANON)
         bad["scheduler.max-tasks"] = 3
         with self.assertRaises(FranctxtError):
