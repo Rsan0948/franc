@@ -59,13 +59,13 @@ class BuildAuthority(unittest.TestCase):
 
     def test_missing_register_detected_before_guest(self):
         pin_seed(self.root)
-        self.put("stage4/apps/example.frac", "def f known :new_register ;\n")
+        self.put("stage4/apps/example.frac", "def f known :new-register ;\n")
         with self.assertRaisesRegex(BuildAuthorityError, "REGISTRY MISMATCH"):
             check_app_registers(self.root)
         self.put("stage4/apps/registry.frac",
-                 "def app-register-seed 0 :known 0 :new_register ;\n")
+                 "def app-register-seed 0 :known 0 :new-register ;\n")
         self.assertEqual(check_app_registers(self.root),
-                         {"new_register"})
+                         {"new-register"})
 
     def test_list_is_single_source_of_truth(self):
         self.assertEqual(packed_apps(self.root),
