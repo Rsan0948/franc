@@ -98,11 +98,11 @@ with tempfile.TemporaryDirectory(prefix='franc-selfhost-') as tmp:
         # Install native kernel into the exact extents the BIOS bootloader reads.
         gen2=scratch/'gen2.img'
         shutil.copyfile(disk,gen2)
-        for seek,count in [(1,127),(200,56),(256,127)]:
+        for seek,count in [(1,127),(200,64),(264,127)]:
             subprocess.run(['dd','if=/dev/zero',f'of={gen2}','bs=512',
                             f'seek={seek}',f'count={count}','conv=notrunc',
                             'status=none'],check=True)
-        for seek,count,skip in [(1,127,0),(200,56,127),(256,127,183)]:
+        for seek,count,skip in [(1,127,0),(200,64,127),(264,127,191)]:
             subprocess.run(['dd',f'if={native_bin}',f'of={gen2}','bs=512',
                             f'seek={seek}',f'count={count}',f'skip={skip}',
                             'conv=notrunc','status=none'],check=True)
