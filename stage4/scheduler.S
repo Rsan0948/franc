@@ -47,6 +47,11 @@
 .Luser_invalid_name: .asciz "user-preempt-invalid-probe"
 .Luser_syscall_name: .asciz "user-preempt-syscall-probe"
 .Luser_badptr_name: .asciz "user-preempt-badptr-probe"
+.Lcompiled_stage_name: .asciz "user-code-stage"
+.Lcompiled_probe_name: .asciz "user-compiled-probe"
+.Lcompiled_relaunch_name: .asciz "user-compiled-relaunch"
+.Lcompiled_a_kind_name: .asciz "user-compiled-a-kind"
+.Lcompiled_b_kind_name: .asciz "user-compiled-b-kind"
 .section .data
 .balign 8
 /* Linked dictionary nodes: next, name, code. First next is set at boot. */
@@ -92,7 +97,12 @@ fr_task_dict_user_reclaim: .quad fr_task_dict_user_switch, .Luser_reclaim_name, 
 fr_task_dict_user_exit: .quad fr_task_dict_user_reclaim, .Luser_exit_name, fr_user_sched_exit_probe
 fr_task_dict_user_invalid: .quad fr_task_dict_user_exit, .Luser_invalid_name, fr_user_sched_invalid_probe
 fr_task_dict_user_syscall: .quad fr_task_dict_user_invalid, .Luser_syscall_name, fr_user_sched_syscall_probe
-fr_task_dict_top: .quad fr_task_dict_user_syscall, .Luser_badptr_name, fr_user_sched_badptr_probe
+fr_task_dict_badptr: .quad fr_task_dict_user_syscall, .Luser_badptr_name, fr_user_sched_badptr_probe
+fr_task_dict_compiled_stage: .quad fr_task_dict_badptr, .Lcompiled_stage_name, fr_user_compiled_stage
+fr_task_dict_compiled_probe: .quad fr_task_dict_compiled_stage, .Lcompiled_probe_name, fr_user_compiled_probe
+fr_task_dict_compiled_relaunch: .quad fr_task_dict_compiled_probe, .Lcompiled_relaunch_name, fr_user_compiled_relaunch
+fr_task_dict_compiled_a_kind: .quad fr_task_dict_compiled_relaunch, .Lcompiled_a_kind_name, fr_user_compiled_a_kind
+fr_task_dict_top: .quad fr_task_dict_compiled_a_kind, .Lcompiled_b_kind_name, fr_user_compiled_b_kind
 .section .bss
 .balign 8
 /* 0:host, 1:worker A, 2:worker B.
