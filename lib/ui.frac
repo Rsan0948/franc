@@ -1,0 +1,14 @@
+\ FrancOS Wave 4 U4 shared BIOS VGA + serial visual contract.
+\ Keyboard first. All drawn text also passes through the existing COM1
+\ fallback; a window manager/mouse/GOP path is explicitly out of v1 scope.
+\ Renders a 40-column header, high-contrast dividing rule and common error
+\ and footer language. No framebuffer mode probing outside vc-* primitives.
+\ (title --)
+def ui-frame 0 vc-clear vc-home "FrancOS | " vc-type vc-type vc-newline "---------------------------------------" vc-type vc-newline ;
+\ (shortcuts --). Only one line may be used in the 40-column VGA viewport.
+def ui-help "Keys: " vc-type vc-type vc-newline ;
+\ (message --): make failure observable by serial readers and VGA users.
+def ui-error "ERROR | " vc-type vc-type vc-newline ;
+def ui-ok "OK | " vc-type vc-type vc-newline ;
+\ (message --) a uniformly formatted task/progress/status line.
+def ui-status "STATUS | " vc-type vc-type vc-newline ;
