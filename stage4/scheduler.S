@@ -18,6 +18,11 @@
 .Le820_base_name: .asciz "e820-base"
 .Le820_length_name: .asciz "e820-length"
 .Le820_type_name: .asciz "e820-type"
+.Lproc_probe_name: .asciz "process-fault-probe"
+.Lproc_a_state_name: .asciz "process-a-state"
+.Lproc_b_state_name: .asciz "process-b-state"
+.Lproc_b_steps_name: .asciz "process-b-steps"
+.Lproc_survivor_name: .asciz "process-survived?"
 .section .data
 .balign 8
 /* Linked dictionary nodes: next, name, code. First next is set at boot. */
@@ -34,7 +39,12 @@ fr_task_dict_generation: .quad fr_task_dict_localb, .Ltask_generation_name, fr_t
 fr_task_dict_e820_count: .quad fr_task_dict_generation, .Le820_count_name, fr_e820_count
 fr_task_dict_e820_base: .quad fr_task_dict_e820_count, .Le820_base_name, fr_e820_base
 fr_task_dict_e820_length: .quad fr_task_dict_e820_base, .Le820_length_name, fr_e820_length
-fr_task_dict_top: .quad fr_task_dict_e820_length, .Le820_type_name, fr_e820_type
+fr_task_dict_e820_type: .quad fr_task_dict_e820_length, .Le820_type_name, fr_e820_type
+fr_task_dict_proc_probe: .quad fr_task_dict_e820_type, .Lproc_probe_name, fr_proc_probe
+fr_task_dict_proc_a: .quad fr_task_dict_proc_probe, .Lproc_a_state_name, fr_proc_state_a
+fr_task_dict_proc_b: .quad fr_task_dict_proc_a, .Lproc_b_state_name, fr_proc_state_b
+fr_task_dict_proc_steps: .quad fr_task_dict_proc_b, .Lproc_b_steps_name, fr_proc_b_steps
+fr_task_dict_top: .quad fr_task_dict_proc_steps, .Lproc_survivor_name, fr_proc_survivor_ok
 .section .bss
 .balign 8
 /* 0:host, 1:worker A, 2:worker B.
