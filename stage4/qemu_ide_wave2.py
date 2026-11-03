@@ -163,22 +163,28 @@ with tempfile.TemporaryDirectory(prefix="franc-wave2-ide-") as temp:
 
         # No REPL insertion: type actual source through the IDE keyboard.
         source = b"def helper 7 8 + ;\ndef main helper 2 + . ;"
+        typed = bytearray()
         for c in source:
             offset = len(guest.out)
             time.sleep(0.11)
             os.write(guest.process.stdin.fileno(), bytes((c,)))
-            # Every IDE edit redraws the VGA source. Wait for its complete
-            # cursor marker so one-byte COM1 cannot lose keystrokes.
-            guest.expect(b"|", offset, timeout=20)
+            typed.append(c)
+            # The cursor marker follows the WHOLE edited source, not the
+            # earlier Home/status vertical bars. Block on the complete
+            # frame before sending the next COM1 byte.
+            guest.expect(bytes(typed) + b"|", offset, timeout=40)
         guest.expect(b"def main helper 2 + . ;", len(guest.out)-1400, timeout=30)
         guest.screenshot("wave2-multiline")
 
         # Move the real PS/2 cursor left six times, backspace over '2'
         # and insert '1'. The source after editing must yield 16.
-        for position in range(6):
+        last_line = b"def main helper 2 + . ;"
+        for position in range(1, 7):
             offset = len(guest.out)
             guest.hmp("sendkey left")
-            guest.expect(b"|", offset, timeout=35)
+            cursor = len(last_line) - position
+            guest.expect(last_line[:cursor] + b"|" + last_line[cursor:],
+                         offset, timeout=45)
         offset = len(guest.out)
         os.write(guest.process.stdin.fileno(), b"\x08")
         guest.expect(b"def main helper  + . ;", offset, timeout=45)
