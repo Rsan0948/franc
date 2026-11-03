@@ -1,0 +1,31 @@
+name: Pin assembler-only Franc bootstrap seed
+on:
+  workflow_dispatch:
+  push:
+    branches: [stage4-cfree-aot]
+    paths:
+      - '.github/workflows/pin_seed.yml'
+permissions:
+  contents: write
+jobs:
+  pin-seed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Generate and audit one-time assembler seed
+        run: |
+          make -C stage4 kernel.generated.S
+          cp stage4/kernel.generated.S stage4/seed.generated.S
+          test -s stage4/seed.generated.S
+          grep -q '^franc_entry:' stage4/seed.generated.S
+          sha256sum stage4/seed.generated.S > stage4/seed.generated.sha256
+          wc -c stage4/seed.generated.S
+      - name: Commit pinned seed to development branch only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add stage4/seed.generated.S stage4/seed.generated.sha256
+          git commit -m 'Pin audited assembler-only Franc seed for Python-free bootstrap'
+          git push origin HEAD:stage4-cfree-aot
