@@ -50,7 +50,7 @@ with tempfile.TemporaryDirectory(prefix="franc-roadmap-") as tmp:
         os.write(guest.stdin.fileno(), c)
         return expect(marker, pos, timeout)
 
-    def line(command, marker=None, timeout=120):
+    def line(command, marker=None, timeout=120, allow_compiler_error=False):
         pos = len(out)
         for c in command.encode("ascii"):
             before = len(out)
@@ -59,7 +59,7 @@ with tempfile.TemporaryDirectory(prefix="franc-roadmap-") as tmp:
             time.sleep(0.11)
         os.write(guest.stdin.fileno(), b"\n")
         text = expect(b"Frac> ", pos, timeout)
-        if b"stage2: unsupported token" in text:
+        if b"stage2: unsupported token" in text and not allow_compiler_error:
             raise AssertionError(f"Compiler rejected {command}: {text[-1200:]!r}")
         if marker is not None and marker not in text:
             raise AssertionError(f"Unexpected result for {command}: {text[-1200:]!r}")
@@ -153,6 +153,24 @@ with tempfile.TemporaryDirectory(prefix="franc-roadmap-") as tmp:
         line("ide-buffer type cr", b"abc\nFrac> ")
 
         print("PASS: native multiline IDE source, persistence and JIT compile", flush=True)
+        line('ide-start "def main 18 . ;" ide-add-line .', b"1\nFrac> ")
+        positive = line("ide-run", b"18\nRUN COMPLETE\nFrac> ")
+        assert b"COMPILE OK | lines " in positive, positive
+        line('ide-start "def main 7 bad-token . ;" ide-add-line .', b"1\nFrac> ")
+        failed = line("ide-run", b"COMPILE FAILED | line 1\n", allow_compiler_error=True)
+        assert b"RUN COMPLETE" not in failed, failed
+        line('ide-start "def helper 9 ;" ide-add-line .', b"1\nFrac> ")
+        no_main = line("ide-run", b"NO def main ENTRYPOINT\nFrac> ")
+        assert b"COMPILE OK" in no_main and b"RUN COMPLETE" not in no_main, no_main
+        print("PASS: Wave 2 IDE reports failing source line and refuses stale main", flush=True)
+        line('ide-start "abc" ide-append .', b"1\nFrac> ")
+        line("1 :ide-cursor ide-line-home ide-cursor .", b"0\nFrac> ")
+        line("ide-line-last ide-cursor .", b"3\nFrac> ")
+        line("1 :ide-cursor ide-delete-next ide-buffer type cr", b"ac\nFrac> ")
+        line("ide-reset 2047 :ide-length 2047 :ide-cursor 88 ide-type-char ide-buffer 2051 + b@ .",
+             b"1\nFrac> ")
+        line("ide-reset ide-buffer 2051 + b@ .", b"0\nFrac> ")
+        print("PASS: Wave 2 IDE fresh-main execution, cursor home/end, delete-forward and explicit full-buffer status", flush=True)
         line('ide-start "abcdef" ide-append .', b"1\nFrac> ")
         line("3 :ide-cursor ide-left ide-cursor .", b"2\nFrac> ")
         line("ide-right ide-cursor .", b"3\nFrac> ")
