@@ -1,0 +1,54 @@
+name: Franc native applications — end-to-end QEMU
+on:
+  push:
+    branches: [stage4-franc-native-bootstrap, stage4-roadmap-foundations]
+    paths:
+      - 'stage4/**'
+      - 'franctxt/seed.lock.franctxt'
+      - 'franctxt/build.py'
+      - 'franctxt/memory.franctxt'
+      - 'franctxt/install_native.sh'
+      - 'stage2/compiler.frac'
+      - 'stage3/**'
+      - 'lib/**'
+      - '.github/workflows/apps.yml'
+  pull_request:
+    paths:
+      - 'stage4/**'
+      - 'franctxt/seed.lock.franctxt'
+      - 'franctxt/build.py'
+      - 'franctxt/memory.franctxt'
+      - 'franctxt/install_native.sh'
+      - 'stage2/compiler.frac'
+      - 'stage3/**'
+      - 'lib/**'
+      - '.github/workflows/apps.yml'
+permissions:
+  contents: read
+jobs:
+  native-apps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Franctxt dependency preflight - reject stale native seed or missing registry words
+        run: python3 -m franctxt.build preflight
+      - name: Install QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Assemble committed Franc-generated native kernel (no Python/C compiler)
+        run: make -f stage4/Makefile.native native-seed
+      - name: Check original Franc libraries and apps execute in native JIT
+        run: python3 stage4/qemu_apps.py stage4/native_seed.img
+      - name: Verify Stage 4+ roadmap libraries in the native guest
+        run: python3 stage4/qemu_roadmap.py stage4/native_seed.img
+      - name: Verify e1000 Ethernet DMA packet I/O against QEMU SLIRP
+        run: python3 stage4/qemu_net.py stage4/native_seed.img
+      - name: Generate tested-build Franctxt artifact after passing native QEMU suites
+        run: |
+          python3 -m franctxt.build record --image stage4/native_seed.img --kernel stage4/native_seed.bin --passed apps --passed network --passed native --output stage4/tested-build.franctxt
+          cat stage4/tested-build.franctxt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: franc-native-tested-build
+          path: stage4/tested-build.franctxt
+          if-no-files-found: error

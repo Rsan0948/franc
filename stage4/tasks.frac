@@ -1,0 +1,11 @@
+\ Cooperative callback scheduling: resumable *state-machine callbacks*, not
+\ CPU context switching. Each callback must return; no stack preemption.
+\ Four entries stored as u64 code pointers in trusted guest memory.
+def task-base $6a00000 ;
+def task-reset 0 :task-count 0 :task-turn 0 :task-a 0 :task-b 0 :task-ticks ;
+def task-spawn :task-entry task-entry if0 0 exit then task-count 4 - if task-base task-count 8 * + task-entry s2-write64 task-count 1 + :task-count task-count else 0 then ;
+def task-step task-count if0 0 exit then task-base task-turn 8 * + s2-read64 :task-entry task-entry ifnz task-entry s2-run then task-turn 1 + task-count % :task-turn task-ticks 1 + :task-ticks 1 ;
+def task-run-for :task-steps task-steps 0 - if 0 exit then task-steps 10001 - if0 0 exit then 0 :task-done begin task-done task-steps - while task-step if0 task-done exit then task-done 1 + :task-done repeat task-done ;
+def task-counter-a task-a 1 + :task-a ;
+def task-counter-b task-b 1 + :task-b ;
+def task-demo task-reset 'task-counter-a task-spawn drop 'task-counter-b task-spawn drop 8 task-run-for drop task-a . task-b . ;

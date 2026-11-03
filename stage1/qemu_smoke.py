@@ -51,12 +51,21 @@ try:
            (b'"guest.frac" "def guest-square dup * ;" save\n',b'Frac> '),
            (b'"guest.frac" load\n',b'Frac> '),
            (b'9 guest-square .\n',b'81'),
-           (b'ata-header-byte .\n',b'70')]
+           (b'ata-header-byte .\n',b'70'),
+           (b'0 90 sector-byte!\n',b'Frac> '),
+           (b'190 ata-write-sector .\n',b'1'),
+           (b'0 0 sector-byte!\n',b'Frac> '),
+           (b'190 ata-read-sector .\n',b'1'),
+           (b'0 sector-byte@ .\n',b'90'),
+           (b'200 ata-write-sector .\n',b'0'),
+           (b'"francsave.frac" "def stored-native 73 ;" fs-save .\n',b'1'),
+           (b'"francsave.frac" fs-source s2-source .\n',b'1'),
+           (b'stored-native .\n',b'73')]
     for command,result in tests:
         position=len(transcript)
         p.stdin.write(command);p.stdin.flush()
         # Require output after the current test starts, not stale output.
-        deadline=time.monotonic()+18
+        deadline=time.monotonic()+45
         while time.monotonic()<deadline:
             if result in transcript[position:]:break
             events=sel.select(timeout=0.3)

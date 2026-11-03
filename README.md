@@ -1,17 +1,64 @@
+# FrancOS — start here (current release plan)
+
+**Canonical handoff document for another chat or contributor:** [FrancOS v1 dual-track release roadmap](docs/FRANCOS_V1_DUAL_TRACK_ROADMAP.md). This is the single entry point for the **definition of done**, the paired **Fundamentals/Networking** and **UX/IDE/Packages** tracks, currently verified behavior, remaining work and full release acceptance journey.
+
+Supporting references:
+- [Detailed Stage 4 engineering milestones and QEMU evidence](docs/FRANCOS_NEXT_MILESTONES.md)
+- [Implemented applications, IDE, package module and library inventory](stage4/apps/README.md)
+- [Current process-memory and fault-containment implementation boundaries](docs/FRANCOS_PROCESS_ISOLATION.md)
+- [Native build/runtime instructions](stage4/README.md)
+- [Earlier development and implementation history](docs/STAGE4_PLUS_ROADMAP.md)
+
+**Current verified baseline:** FrancOS has byte-reproducible Franc-compiled native builds, BIOS/UEFI QEMU boot, interactive JIT and native applications, limited offline package and IDE functionality, a tested UDP/DNS exchange, timer-preempted *kernel-mode* Franc tasks, BIOS E820 memory-map inventory and a **sequential** Ring 3 fault-survival proof. Full concurrent isolated Franc user processes, a usable graphical IDE/file interface and package lifecycle are **still release blockers**. v1 is planned as a **single-user experimental QEMU OS**, not production-grade security or portable hardware support. Historical size/hash and progress claims below are point-in-time snapshots, not current source-of-truth status.
+
+---
+
 # Franc — native-compiled rational language and miniature OS
 
-**Development status (November 2026):** Stage 0 native JIT passes host tests;
-Stage 1 BIOS kernel has previously booted in QEMU; Stage 2 demonstrates
-*two-generation compiler self-compilation* in Franc; Stage 3 now includes a
-Franc-recompiled native interactive shell. The current Stage 3 boot path must
-pass QEMU CI before it is treated as verified. The OS intentionally retains
-C/ASM hardware drivers and low-level numeric/allocator primitives.
+**Development status (November 2026):** The experimental
+[`stage4-franc-native-bootstrap`](https://github.com/Rsan0948/franc/tree/stage4-franc-native-bootstrap)
+branch now builds and boots FrancOS from a **committed, Franc-generated x86-64
+assembly compiler seed**, then compiles the complete operating-system kernel
+using Franc itself. Two successive native rebuilds are byte-identical to the
+seed kernel. This production build invokes **no Python, C compiler, libc, or
+C runtime**. A separate historical Python seed build is retained for regression
+testing. See [Stage 4](stage4/README.md) for architecture and limitations.
 
-Run `make test` for hosted checks, `make -C stage1` to build the BIOS image,
-and (on a QEMU-capable machine) `python3 stage1/qemu_smoke.py` to boot-test it.
+### Build FrancOS with Franc and x86-64 assembly (development branch)
 
-See [Stage 2](stage2/README.md) and [Stage 3](stage3/README.md) for current
-implementation details and explicit remaining limitations.
+```sh
+# Requires GNU as/ld/objcopy, make, bash, dd, and QEMU x86-64.
+make -C stage4
+
+# Equivalent explicit clean-source bootstrap:
+make -f stage4/Makefile.native native-proof
+
+# Historical Python AOT comparison only:
+make -C stage4 legacy-all
+```
+
+The verified native source seed is `stage4/bootstrap_seed.S` (520,642 bytes).
+The independent clean-checkout test blocks Python and C compiler invocations,
+assembles that seed, boots QEMU, recompiles all ten FrancOS source files twice,
+and compares assembly sources and kernel binaries. All three resulting kernels
+are **102,016 bytes**, with SHA-256
+`0944adba3bf6c524f43cade682ec8fcd5a778de1c6e7301a1afe6696bd2f67d5`.
+A fixed bootstrap seed is a trusted artifact, not a proof against compiler
+backdoors; reproducibility verifies consistency, not absolute correctness.
+
+Historical Stage 0–3 still has C-backed hosted and legacy operating-system
+paths for regression and comparison. Those are **not** dependencies of the
+native Stage 4 build. The native disk image also bundles **12 original Franc libraries and eight
+application launch options** (FracCalc, source editor, Stern–Brocot, Ford
+circles, spirograph and demos). QEMU verifies live JIT loading and the main
+application/math/drawing paths. See the [native software inventory](stage4/apps/README.md).
+
+The project remains a miniature experimental OS, not a
+full TempleOS replacement, and Stage 0 semantic parity, peripheral coverage
+and hardened security boundaries are still incomplete.
+
+To run historical hosted checks, use `make test`. Stage 1 can still be built
+with `make -C stage1` and tested with its separate Python/QEMU scripts.
 
 ---
 

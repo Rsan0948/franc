@@ -1,0 +1,19 @@
+\ Native FrancOS compatibility words for hosted Franc's libraries and apps.
+\ Loaded by the native JIT; no C helpers, Linux calls or external compiler.
+def inv 1 swap / ;
+def ^ :pow-exponent :pow-base pow-exponent 0 - if 1 pow-base / :pow-base pow-exponent neg :pow-exponent then 1 :pow-result begin pow-exponent if0 pow-result exit then pow-result pow-base * :pow-result pow-exponent 1 - :pow-exponent again ;
+def key-mode drop ;
+def eval s2-eval ;
+def home vc-home ;
+\ Deliberate scratch RAM reservations, outside framebuffer, bundle, and JIT.
+def calc-buffer $300000 ;
+def history-buffer $310000 ;
+def pixel@ :px-y :px-x px-y 0 - if 0 exit then px-x 0 - if 0 exit then px-x 320 - if0 0 exit then px-y 200 - if0 0 exit then $A0000 px-y 320 * + px-x + b@ ;
+def line :ln-color :ln-y1 :ln-x1 :ln-y0 :ln-x0 ln-x1 ln-x0 - :ln-dx ln-y1 ln-y0 - :ln-dy ln-dx abs :ln-count ln-dy abs ln-count - if ln-dy abs :ln-count then ln-count if0 ln-x0 ln-y0 ln-color pixel exit then 0 :ln-i begin ln-i ln-count - 1 - while ln-x0 ln-dx ln-i * ln-count / + floor ln-y0 ln-dy ln-i * ln-count / + floor ln-color pixel ln-i 1 + :ln-i repeat ;
+def fillrect :fr-color :fr-height :fr-width :fr-y :fr-x 0 :fr-row begin fr-row fr-height - while 0 :fr-col begin fr-col fr-width - while fr-x fr-col + fr-y fr-row + fr-color pixel fr-col 1 + :fr-col repeat fr-row 1 + :fr-row repeat ;
+def palette :pl-blue :pl-green :pl-red :pl-index $3C8 pl-index io8! $3C9 pl-red io8! $3C9 pl-green io8! $3C9 pl-blue io8! ;
+def copy :cp-dest :cp-source cp-source fs-source :cp-data cp-data if0 0 exit then cp-dest cp-data fs-save ;
+def load fs-source :load-data load-data if0 0 exit then load-data s2-source ;
+def launch :launch-name launch-name load drop "main" s2-find :launch-code launch-code if0 0 exit then launch-code s2-run 1 ;
+def screenshot "SCREENSHOT EXPORT NOT AVAILABLE IN NATIVE VGA" type cr ;
+def apps-init 6 :fp 0 :calc-ans 0 :calc-len 0 :calc-saved 0 :calc-prev ;

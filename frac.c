@@ -18,6 +18,7 @@
 #include <unistd.h>
 #endif
 #include "gfx.h"
+#include "font8x8.h"
 #include "stage2/compiler_source.h"
 
 typedef struct { int64_t num, den; } Rat;   // den==0: num==0→⊥, else ∞
@@ -103,7 +104,9 @@ static uint8_t* g_exec; static size_t g_exec_size, g_exec_used, g_line_start, g_
 static const size_t g_scratch_start = 32 * 1024 * 1024;
 static int g_compile_error = 0;
 static void error(const char* msg) { fprintf(stderr, "%s\n",msg); g_compile_error=1; }
-static Rat g_regs[256];
+/* Stage 3 driver and source-store modules allocate named global registers. */
+#define FRANC_REGISTER_CAP 1024
+static Rat g_regs[FRANC_REGISTER_CAP];
 static int g_next_reg=26;
 
 static int need(int n) {
@@ -233,6 +236,16 @@ HELPER void h_io16_read(void) {
     h_push(0,1);
 #endif
 }
+/* Franc owns ATA protocol. This is a single raw 16-bit port output. */
+HELPER void h_io16_write(void) {
+    if(!need(2))return;
+    Rat val=*--g_sp,port=*--g_sp;
+    if(port.den!=1||port.num<0||port.num>65535||val.den!=1)return;
+#ifdef FRANC_BARE_METAL
+    uint16_t p=(uint16_t)port.num;
+    __asm__ volatile("outw %0,%1"::"a"((uint16_t)val.num),"Nd"(p));
+#endif
+}
 /* Reserved safe DMA-free scratch: stores exactly one ATA sector. */
 static uint8_t g_franc_sector_buffer[512];
 HELPER void h_sector_buffer(void){h_push((int64_t)(uintptr_t)g_franc_sector_buffer,1);}
@@ -249,6 +262,33 @@ HELPER void h_sector_byte_write(void){
 
 
 
+/* Raw byte containers; no allocation, graphics policy or filesystem logic in C.
+ * Bounds apply on both Linux and bare metal. The compiler owns the calling code. */
+static uint8_t g_franc_source_buffer[2048];
+HELPER void h_source_buffer(void){h_push((int64_t)(uintptr_t)g_franc_source_buffer,1);}
+HELPER void h_source_byte_store(void){
+    if(!need(2))return;Rat value=*--g_sp,index=*--g_sp;
+    if(index.den!=1||index.num<0||index.num>=2048||value.den!=1)return;
+    g_franc_source_buffer[index.num]=(uint8_t)value.num;
+}
+HELPER void h_frame_read(void){
+    if(!need(1))return;
+    Rat offset=*--g_sp;
+    if(offset.den!=1||offset.num<0||offset.num>=64000){h_push(0,1);return;}
+    h_push(gfx_get((int)(offset.num%320),(int)(offset.num/320)),1);
+}
+HELPER void h_frame_write(void){
+    if(!need(2))return;
+    Rat value=*--g_sp,offset=*--g_sp;
+    if(offset.den!=1||offset.num<0||offset.num>=64000||value.den!=1)return;
+    gfx_pixel((int)(offset.num%320),(int)(offset.num/320),(uint8_t)value.num);
+}
+HELPER void h_font_row(void){
+    if(!need(2))return;
+    Rat row=*--g_sp,ch=*--g_sp;
+    if(ch.den!=1||row.den!=1||row.num<0||row.num>=8||ch.num<0||ch.num>=128){h_push(0,1);return;}
+    h_push(franc_font8x8[(int)ch.num][(int)row.num],1);
+}
 HELPER void h_depth(void) { h_push((int64_t)(g_sp-g_stack),1); }
 HELPER void h_calc_buffer(void) { h_push((int64_t)(uintptr_t)g_app_memory,1); }
 HELPER void h_history_buffer(void) { h_push((int64_t)(uintptr_t)(g_app_memory+256),1); }
@@ -501,7 +541,10 @@ static int ensure_register(const char* name) {
     char store_name[64];
     store_name[0]=':'; strncpy(store_name+1,name,62); store_name[63]=0;
     if (lookup(store_name)) return 1;
-    if (g_next_reg>=256) { error("too many registers"); return 0; }
+    if (g_next_reg>=FRANC_REGISTER_CAP) {
+        fprintf(stderr, "too many registers: cap=%d, name=%s\n", FRANC_REGISTER_CAP, name);
+        g_compile_error=1; return 0;
+    }
     int index=g_next_reg++;
     CState saved=cstate_push();
     size_t start=g_exec_used;
@@ -798,7 +841,7 @@ static void bootstrap(void) {
     add_word("key?",h_keyq);add_word("break?",h_breakq);add_word("key-mode",h_keymode);
     add_word("host-key",h_key);add_word("hardware?",h_hw_bare);
     add_word("band",h_bitand);add_word("io8@",h_io8_read);add_word("io8!",h_io8_write);
-    add_word("io16@",h_io16_read);add_word("sector-buffer",h_sector_buffer);add_word("sector-byte@",h_sector_byte_read);add_word("sector-byte!",h_sector_byte_write);
+    add_word("io16@",h_io16_read);add_word("io16!",h_io16_write);add_word("sector-buffer",h_sector_buffer);add_word("sector-byte@",h_sector_byte_read);add_word("sector-byte!",h_sector_byte_write);
     add_word("home",h_home);
     add_word("bye",h_bye);
     add_word("type",h_type); add_word("print",h_type); add_word("key",h_key);
@@ -1021,6 +1064,11 @@ int main(void) {
 #endif
     bootstrap();
     // These words live here because evaluate_source depends on the compiler.
+    add_word("source-buffer",h_source_buffer);add_word("source-byte!",h_source_byte_store);
+    add_word("frame@",h_frame_read);add_word("frame!",h_frame_write);
+    add_word("font-row",h_font_row);add_word("host-emit",h_emit);
+    add_word("host-type",h_type);add_word("host-save",h_save);
+    add_word("host-source",h_source);add_word("host-files",h_files);
     add_word("eval",h_eval);add_word("save",h_save);
     add_word("load",h_load);add_word("files",h_files);
     add_word("source",h_source);add_word("copy",h_copy);

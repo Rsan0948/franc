@@ -1,0 +1,82 @@
+name: Franctxt portable state format and native FrancOS integration
+on:
+  push:
+    branches: [stage4-roadmap-foundations]
+    paths:
+      - 'franctxt/**'
+      - 'lib/franctxt.frac'
+      - 'stage4/pack_native.sh'
+      - 'stage4/apps/registry.frac'
+      - 'stage4/bootstrap_seed.S'
+      - 'stage4/Makefile.native'
+      - '.github/workflows/franctxt.yml'
+  pull_request:
+    paths:
+      - 'franctxt/**'
+      - 'lib/franctxt.frac'
+      - 'stage4/pack_native.sh'
+      - 'stage4/apps/registry.frac'
+      - 'stage4/Makefile.native'
+      - '.github/workflows/franctxt.yml'
+permissions:
+  contents: read
+jobs:
+  portable:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install optional Ed25519 verification library
+        run: python3 -m pip install cryptography
+      - name: Python Franctxt 1 conformance, profiles and signatures
+        run: python3 -m unittest discover -s franctxt/tests -p 'test_conformance.py' -v
+      - name: Compare freestanding x86-64 SHA-256 with hashlib at block boundaries
+        run: python3 -m unittest discover -s franctxt/tests -p 'test_sha256_native.py' -v
+      - name: Franctxt build lock and stale-seed negative tests
+        run: python3 -m unittest discover -s franctxt/tests -p 'test_build_authority.py' -v
+      - name: QEMU memory reservations, collisions and code-address anchors
+        run: python3 -m unittest discover -s franctxt/tests -p 'test_memory.py' -v
+      - name: Verify native 32-bit MMIO symbols stay in executable text
+        run: python3 -m unittest discover -s franctxt/tests -p 'test_mmio_contract.py' -v
+      - name: Independent JavaScript Franctxt 1 implementation
+        run: node franctxt/tests/test_cross_language.cjs
+      - name: Byte-for-byte Python/Node normalized fixture and hash equality
+        run: |
+          python3 -m franctxt canonical franctxt/examples/kernel_alternate.franctxt > /tmp/py.canonical
+          node -e "process.stdout.write(require('./franctxt').normalized(require('fs').readFileSync('franctxt/examples/kernel_alternate.franctxt')))" > /tmp/js.canonical
+          cmp /tmp/py.canonical /tmp/js.canonical
+          cmp /tmp/py.canonical franctxt/examples/kernel.franctxt
+          PYID=$(python3 -m franctxt id franctxt/examples/kernel_alternate.franctxt)
+          JSID=$(node -e "console.log(require('./franctxt').digest(require('fs').readFileSync('franctxt/examples/kernel.franctxt')))")
+          test "$PYID" = "$JSID"
+          python3 -m franctxt check-kernel franctxt/examples/kernel.franctxt
+          printf 'PASS: shared Python/Node canonical bytes and semantic digest %s\n' "$PYID"
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 17
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Check Franctxt source/seed and native app compatibility before QEMU
+        run: python3 -m franctxt.build preflight
+      - name: Build native C/Python-free FrancOS with embedded Franctxt
+        run: make -f stage4/Makefile.native native-seed
+      - name: Verify packed app bytes and every kernel build component against native manifest
+        run: python3 -m franctxt.build verify-image --image stage4/native_seed.img --kernel stage4/native_seed.bin
+      - name: Validate raw persistent FRANCFS1 manifest and kernel binary digest
+        run: PYTHONPATH=. python3 franctxt/tests/test_native_disk.py stage4/native_seed.img stage4/native_seed.bin
+      - name: Boot guest, read native Franctxt, persist state and cold reboot
+        run: python3 franctxt/tests/qemu_native.py stage4/native_seed.img
+      - name: Record Franctxt guest-tested build identity
+        run: python3 -m franctxt.build record --image stage4/native_seed.img --kernel stage4/native_seed.bin --passed native --output stage4/franctxt-tested-build.franctxt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: franctxt-tested-build
+          path: stage4/franctxt-tested-build.franctxt

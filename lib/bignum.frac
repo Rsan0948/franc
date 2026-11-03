@@ -1,0 +1,28 @@
+\ Bounded only by a reserved 4 MiB arena: unsigned, base-256 multi-limb integers.
+\ Runtime uses byte-addressed b@/b!, NOT C's word-addressed memory.
+\ Object: u16 capacity; u16 active length; little-endian bytes. 0 pointer means error.
+\ NOTE: fixed physical scratch regions are experimental BIOS/QEMU assumptions.
+def bn-base $6000000 ;
+def bn-state $5fff000 ;
+def bn-u16@ :u16p u16p b@ u16p 1 + b@ 256 * + ;
+def bn-u16! :u16v :u16p u16p u16v 256 % b! u16p 1 + u16v 256 / floor b! ;
+def bn-u32@ :u32p u32p b@ u32p 1 + b@ 256 * + u32p 2 + b@ 65536 * + u32p 3 + b@ 16777216 * + ;
+def bn-u32! :u32v :u32p u32p u32v 256 % b! u32p 1 + u32v 256 / floor 256 % b! u32p 2 + u32v 65536 / floor 256 % b! u32p 3 + u32v 16777216 / floor 256 % b! ;
+def bn-init bn-state 0 bn-u32! ;
+def bn-capacity :bcap-p bcap-p bn-u16@ ;
+def bn-len :blen-p blen-p 2 + bn-u16@ ;
+def bn-max :bmx-b :bmx-a bmx-a bmx-b - if bmx-b else bmx-a then ;
+def bn-new :bnew-cap bnew-cap 1 - if 0 exit then bnew-cap 65536 - if0 0 exit then bnew-cap 65536 - if bnew-cap bn-state bn-u32@ + 4 + :bnew-end bnew-end 4194305 - if bnew-end bnew-cap 4 + - bn-base + :bnew-p bn-state bnew-end bn-u32! bnew-p bnew-cap bn-u16! bnew-p 2 + 1 bn-u16! 0 :bnew-i begin bnew-i bnew-cap - while bnew-p 4 + bnew-i + 0 b! bnew-i 1 + :bnew-i repeat bnew-p else 0 then else 0 then ;
+def bn-digit :bdig-i :bdig-p bdig-p if0 0 exit then bdig-i 0 - if 0 exit then bdig-i bdig-p bn-len - if bdig-p 4 + bdig-i + b@ else 0 then ;
+def bn-put :bput-v :bput-i :bput-p bput-p if0 0 exit then bput-i 0 - if 0 exit then bput-v 0 - if 0 exit then bput-v 256 - if bput-i bput-p bn-capacity - if bput-p 4 + bput-i + bput-v b! bput-i 1 + bput-p bn-len - if else bput-p 2 + bput-i 1 + bn-u16! then 1 else 0 then else 0 then ;
+def bn-trim :btrim-p btrim-p if0 0 exit then begin btrim-p bn-len 1 - if0 btrim-p exit then btrim-p bn-len 1 - :btrim-i btrim-p btrim-i bn-digit ifnz btrim-p exit then btrim-p 2 + btrim-i bn-u16! again ;
+def bn-zero? :bzero-p bzero-p if0 1 exit then bzero-p bn-len 1 - if0 bzero-p 0 bn-digit if0 1 else 0 then else 0 then ;
+def bn-from :bfrom-v bfrom-v 0 - if 0 exit then 16 bn-new :bfrom-p bfrom-p if0 0 exit then 0 :bfrom-i begin bfrom-v if0 bfrom-p exit then bfrom-p bfrom-i bfrom-v 256 % bn-put drop bfrom-v 256 / floor :bfrom-v bfrom-i 1 + :bfrom-i again ;
+def bn-copy :bcopy-a bcopy-a if0 0 exit then bcopy-a bn-len bn-new :bcopy-r bcopy-r if0 0 exit then 0 :bcopy-i begin bcopy-i bcopy-a bn-len - while bcopy-r bcopy-i bcopy-a bcopy-i bn-digit bn-put drop bcopy-i 1 + :bcopy-i repeat bcopy-r ;
+def bn-add :badd-b :badd-a badd-a if0 0 exit then badd-b if0 0 exit then badd-a bn-len badd-b bn-len bn-max :badd-n badd-n 1 + bn-new :badd-r badd-r if0 0 exit then 0 :badd-carry 0 :badd-i begin badd-i badd-n - while badd-a badd-i bn-digit badd-b badd-i bn-digit + badd-carry + :badd-s badd-r badd-i badd-s 256 % bn-put drop badd-s 256 / floor :badd-carry badd-i 1 + :badd-i repeat badd-carry ifnz badd-r badd-n badd-carry bn-put drop then badd-r bn-trim ;
+def bn-cmp :bcmp-b :bcmp-a bcmp-a bn-len bcmp-b bn-len - :bcmp-d bcmp-d if -1 exit then bcmp-d ifnz 1 exit then bcmp-a bn-len :bcmp-i begin bcmp-i if0 0 exit then bcmp-i 1 - :bcmp-i bcmp-a bcmp-i bn-digit bcmp-b bcmp-i bn-digit - :bcmp-d bcmp-d if -1 exit then bcmp-d ifnz 1 exit then again ;
+def bn-sub :bsub-b :bsub-a bsub-a if0 0 exit then bsub-b if0 0 exit then bsub-a bsub-b bn-cmp if 0 exit then bsub-a bn-len bn-new :bsub-r bsub-r if0 0 exit then 0 :bsub-borrow 0 :bsub-i begin bsub-i bsub-a bn-len - while bsub-a bsub-i bn-digit bsub-b bsub-i bn-digit - bsub-borrow - :bsub-d bsub-d if bsub-d 256 + :bsub-d 1 :bsub-borrow else 0 :bsub-borrow then bsub-r bsub-i bsub-d bn-put drop bsub-i 1 + :bsub-i repeat bsub-r bn-trim ;
+def bn-mul :bmul-b :bmul-a bmul-a if0 0 exit then bmul-b if0 0 exit then bmul-a bn-len bmul-b bn-len + :bmul-n bmul-n bn-new :bmul-r bmul-r if0 0 exit then 0 :bmul-i begin bmul-i bmul-a bn-len - while 0 :bmul-carry 0 :bmul-j begin bmul-j bmul-b bn-len - while bmul-i bmul-j + :bmul-k bmul-r bmul-k bn-digit bmul-a bmul-i bn-digit bmul-b bmul-j bn-digit * + bmul-carry + :bmul-s bmul-r bmul-k bmul-s 256 % bn-put drop bmul-s 256 / floor :bmul-carry bmul-j 1 + :bmul-j repeat bmul-r bmul-i bmul-b bn-len + bmul-carry bn-put drop bmul-i 1 + :bmul-i repeat bmul-r bn-trim ;
+def bn-div-small! :bdiv-d :bdiv-p bdiv-p if0 -1 exit then bdiv-d 1 - if -1 exit then bdiv-d 256 - if 0 :bdiv-rem bdiv-p bn-len :bdiv-i begin bdiv-i if0 bdiv-p bn-trim drop bdiv-rem exit then bdiv-i 1 - :bdiv-i bdiv-rem 256 * bdiv-p bdiv-i bn-digit + :bdiv-v bdiv-p 4 + bdiv-i + bdiv-v bdiv-d / floor b! bdiv-v bdiv-d % :bdiv-rem again else -1 then ;
+def bn-print :bpr-p bpr-p if0 "BIGNUM ERROR" type exit then bpr-p bn-copy :bpr-work bpr-work if0 "BIGNUM OOM" type exit then 0 :bpr-size begin bpr-work bn-zero? ifnz bpr-size if0 48 emit exit then begin bpr-size if0 exit then bpr-size 1 - :bpr-size $6500000 bpr-size + b@ emit again then bpr-size 4096 - if0 "BIGNUM PRINT LIMIT" type exit then bpr-work 10 bn-div-small! :bpr-digit bpr-digit 0 - if "BIGNUM DIV ERROR" type exit then $6500000 bpr-size + bpr-digit 48 + b! bpr-size 1 + :bpr-size again ;
+def bn-pow :bpow-exp :bpow-p bpow-exp 0 - if 0 exit then 1 bn-from :bpow-r begin bpow-exp if0 bpow-r exit then bpow-r bpow-p bn-mul :bpow-r bpow-r if0 0 exit then bpow-exp 1 - :bpow-exp again ;

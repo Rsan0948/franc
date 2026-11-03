@@ -115,5 +115,5 @@ It loads the first compiler generation from `stage2/compiler.frac`;
 `stage3/shell.frac` using the newly compiled version, and runs the newly
 compiled `os-main` shell. Commands are JIT-compiled with Franc `s2-eval`,
 not with the C `eval` bootstrap. The QEMU smoke test checks a serial marker
-from this path before asserting the prompt. The kernel builds with `-Os` to
-keep the original 127-sector BIOS loader format.
+from this path before asserting the prompt. The kernel builds with `-Os`. The BIOS loader reads 127 sectors from LBA 1
+and an additional 56 from LBA 200, leaving source storage at LBA 128–199.

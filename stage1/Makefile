@@ -11,7 +11,7 @@ boot.bin: boot.S
 	$(LD) -m elf_x86_64 --oformat binary -Ttext 0x7c00 -o $@ boot.o
 entry.o: entry.S
 	$(AS) --64 -o $@ $<
-library_bundle.h: ../lib/fixpt.frac ../lib/cf.frac ../lib/approx.frac ../lib/iv.frac ../lib/trans.frac ../lib/graphics.frac ../lib/ford.frac ../lib/spiro.frac ../lib/calc.frac ../lib/edit.frac ../lib/walk.frac ../lib/dd.frac ../stage3/shell.frac ../stage3/drivers.frac ../stage3/ata.frac ../stage3/console.frac embed_libraries.py
+library_bundle.h: ../lib/fixpt.frac ../lib/cf.frac ../lib/approx.frac ../lib/iv.frac ../lib/trans.frac ../lib/graphics.frac ../lib/ford.frac ../lib/spiro.frac ../lib/calc.frac ../lib/edit.frac ../lib/walk.frac ../lib/dd.frac ../stage3/shell.frac ../stage3/drivers.frac ../stage3/ata.frac ../stage3/storage.frac ../stage3/display.frac ../stage3/console.frac embed_libraries.py
 	python3 embed_libraries.py
 ../stage2/compiler_source.h: ../stage2/compiler.frac ../stage3/shell.frac ../stage2/gen_compiler_header.py
 	python3 ../stage2/gen_compiler_header.py
@@ -25,9 +25,9 @@ kernel.elf: entry.o frac.o runtime.o gfx.o kernel.ld
 	$(CC) $(LDFLAGS) -o $@ entry.o frac.o runtime.o gfx.o -lgcc
 kernel.bin: kernel.elf
 	$(OBJCOPY) -O binary $< $@
-	@test $$(stat -c%s $@) -le 65024 || (echo 'kernel exceeds 127-sector BIOS loader capacity' >&2; exit 1)
+	@test $$(stat -c%s $@) -le 93696 || (echo 'kernel exceeds 127-sector BIOS loader capacity' >&2; exit 1)
 fracos.img: boot.bin kernel.bin
-	@python3 -c 'from pathlib import Path; b=Path("boot.bin").read_bytes(); k=Path("kernel.bin").read_bytes(); assert len(b)==512; image=bytearray(b+k+bytes(127*512-len(k))+bytes(128*512)); image[128*512:128*512+8]=b"FRANCFS1"; Path("fracos.img").write_bytes(image)'
+	@python3 -c 'from pathlib import Path; b=Path("boot.bin").read_bytes(); k=Path("kernel.bin").read_bytes(); assert len(b)==512; image=bytearray(b+k[:127*512]+bytes(127*512-len(k[:127*512]))+bytes(72*512)+k[127*512:]+bytes(56*512-len(k[127*512:]))); assert len(image)==256*512; image[128*512:128*512+8]=b"FRANCFS1"; Path("fracos.img").write_bytes(image)'
 run: fracos.img
 	qemu-system-x86_64 -m 128M -drive file=fracos.img,format=raw,if=ide -serial stdio -display none -no-reboot
 run-gui: fracos.img

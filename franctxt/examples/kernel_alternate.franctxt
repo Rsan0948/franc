@@ -1,0 +1,12 @@
+franctxt 1
+# Reordering, whitespace and equivalent exact rationals do not change identity.
+system.name="FrancOS"
+network.enabled = false
+math.ratio = 2/6
+boot.default = "bios"
+scheduler.max-tasks = 2
+schema = "francos.kernel.v1"
+memory.page-size = 4096
+history.parent = null
+network.driver = "e1000"
+memory.heap-size = 4194304

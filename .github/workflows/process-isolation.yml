@@ -1,0 +1,54 @@
+name: Franc BIOS E820 and sequential CPL3 process fault containment
+on:
+  pull_request:
+    paths:
+      - 'stage4/boot.S'
+      - 'stage4/e820.S'
+      - 'stage4/scheduler.S'
+      - 'stage4/ring3.S'
+      - 'stage4/runtime.S'
+      - 'stage4/qemu_irq.py'
+      - 'stage4/Makefile.native'
+      - 'stage4/Makefile'
+      - 'franctxt/tests/test_process_isolation_contract.py'
+      - '.github/workflows/process-isolation.yml'
+  push:
+    branches: [stage4-roadmap-foundations]
+    paths:
+      - 'stage4/boot.S'
+      - 'stage4/e820.S'
+      - 'stage4/scheduler.S'
+      - 'stage4/ring3.S'
+      - 'stage4/runtime.S'
+      - 'stage4/qemu_irq.py'
+      - 'stage4/Makefile.native'
+      - 'stage4/Makefile'
+      - 'franctxt/tests/test_process_isolation_contract.py'
+      - '.github/workflows/process-isolation.yml'
+permissions:
+  contents: read
+jobs:
+  isolation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check native memory and source reservations
+        run: python3 -m franctxt.build preflight
+      - name: Verify E820 handoff, isolated user aliases and executable assembly
+        run: python3 -m unittest discover -s franctxt/tests -p 'test_process_isolation_contract.py' -v
+      - name: Install QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Compile native Franc kernel
+        run: make -f stage4/Makefile.native native-seed
+      - name: Verify Franctxt identity
+        run: python3 -m franctxt.build verify-image --image stage4/native_seed.img --kernel stage4/native_seed.bin
+      - name: Discover BIOS E820, fault A in CPL3, remap and complete B
+        run: FRANC_TEST_PROC_ISO=1 python3 stage4/qemu_irq.py stage4/native_seed.img
+      - name: Record validated exact native image
+        run: python3 -m franctxt.build record --image stage4/native_seed.img --kernel stage4/native_seed.bin --passed native --output stage4/process-isolation-tested.franctxt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: franc-e820-cpl3-fault-survival-tested-build
+          path: stage4/process-isolation-tested.franctxt
+          if-no-files-found: error

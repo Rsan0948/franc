@@ -1,0 +1,82 @@
+name: Franc C-free experimental AOT boot
+on:
+  push:
+    branches: [stage4-cfree-aot, stage4-franc-native-bootstrap, stage4-roadmap-foundations]
+  pull_request:
+    paths:
+      - 'stage4/**'
+      - '.github/workflows/aot.yml'
+permissions:
+  contents: write
+jobs:
+  aot-kernel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Franctxt static QEMU memory reservations before native compilation
+        run: python3 -m franctxt.build check-memory
+      - name: Check app/source register compatibility before expensive AOT generation
+        run: python3 -m franctxt.build check-apps
+      - name: Build Franc AOT kernel without C objects
+        run: |
+          make -C stage4 legacy-all
+          python3 stage4/test_compiler.py
+          if nm stage4/kernel.elf | grep -Eq ' (U|T) (main|printf|malloc|free|memcpy|mmap)$'; then exit 1; fi
+      - name: Verify Python-free disk packer against original reference
+        run: python3 stage4/test_packaging.py
+      - name: Install QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Franc full source AOT integration (experimental)
+        run: python3 stage4/qemu_selfhost.py
+      - name: Rebuild FrancOS twice with Franc and assembly only (no Python)
+        run: |
+          bash -n stage4/bootstrap.sh
+          sh -n stage4/pack_native.sh
+          bash stage4/bootstrap.sh stage4/franos-aot.img stage4/native-build
+      - name: Archive verified Franc-native bootstrap seed and generations
+        uses: actions/upload-artifact@v4
+        with:
+          name: franc-native-bootstrap-proof
+          if-no-files-found: error
+          path: |
+            stage4/native-build/gen2.S
+            stage4/native-build/gen2.bin
+            stage4/native-build/gen3.S
+            stage4/native-build/gen3.bin
+      - name: Freeze verified Franc-native bootstrap seed on development branch
+        if: github.ref == 'refs/heads/stage4-franc-native-bootstrap' || github.ref == 'refs/heads/stage4-roadmap-foundations'
+        run: |
+          cp stage4/native-build/gen3.S stage4/bootstrap_seed.S
+          python3 -m franctxt.build pin-seed
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add stage4/bootstrap_seed.S franctxt/seed.lock.franctxt
+          if ! git diff --cached --quiet; then
+            git commit -m 'Pin reproducible Franc-generated bootstrap assembly seed'
+            # Concurrent feature pushes must not make a valid bootstrap
+            # unpinnable. Fast-forward by rebasing onto the latest branch.
+            # If intervening kernel sources changed, the seed lock will be
+            # rejected rather than publishing a mismatched compiler.
+            branch="${GITHUB_REF#refs/heads/}"
+            pushed=0
+            for attempt in 1 2 3; do
+              git fetch origin "$branch"
+              git rebase "origin/$branch"
+              python3 -m franctxt.build check-seed
+              if git push origin "HEAD:$branch"; then
+                pushed=1
+                break
+              fi
+              echo "Branch changed during seed pin (attempt $attempt)" >&2
+            done
+            if [ "$pushed" -ne 1 ]; then
+              echo "Refusing to publish unpinned kernel seed" >&2
+              exit 1
+            fi
+          fi
+      - name: Rebuild FrancOS from assembly seed without Python or C
+        run: |
+          rm -f stage4/kernel.generated.S stage4/program.o stage4/kernel.bin
+          make -f stage4/Makefile.native native-proof
+      - name: Cold boot C-free AOT image in software QEMU
+        run: python3 stage4/qemu_aot.py

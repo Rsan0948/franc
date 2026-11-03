@@ -12,3 +12,12 @@ __pycache__/
 /stage1/library_bundle.h
 
 /stage1/library_bundle.h
+
+# FrancOS native/reproducible Stage 4 outputs (tracked .S seed is retained)
+/stage4/*.o
+/stage4/*.elf
+/stage4/*.img
+/stage4/native_build/
+/stage4/native-build/
+/stage4/native-proof/
+/stage4/kernel.generated.S
