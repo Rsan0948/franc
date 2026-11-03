@@ -86,6 +86,8 @@ fr_ring3_setgate:
  * accepted. No arbitrary user syscall dispatch or unsafe kernel calls.
  */
 fr_ring3_int80:
+    cmpq $1,fr_user_enabled(%rip)
+    je fr_user_int80
     cmpq $1,fr_space_active(%rip)
     je fr_space_int80
     cmpq $1,fr_ring3_active(%rip)
@@ -115,6 +117,8 @@ fr_ring3_int80:
     jmp .Lproc_after_success
 
 fr_ring3_page_fault:
+    cmpq $1,fr_user_enabled(%rip)
+    je fr_user_page_fault
     cmpq $1,fr_space_active(%rip)
     je fr_space_page_fault
     cmpq $1,fr_ring3_active(%rip)
