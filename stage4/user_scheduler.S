@@ -470,9 +470,33 @@ fr_user_run:
     leaq fr_space_pages(%rip),%rbx
     movq 32(%rbx),%rdi
     cmpq $1,fr_user_mode(%rip)
-    jne .Luser_write_a_normal
+    jne .Luser_try_exit
     leaq fr_user_code_a_fault(%rip),%rsi
     movl $(fr_user_code_a_fault_end-fr_user_code_a_fault),%ecx
+    jmp .Luser_copy_a
+.Luser_try_exit:
+    cmpq $2,fr_user_mode(%rip)
+    jne .Luser_try_invalid
+    leaq fr_user_code_a_exit(%rip),%rsi
+    movl $(fr_user_code_a_exit_end-fr_user_code_a_exit),%ecx
+    jmp .Luser_copy_a
+.Luser_try_invalid:
+    cmpq $3,fr_user_mode(%rip)
+    jne .Luser_try_syscall
+    leaq fr_user_code_a_invalid(%rip),%rsi
+    movl $(fr_user_code_a_invalid_end-fr_user_code_a_invalid),%ecx
+    jmp .Luser_copy_a
+.Luser_try_syscall:
+    cmpq $4,fr_user_mode(%rip)
+    jne .Luser_try_badptr
+    leaq fr_user_code_a_write(%rip),%rsi
+    movl $(fr_user_code_a_write_end-fr_user_code_a_write),%ecx
+    jmp .Luser_copy_a
+.Luser_try_badptr:
+    cmpq $5,fr_user_mode(%rip)
+    jne .Luser_write_a_normal
+    leaq fr_user_code_a_invalid_pointer(%rip),%rsi
+    movl $(fr_user_code_a_invalid_pointer_end-fr_user_code_a_invalid_pointer),%ecx
     jmp .Luser_copy_a
 .Luser_write_a_normal:
     leaq fr_user_code_a(%rip),%rsi
@@ -535,13 +559,47 @@ fr_user_run:
     je .Luser_cleanup_cli
     cmpq $5,fr_user_switch_count(%rip)
     jb .Luser_cleanup_cli
-    cmpq $1,fr_user_mode(%rip)
-    jne .Luser_success
+    movq fr_user_mode(%rip),%rax
+    testq %rax,%rax
+    jz .Luser_success
+    /* Any abnormal A exit must still leave B runnable until timeout. */
+    cmpq $3,fr_user_states+16(%rip)
+    jne .Luser_cleanup_cli
+    cmpq $1,%rax
+    jne .Luser_check_exit
     cmpq $4,fr_user_states+8(%rip)
     jne .Luser_cleanup_cli
     cmpq $0x10000,fr_user_fault_addr(%rip)
     jne .Luser_cleanup_cli
-    cmpq $3,fr_user_states+16(%rip)
+    jmp .Luser_success
+.Luser_check_exit:
+    cmpq $2,%rax
+    jne .Luser_check_invalid
+    cmpq $2,fr_user_states+8(%rip)
+    jne .Luser_cleanup_cli
+    jmp .Luser_success
+.Luser_check_invalid:
+    cmpq $4,%rax
+    jne .Luser_check_bad_call
+    cmpq $2,fr_user_states+8(%rip)
+    jne .Luser_cleanup_cli
+    cmpq $0,fr_user_fault_addr(%rip)
+    jne .Luser_cleanup_cli
+    jmp .Luser_success
+.Luser_check_bad_call:
+    cmpq $4,fr_user_states+8(%rip)
+    jne .Luser_cleanup_cli
+    cmpq $0,fr_user_fault_addr(%rip)
+    jne .Luser_cleanup_cli
+    cmpq $3,%rax
+    jne .Luser_check_bad_ptr
+    cmpq $99,fr_user_syscall_code(%rip)
+    jne .Luser_cleanup_cli
+    jmp .Luser_success
+.Luser_check_bad_ptr:
+    cmpq $5,%rax
+    jne .Luser_cleanup_cli
+    cmpq $-2,fr_user_syscall_code(%rip)
     jne .Luser_cleanup_cli
 .Luser_success:
     movq $1,%r15
@@ -593,6 +651,22 @@ fr_user_sched_probe:
 .global fr_user_sched_fault_probe
 fr_user_sched_fault_probe:
     movq $1,%rdi
+    jmp fr_user_run
+.global fr_user_sched_exit_probe
+fr_user_sched_exit_probe:
+    movq $2,%rdi
+    jmp fr_user_run
+.global fr_user_sched_invalid_probe
+fr_user_sched_invalid_probe:
+    movq $3,%rdi
+    jmp fr_user_run
+.global fr_user_sched_syscall_probe
+fr_user_sched_syscall_probe:
+    movq $4,%rdi
+    jmp fr_user_run
+.global fr_user_sched_badptr_probe
+fr_user_sched_badptr_probe:
+    movq $5,%rdi
     jmp fr_user_run
 .global fr_user_sched_a_steps
 fr_user_sched_a_steps:
