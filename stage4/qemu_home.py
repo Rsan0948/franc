@@ -191,8 +191,8 @@ with tempfile.TemporaryDirectory(prefix="franc-wave1-") as temp:
 
         package_view = g.key(b"m", b"pkg> ", timeout=160)
         if os.getenv("FRANC_TEST_WAVE4") == "1":
-            assert b"FrancOS | Packages | verified" in package_view, package_view[-1600:]
-            assert b"i Install/update | b Rollback" in package_view
+            assert b"FrancOS PACKAGES | verified" in package_view, package_view[-1600:]
+            assert b"l Status | i Install/update" in package_view and b"b Rollback | u Uninstall" in package_view
             print("PASS: shared FrancOS VGA/serial package typography and keyboard shortcuts", flush=True)
         g.screenshot("packages")
         g.key(b"\x1b", b"Franc> ")
