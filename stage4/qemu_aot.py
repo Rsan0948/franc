@@ -176,7 +176,7 @@ try:
     assert len(matches) >= 2 and b'FRANC-PROGRAM-ERROR' not in transcript, transcript
     with TemporaryDirectory(prefix='franc-control-aot-') as work:
         assembly=matches[-1].group(1).decode('ascii')
-        assert 'call fr_condition' in assembly and 'jns .Lfranc_' in assembly
+        assert 'call fr_condition' in assembly and 'jns .Lfranc_' in assembly, assembly
         assert 'jmp .Lfranc_' in assembly and 'fw_63686f6f7365:' in assembly
         source=Path(work)/'conditional.S'
         native=Path(work)/'conditional.o'
