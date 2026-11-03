@@ -58,7 +58,8 @@ try:
     # COM1 has only a single-byte receive register, so wait for echoed input.
     for source, expected in [(b'2 3 +\n', b'5\nFrac> '),
                              (b'def n 7 ;\n', b'Frac> '),
-                             (b'n 6 *\n', b'42\nFrac> ')]:
+                             (b'n 6 *\n', b'42\nFrac> '),
+                             (b'"startup.frac" "def startup-main 99 . ;" fs-save\n', b'1\nFrac> ')]:
         for ch in source:
             time.sleep(0.12)
             offset = len(transcript)
@@ -86,3 +87,31 @@ try:
     print('PASS: C-free cold boot, Franc framebuffer console, serial keyboard and storage')
 finally:
     p.kill();p.wait()
+
+# A second BIOS cold boot must discover and compile the source persisted
+# by the first guest, without regenerating the disk or running a C compiler.
+p2 = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                      stderr=subprocess.STDOUT, bufsize=0)
+sel2 = selectors.DefaultSelector()
+sel2.register(p2.stdout, selectors.EVENT_READ)
+reboot_output = b''
+try:
+    deadline = time.monotonic()+150
+    while time.monotonic() < deadline:
+        if b'99\nAOT BOOT OK' in reboot_output and b'Franc> ' in reboot_output:
+            break
+        if p2.poll() is not None:
+            break
+        if sel2.select(0.3):
+            data = os.read(p2.stdout.fileno(), 8192)
+            if not data:
+                break
+            reboot_output += data
+    assert b'99\nAOT BOOT OK' in reboot_output, (
+        'persisted Franc startup not compiled/executed after cold reboot: '
+        + repr(reboot_output))
+    assert b'Franc> ' in reboot_output, reboot_output
+    print('PASS: second cold boot native-compiles and executes saved Franc startup source')
+finally:
+    p2.kill()
+    p2.wait()

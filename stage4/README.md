@@ -88,3 +88,14 @@ The AOT compiler generates primitive dictionary entries for each named register
 referenced in its Franc sources. These assembly accessors let the native Stage 2
 compiler resolve register reads and writes while recompiling itself. Arbitrary
 new register names entered at runtime still need dynamic registration support.
+
+## Persisted Franc startup without an external rebuild
+
+When the source store contains `startup.frac`, the C-free kernel now compiles
+its definitions with the resident Franc native compiler. A **freshly defined**
+`startup-main` word runs once during boot; no stale entry is invoked. The CI
+smoke test saves this Franc source through the interactive REPL, stops QEMU,
+boots the same writable disk image again, and expects the startup word to run.
+This is runtime source-driven startup; the immutable seed image itself is still
+created by the host Python AOT bridge and GNU assembly tools. Startup programs
+execute with kernel privileges and must be trusted.
