@@ -14,7 +14,7 @@
 | Franctxt | Portable typed configuration, SHA-256, native persisted manifest, build source inventories, seed lock and static reservation checks | Authenticated secure boot and live policy enforcement |
 | Memory | 4 KiB checked bitmap arena, zeroed allocation, bounded heap | Firmware memory discovery and process page tables |
 | Scheduler | Round robin callbacks and two independently stacked cooperative fibers | Interrupts, preemption, process isolation |
-| Networking | e1000 BAR0 MMIO, DMA ARP TX/RX, independent QEMU Ethernet capture | Reusable rings, IPv4/ICMP/UDP/TCP and sockets |
+| Networking | e1000 BAR0 MMIO, reusable rings, two ARP RX/TX cycles and native IPv4/ICMP echo | UDP DNS exchange under test; TCP, DNS API and sockets unfinished |
 | UEFI | OVMF boot through C-only firmware adapter to C-free kernel | GOP graphics, full firmware map and real hardware |
 | Userland | Native IDE, twelve original apps, partial float/bignum/FrancLite/offline packages | Full arithmetic, language, package resolver and online install |
 
@@ -76,7 +76,9 @@ Baseline test evidence: [AOT self-hosting](https://github.com/Rsan0948/franc/act
 | 2026-11-03 | Franctxt build authority, fixed memory layout, seed identity | Verified foundation |
 | 2026-11-03 | e1000 DMA ARP transmission and reception | Verified foundation |
 | 2026-11-03 | Physical pages and cooperatively resumed stacks | Verified foundation |
-| 2026-11-03 | Eight-slot e1000 TX/RX and repeated ARP exchange | Verified — [QEMU network run 41654048287](https://github.com/Rsan0948/franc/actions/runs/41654048287) |\n| 2026-11-03 | Bounded IPv4 and ICMP echo request/reply | Verified — [QEMU network run 41654048287](https://github.com/Rsan0948/franc/actions/runs/41654048287) |\n| 2026-11-03 | UDP/DNS query and checksum validation | Implemented; isolated QEMU exchange awaiting verification |
+| 2026-11-03 | Eight-slot e1000 TX/RX and repeated ARP exchange | Verified — [QEMU network run 41654048287](https://github.com/Rsan0948/franc/actions/runs/41654048287) |
+| 2026-11-03 | Bounded IPv4 and ICMP echo request/reply | Verified — [QEMU network run 41654048287](https://github.com/Rsan0948/franc/actions/runs/41654048287) |
+| 2026-11-03 | UDP/DNS query and checksum validation | Implemented; isolated QEMU exchange awaiting verification |
 | 2026-11-03 | PIC/PIT timer IRQ + IDT foundation (not preemptive) | Verified QEMU — [CI run 41652092184](https://github.com/Rsan0948/franc/actions/runs/41652092184) |
 | 2026-11-03 | Ring 3 process isolation | Planned |
 
