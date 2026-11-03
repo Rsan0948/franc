@@ -1,6 +1,6 @@
 # FrancOS v1 — Wave 4 initial paired implementation
 
-**Status: Started, not complete.** The complete acceptance contract is [FRANCOS_V1_DUAL_TRACK_ROADMAP.md](FRANCOS_V1_DUAL_TRACK_ROADMAP.md). This branch remains based on ongoing Wave 3 until the F3/U3 acceptance merges to main.
+**Status: Started, not complete.** The complete acceptance contract is [FRANCOS_V1_DUAL_TRACK_ROADMAP.md](FRANCOS_V1_DUAL_TRACK_ROADMAP.md). Wave 3 is now accepted and merged to `main` ([PR #14](https://github.com/Rsan0948/franc/pull/14), 17/17 green suites). This Wave 4 draft [PR #15](https://github.com/Rsan0948/franc/pull/15) has been retargeted to `main` and its dedicated initial networking/VGA QEMU suite passed. The full v1 consolidation and release test have **not** been performed.
 
 ## F4 — bounded service API
 
