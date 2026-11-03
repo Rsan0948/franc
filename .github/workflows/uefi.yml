@@ -1,0 +1,40 @@
+name: Franc x64 UEFI boot — C loader, Franc kernel
+on:
+  push:
+    branches: [stage4-roadmap-foundations]
+    paths:
+      - 'stage4/uefi/**'
+      - 'stage4/bootstrap_seed.S'
+      - 'stage4/runtime.S'
+      - 'stage4/pack_native.sh'
+      - '.github/workflows/uefi.yml'
+  pull_request:
+    paths:
+      - 'stage4/uefi/**'
+      - 'stage4/bootstrap_seed.S'
+      - 'stage4/runtime.S'
+      - '.github/workflows/uefi.yml'
+permissions:
+  contents: read
+jobs:
+  ovmf-cold-boot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install QEMU, OVMF, and mtools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends qemu-system-x86 ovmf mtools
+      - name: Verify clang/lld-link for UEFI PE32+
+        run: |
+          clang --version | head -1
+          command -v lld-link
+      - name: Assemble existing Franc-produced BIOS kernel seed
+        run: make -f stage4/Makefile.native native-seed
+      - name: Build C UEFI application and FAT ESP
+        run: make -f stage4/uefi/Makefile esp
+      - name: Confirm EFI image is PE32+ and not linked into kernel
+        run: |
+          file stage4/uefi/BOOTX64.EFI | grep -E 'PE32\+.*EFI'
+          file stage4/native_seed.bin
+      - name: Cold boot native FrancOS through OVMF
+        run: python3 stage4/uefi/test_boot.py
