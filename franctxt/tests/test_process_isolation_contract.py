@@ -32,10 +32,14 @@ class ProcessIsolationContract(unittest.TestCase):
     def test_bounded_e820_discovery_and_fail_closed_unknown(self):
         boot = (ROOT / "stage4/boot.S").read_text()
         core = (ROOT / "stage4/e820.S").read_text()
-        self.assertIn("call e820_capture", boot)
+        runtime = (ROOT / "stage4/runtime.S").read_text()
+        self.assertIn("lcall $0x1000,$0x0005", boot)
+        self.assertIn(".byte 0xe9", runtime)
+        self.assertIn(".long .Lkstart64 - . - 4", runtime)
+        self.assertIn(".Lbios_e820_entry:", runtime)
         for token in ("movl $0xe820,%eax", "movl $0x534d4150,%edx",
                       "cmpw $48,%bp", "movl $0x30323845,0x4ff0"):
-            self.assertIn(token, boot)
+            self.assertIn(token, runtime)
         for token in ("cmpl $0x30323845,0x4ff0",
                       "movzwq 0x4ff4,%rcx", "cmpq $48,%rcx",
                       "cmpq %rcx,%rax"):

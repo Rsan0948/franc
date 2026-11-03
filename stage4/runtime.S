@@ -9,6 +9,58 @@
 .extern __bss_end
 .extern franc_entry
 _kstart:
+    /* Exactly five bytes: JMP rel32 over the real-mode BIOS helper.
+     * The Stage 1 boot sector far-calls 0x1000:0005 while still in
+     * real mode; UEFI/BIOS 64-bit entry continues at this JMP target.
+     */
+    .byte 0xe9
+    .long .Lkstart64 - . - 4
+    .code16
+.Lbios_e820_entry:
+    pushw %ds
+    pushw %es
+    pushw %di
+    pushw %bp
+    xorw %ax,%ax
+    movw %ax,%ds
+    movw %ax,%es
+    movl $0,0x4ff0
+    movw $0,0x4ff4
+    movw $0x5000,%di
+    xorw %bp,%bp
+    xorl %ebx,%ebx
+.Lbios_e820_next:
+    movl $0,0(%di)
+    movl $0,4(%di)
+    movl $0,8(%di)
+    movl $0,12(%di)
+    movl $0,16(%di)
+    movl $1,20(%di)
+    movl $0xe820,%eax
+    movl $0x534d4150,%edx
+    movl $24,%ecx
+    int $0x15
+    jc .Lbios_e820_return
+    cmpl $0x534d4150,%eax
+    jne .Lbios_e820_return
+    cmpw $20,%cx
+    jb .Lbios_e820_return
+    incw %bp
+    cmpw $48,%bp
+    ja .Lbios_e820_return
+    addw $24,%di
+    testl %ebx,%ebx
+    jne .Lbios_e820_next
+    movw %bp,0x4ff4
+    movl $0x30323845,0x4ff0
+.Lbios_e820_return:
+    popw %bp
+    popw %di
+    popw %es
+    popw %ds
+    lret
+    .code64
+.Lkstart64:
     cld
     movabs $__bss_start,%rdi
     movabs $__bss_end,%rcx
