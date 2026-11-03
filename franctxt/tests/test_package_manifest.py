@@ -20,6 +20,21 @@ def make(id_, version="1.0.0", deps=(), files=None):
 
 
 class OfflinePackageManifestTests(unittest.TestCase):
+    def test_generation_epochs_for_native_copy_on_write_banks(self):
+        old = manifest_for("app", "1.0.0",
+                           {"pkg-app0.frac": b"def main 100 count fault ;"},
+                           generation=1)
+        new = manifest_for("app", "1.1.0",
+                           {"pkg-app1.frac": b"def main 200 count fault ;"},
+                           generation=2)
+        self.assertEqual(read_manifest(old.manifest).generation, 1)
+        self.assertEqual(read_manifest(new.manifest).generation, 2)
+        self.assertNotEqual(old.manifest, new.manifest)
+        for value in (-1, 2147483648, True, "1"):
+            with self.subTest(value=value), self.assertRaises(PackageError):
+                manifest_for("app", "1.0.0", {"pkg-app0.frac": b"x"},
+                             generation=value)
+
     def test_manifest_identity_roundtrip(self):
         pkg, payloads = make("math")
         self.assertEqual(read_manifest(pkg.manifest), pkg)
