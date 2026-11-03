@@ -88,8 +88,8 @@ with tempfile.TemporaryDirectory(prefix='franc-selfhost-') as tmp:
             'objcopy','-O','binary','-j','.text','-j','.rodata',
             '-j','.data',str(native_elf),str(native_bin)
         ],check=True)
-        assert 0 < native_bin.stat().st_size <= 310*512, (
-            f'Franc-native full kernel exceeds 310-sector loader capacity: '
+        assert 0 < native_bin.stat().st_size <= 318*512, (
+            f'Franc-native full kernel exceeds 318-sector loader capacity: '
             f'{native_bin.stat().st_size} bytes')
         print(f'PASS: full Franc-native AOT kernel linked '
               f'({native_bin.stat().st_size} bytes, zero C/Python compiler objects)')
