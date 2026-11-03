@@ -53,7 +53,26 @@ jobs:
           git add stage4/bootstrap_seed.S franctxt/seed.lock.franctxt
           if ! git diff --cached --quiet; then
             git commit -m 'Pin reproducible Franc-generated bootstrap assembly seed'
-            git push origin HEAD:"${{ github.ref }}"
+            # Concurrent feature pushes must not make a valid bootstrap
+            # unpinnable. Fast-forward by rebasing onto the latest branch.
+            # If intervening kernel sources changed, the seed lock will be
+            # rejected rather than publishing a mismatched compiler.
+            branch="${GITHUB_REF#refs/heads/}"
+            pushed=0
+            for attempt in 1 2 3; do
+              git fetch origin "$branch"
+              git rebase "origin/$branch"
+              python3 -m franctxt.build check-seed
+              if git push origin "HEAD:$branch"; then
+                pushed=1
+                break
+              fi
+              echo "Branch changed during seed pin (attempt $attempt)" >&2
+            done
+            if [ "$pushed" -ne 1 ]; then
+              echo "Refusing to publish unpinned kernel seed" >&2
+              exit 1
+            fi
           fi
       - name: Rebuild FrancOS from assembly seed without Python or C
         run: |
