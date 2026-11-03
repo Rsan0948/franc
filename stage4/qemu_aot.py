@@ -289,6 +289,8 @@ try:
     assert bundle_match is not None and b'FRANC-SOURCE-ERROR' not in transcript,transcript
     bundle_asm=bundle_match.decode('ascii')
     assert 'fw_737175617265:' in bundle_asm and 'fw_6d61696e:' in bundle_asm
+    assert 'movabsq $4294967296, %rdi' in bundle_asm, bundle_asm
+    assert '  .byte 34' in bundle_asm, bundle_asm
     with TemporaryDirectory(prefix='franc-disk-source-') as work:
         source=Path(work)/'source.S'
         target=Path(work)/'source.o'

@@ -189,3 +189,9 @@ The separate Stage 4 bootloader reads 310 kernel sectors from LBAs 1–127,
 original loader and FRANCFS1 at 128–199. The base image is now 512 sectors
 (256 KiB); the Franc source staging marker is at LBA 512, source begins 513.
 Assembly/GNU binutils and dd remain the permitted toolchain.
+
+The disk-fed Franc AOT lexer is implemented in Franc and now skips comments,
+respects backslash-escaped quotation marks, bounds token writes and handles
+signed 64-bit literals (except the INT64_MIN absolute-value printing edge).
+CI stages a commented source fixture containing escaped quotes and a value
+above 32 bits, then assembles the emitted native program.
