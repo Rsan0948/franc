@@ -59,6 +59,7 @@ class Package:
     files: tuple[tuple[str, int, str], ...]
     entry: str | None
     manifest: bytes
+    generation: int = 0  # Native two-bank transaction epoch; 0=legacy manifest
 
     @property
     def key(self) -> tuple[str, str]:
@@ -112,15 +113,23 @@ def read_manifest(raw: bytes) -> Package:
     for i in range(nfiles):
         required |= {f"package.file.{i}.name", f"package.file.{i}.bytes",
                      f"package.file.{i}.sha256"}
+    generation = data.get("package.generation", 0)
+    if type(generation) is not int or not 0 <= generation <= 2147483647:
+        raise PackageError("invalid package generation")
+    if "package.generation" in data:
+        required.add("package.generation")
     if set(data) != required:
         raise PackageError("unknown, missing or noncontiguous manifest fields")
-    return Package(identifier, version, tuple(deps), tuple(files), entry, raw)
+    return Package(identifier, version, tuple(deps), tuple(files), entry, raw, generation)
 
 
 def manifest_for(identifier: str, version: str, payloads: Mapping[str, bytes],
                  dependencies: tuple[tuple[str, str], ...] = (),
-                 entry: str | None = None) -> Package:
+                 entry: str | None = None,
+                 generation: int = 0) -> Package:
     identifier, version = _name(identifier), _version(version)
+    if type(generation) is not int or not 0 <= generation <= 2147483647:
+        raise PackageError("invalid package generation")
     if not 1 <= len(payloads) <= MAX_FILES or len(dependencies) > MAX_DEPS:
         raise PackageError("files/dependencies exceed bounded native format")
     doc: dict = {
@@ -131,6 +140,8 @@ def manifest_for(identifier: str, version: str, payloads: Mapping[str, bytes],
         "package.file-count": len(payloads),
         "package.entry": entry,
     }
+    if generation:
+        doc["package.generation"] = generation
     for i, (name, depver) in enumerate(dependencies):
         doc[f"package.dependency.{i}.id"] = _name(name)
         doc[f"package.dependency.{i}.version"] = _version(depver)
