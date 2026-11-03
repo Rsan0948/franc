@@ -249,8 +249,14 @@ with tempfile.TemporaryDirectory(prefix="franc-net-") as tmp:
                 line("0 svc-dns-poll .", b"-4\nFrac> ")
                 line("2049 svc-dns-poll .", b"-4\nFrac> ")
                 service = line("1024 svc-dns-request .", timeout=150)
+                if b"-4\nFrac> " in service:
+                    # The adapter is intentionally bounded/nonblocking;
+                    # the host allows SLIRP time to deliver the packet,
+                    # then consumes it via the same safe service.
+                    time.sleep(1.5)
+                    service = line("1024 svc-dns-poll .", timeout=150)
                 assert b"1\nFrac> " in service, service
-                print("PASS: bounded reusable DNS service survived a second real QEMU e1000 query", flush=True)
+                print("PASS: bounded reusable DNS service survived a second real QEMU e1000 query and asynchronous wait", flush=True)
 
 
 
