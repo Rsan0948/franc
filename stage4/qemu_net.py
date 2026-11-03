@@ -180,6 +180,38 @@ with tempfile.TemporaryDirectory(prefix="franc-net-") as tmp:
         line("net-sent .", b"3\nFrac> ")
         line("net-received .", b"3\nFrac> ")
         print("PASS: native IPv4 checksum and ICMP echo request/reply", flush=True)
+        if os.getenv("FRANC_TEST_UDP") == "1":
+            line("net-dns-arp .", b"1\nFrac> ")
+            time.sleep(1.2)
+            line("net-rx-ready? .", b"1\nFrac> ")
+            line("net-rx-ethertype .", b"2054\nFrac> ")
+            line("net-dns-learn .", b"1\nFrac> ")
+            line("net-dns-ready .", b"1\nFrac> ")
+            line("net-rx-consume .", b"1\nFrac> ")
+            line("udp-dns-query .", b"1\nFrac> ")
+            line("net-frame 34 + net-frame 14 + 37 udp-checksum .",
+                 b"0\nFrac> ")
+            print("PASS: native IPv4 UDP pseudoheader checksum verifies", flush=True)
+            time.sleep(1.5)
+            line("net-rx-ready? .", b"1\nFrac> ")
+            result = line("udp-dns-reply? .")
+            if b"1\nFrac> " not in result:
+                snap = {}
+                for command in ("net-rx-ready? .", "net-rx-size .",
+                                "net-rx-ethertype .", "net-rx-err .",
+                                "net-rx-ptr 23 + b@ .",
+                                "net-rx-ptr 34 + ip-u16@ .",
+                                "net-rx-ptr 36 + ip-u16@ .",
+                                "net-rx-ptr 38 + ip-u16@ .",
+                                "net-rx-ptr 40 + ip-u16@ .",
+                                "net-rx-ptr 42 + ip-u16@ .",
+                                "net-rx-ptr 44 + ip-u16@ ."):
+                    snap[command] = line(command).decode("ascii", errors="replace").strip()
+                raise AssertionError(f"UDP DNS reply not validated: {result!r}, {snap}")
+            line("net-rx-consume .", b"1\nFrac> ")
+            line("net-sent .", b"5\nFrac> ")
+            line("net-received .", b"5\nFrac> ")
+            print("PASS: native UDP checksum, DNS request and validated DNS response", flush=True)
 
 
         print("PASS: native e1000 completed DMA TX and received an ARP reply", flush=True)
@@ -242,4 +274,21 @@ with tempfile.TemporaryDirectory(prefix="franc-net-") as tmp:
     )
     assert icmp, "QEMU capture contains no Franc-origin valid ICMP echo request"
     print("PASS: host packet capture proves a real IPv4 ICMP echo request", flush=True)
+    if os.getenv("FRANC_TEST_UDP") == "1":
+        dns_arp = [p for p in packets if len(p) >= 42
+                   and p[:6] == b"\xff" * 6 and p[12:14] == b"\x08\x06"
+                   and p[38:42] == b"\x0a\x00\x02\x03"]
+        assert dns_arp, "No independent ARP request for 10.0.2.3"
+        queries = [p for p in packets if len(p) >= 71 and p[12:14] == b"\x08\x00"
+                   and p[23] == 17 and p[26:30] == b"\x0a\x00\x02\x0f"
+                   and p[30:34] == b"\x0a\x00\x02\x03"
+                   and p[34:36] == b"\xcf\x08" and p[36:38] == b"\x00\x35"
+                   and p[42:44] == b"\x12\x34"]
+        assert queries, "No native DNS UDP datagram appeared on the real virtual NIC"
+        for p in queries:
+            assert checksum16(p[14:34]) == 0
+            pseudo = p[26:34] + bytes((0, 17)) + p[38:40]
+            assert checksum16(pseudo + p[34:71]) == 0, "invalid UDP pseudoheader checksum"
+        print("PASS: host PCAP verified QEMU DNS IPv4/UDP checksums and query", flush=True)
+
 

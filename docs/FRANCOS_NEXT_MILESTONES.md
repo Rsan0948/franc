@@ -76,7 +76,7 @@ Baseline test evidence: [AOT self-hosting](https://github.com/Rsan0948/franc/act
 | 2026-11-03 | Franctxt build authority, fixed memory layout, seed identity | Verified foundation |
 | 2026-11-03 | e1000 DMA ARP transmission and reception | Verified foundation |
 | 2026-11-03 | Physical pages and cooperatively resumed stacks | Verified foundation |
-| 2026-11-03 | Eight-slot e1000 TX/RX and repeated ARP exchange | Verified — [QEMU network run 41654048287](https://github.com/Rsan0948/franc/actions/runs/41654048287) |\n| 2026-11-03 | Bounded IPv4 and ICMP echo request/reply | Verified — [QEMU network run 41654048287](https://github.com/Rsan0948/franc/actions/runs/41654048287) |\n| 2026-11-03 | UDP | Planned |
+| 2026-11-03 | Eight-slot e1000 TX/RX and repeated ARP exchange | Verified — [QEMU network run 41654048287](https://github.com/Rsan0948/franc/actions/runs/41654048287) |\n| 2026-11-03 | Bounded IPv4 and ICMP echo request/reply | Verified — [QEMU network run 41654048287](https://github.com/Rsan0948/franc/actions/runs/41654048287) |\n| 2026-11-03 | UDP/DNS query and checksum validation | Implemented; isolated QEMU exchange awaiting verification |
 | 2026-11-03 | PIC/PIT timer IRQ + IDT foundation (not preemptive) | Verified QEMU — [CI run 41652092184](https://github.com/Rsan0948/franc/actions/runs/41652092184) |
 | 2026-11-03 | Ring 3 process isolation | Planned |
 
@@ -93,3 +93,7 @@ The [network CI run 41652092097](https://github.com/Rsan0948/franc/actions/runs/
 ### IPv4/ICMP acceptance update (2026-11-03)
 
 [Network CI run 41654048287](https://github.com/Rsan0948/franc/actions/runs/41654048287) is fully green. It validates two Ethernet descriptor TX/RX cycles with ARP address learning, IPv4/ICMP checksum generation and independent packet capture, a successful native echo request/reply, rejection of a corrupted IPv4 header, and bounded packet lengths. A bug in one's-complement carry folding was identified from the host-captured ICMP frame and corrected. This is a tested **fixed 10.0.2.15 -> 10.0.2.2 QEMU path**, not DHCP/routing/fragmentation, UDP/TCP, or a general socket API.
+
+### UDP increment
+
+`stage4/udp.frac` sends a small UDP DNS A/IN query to the built-in QEMU resolver at `10.0.2.3:53`, with separately learned ARP, an IPv4 pseudoheader checksum, and strict receive address/length/response checks. The **optional** `FRANC_TEST_UDP=1` QEMU network check requires a real DNS reply, independent Ethernet packet capture, correct IP/UDP checksums, and successful RX descriptor reuse. This is not yet a general UDP socket API or external DNS client and must remain **unverified** until the isolated UDP integration workflow passes.
