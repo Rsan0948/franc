@@ -28,6 +28,13 @@
 .Llease_alloc_name: .asciz "proc-lease-alloc"
 .Llease_free_name: .asciz "proc-lease-free"
 .Llease_end_name: .asciz "proc-lease-end"
+.Lspace_probe_name: .asciz "space-probe"
+.Lspace_a_name: .asciz "space-root-a"
+.Lspace_b_name: .asciz "space-root-b"
+.Lspace_sa_name: .asciz "space-state-a"
+.Lspace_sb_name: .asciz "space-state-b"
+.Lspace_fault_name: .asciz "space-fault-address"
+.Lspace_reclaim_name: .asciz "space-reclaimed"
 .section .data
 .balign 8
 /* Linked dictionary nodes: next, name, code. First next is set at boot. */
@@ -54,7 +61,14 @@ fr_task_dict_proc_survivor: .quad fr_task_dict_proc_steps, .Lproc_survivor_name,
 fr_task_dict_lease_begin: .quad fr_task_dict_proc_survivor, .Llease_begin_name, fr_lease_begin
 fr_task_dict_lease_alloc: .quad fr_task_dict_lease_begin, .Llease_alloc_name, fr_lease_alloc
 fr_task_dict_lease_free: .quad fr_task_dict_lease_alloc, .Llease_free_name, fr_lease_free
-fr_task_dict_top: .quad fr_task_dict_lease_free, .Llease_end_name, fr_lease_end
+fr_task_dict_lease_end: .quad fr_task_dict_lease_free, .Llease_end_name, fr_lease_end
+fr_task_dict_space_probe: .quad fr_task_dict_lease_end, .Lspace_probe_name, fr_space_probe
+fr_task_dict_space_a: .quad fr_task_dict_space_probe, .Lspace_a_name, fr_space_root_a
+fr_task_dict_space_b: .quad fr_task_dict_space_a, .Lspace_b_name, fr_space_root_b
+fr_task_dict_space_sa: .quad fr_task_dict_space_b, .Lspace_sa_name, fr_space_state_a
+fr_task_dict_space_sb: .quad fr_task_dict_space_sa, .Lspace_sb_name, fr_space_state_b
+fr_task_dict_space_fault: .quad fr_task_dict_space_sb, .Lspace_fault_name, fr_space_fault_addr
+fr_task_dict_top: .quad fr_task_dict_space_fault, .Lspace_reclaim_name, fr_space_reclaimed_count
 .section .bss
 .balign 8
 /* 0:host, 1:worker A, 2:worker B.
