@@ -82,6 +82,8 @@ with tempfile.TemporaryDirectory(prefix="franc-timer-") as tmp:
         assert b"stage2: unsupported token" not in loaded, loaded[-1200:]
         key(b"r", b"Frac> ")
         assert number(line("irq-ticks .")) == 0
+        if os.getenv("FRANC_TEST_PREEMPT") == "1":
+            assert number(line("preempt-asm-demo .")) == 0, "Preempt demo without IRQ must fail closed"
         line("irq-start .", b"1\nFrac> ")
         time.sleep(0.6)
         first = number(line("irq-ticks ."))
@@ -90,6 +92,13 @@ with tempfile.TemporaryDirectory(prefix="franc-timer-") as tmp:
         assert 2 <= first < second, (
             f"Hardware timer did not interrupt the Franc JIT: {first}, {second}"
         )
+        if os.getenv("FRANC_TEST_PREEMPT") == "1":
+            success = number(line("preempt-asm-demo ."))
+            assert success == 1, f"Timer-driven context switch failed: {success}"
+            a = number(line("preempt-a ."))
+            b = number(line("preempt-b ."))
+            assert a > 100 and b > 100, (a, b)
+            print(f"PASS: independent, never-yielding assembly workers were preempted and resumed ({a}, {b} iterations)", flush=True)
         stopped = number(line("irq-stop ."))
         time.sleep(0.5)
         last = number(line("irq-ticks ."))

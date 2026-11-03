@@ -12,6 +12,20 @@ fr_irq_idt: .skip 4096
 .balign 8
 fr_irq_tick_count: .skip 8
 fr_irq_running: .skip 8
+/* Single CPU, ring-0, assembly-only preemption proof. This is not a
+ * general Franc fiber scheduler; threads do not touch shared ds_ptr.
+ * A scheduler requires per-task rational state, FPU/SIMD and faults.
+ */
+.balign 16
+fr_preempt_a_stack: .skip 16384
+fr_preempt_b_stack: .skip 16384
+.balign 8
+fr_preempt_rsp: .skip 24 /* [host, asm A, asm B] interrupted RSP */
+fr_preempt_current: .skip 8
+fr_preempt_enabled: .skip 8
+fr_preempt_target_tick: .skip 8
+fr_preempt_a_counter: .skip 8
+fr_preempt_b_counter: .skip 8
 .section .data
 .balign 8
 fr_irq_idtr:
@@ -113,21 +127,158 @@ fr_irq_stop:
     movb $0xff,%al
     outb %al,$0x21
     outb %al,$0xa1
+    movq $0,fr_preempt_enabled(%rip)
     movq $0,fr_irq_running(%rip)
     movq fr_irq_tick_count(%rip),%rdi
     movq $1,%rsi
     jmp fr_push
 
 fr_irq_timer:
+    /* Save the complete integer register file before task selection.
+     * Hardware already pushed RIP, CS, RFLAGS at same privilege level.
+     * The handler NEVER uses the Franc rational stack or heap.
+     */
     pushq %rax
+    pushq %rbx
+    pushq %rcx
     pushq %rdx
+    pushq %rsi
+    pushq %rdi
+    pushq %rbp
+    pushq %r8
+    pushq %r9
+    pushq %r10
+    pushq %r11
+    pushq %r12
+    pushq %r13
+    pushq %r14
+    pushq %r15
     incq fr_irq_tick_count(%rip)
     movw $0x20,%dx
     movb $0x20,%al
     outb %al,%dx
+    cmpq $1,fr_preempt_enabled(%rip)
+    jne .Lirq_restore
+    movq fr_preempt_current(%rip),%rax
+    leaq fr_preempt_rsp(%rip),%rcx
+    movq %rsp,(%rcx,%rax,8)
+    incq %rax
+    cmpq $3,%rax
+    jb .Lirq_next_chosen
+    xorq %rax,%rax
+.Lirq_next_chosen:
+    movq %rax,fr_preempt_current(%rip)
+    movq (%rcx,%rax,8),%rsp
+.Lirq_restore:
+    popq %r15
+    popq %r14
+    popq %r13
+    popq %r12
+    popq %r11
+    popq %r10
+    popq %r9
+    popq %r8
+    popq %rbp
+    popq %rdi
+    popq %rsi
     popq %rdx
+    popq %rcx
+    popq %rbx
     popq %rax
     iretq
+
+/* Build a fresh synthetic interrupt frame at the top of an isolated
+ * 16 KiB kernel stack. Inputs: rdi=top-of-stack, rsi=worker RIP.
+ * Outputs: rax=saved rsp pointing at 15 saved zeroed GPRs.
+ */
+fr_preempt_prepare:
+    subq $24,%rdi
+    movq %rsi,0(%rdi)
+    movw %cs,%ax
+    movzwq %ax,%rax
+    movq %rax,8(%rdi)
+    movq $0x202,16(%rdi)
+    subq $120,%rdi
+    movq %rdi,%r9
+    movl $15,%ecx
+    xorl %eax,%eax
+    cld
+    rep stosq
+    movq %r9,%rax
+    ret
+
+/* Never yielding, mutually preempted CPU-bound assembly workers.
+ * They touch only their own counter; their instruction pointers are
+ * resumed from IRQ frames, not cooperative coroutine calls.
+ */
+fr_preempt_worker_a:
+    incq fr_preempt_a_counter(%rip)
+    pause
+    jmp fr_preempt_worker_a
+fr_preempt_worker_b:
+    incq fr_preempt_b_counter(%rip)
+    pause
+    jmp fr_preempt_worker_b
+
+/* (-- did-both-progress). Requires irq-start first; bounded to 120 PIT
+ * ticks. Host is runnable slot 0, workers are slots 1 and 2.
+ * All contexts stay kernel ring0; no user-mode memory isolation.
+ */
+.global fr_preempt_demo
+fr_preempt_demo:
+    cmpq $1,fr_irq_running(%rip)
+    jne .Lpreempt_bad
+    cmpq $0,fr_preempt_enabled(%rip)
+    jne .Lpreempt_bad
+    cli
+    movq $0,fr_preempt_a_counter(%rip)
+    movq $0,fr_preempt_b_counter(%rip)
+    movq $0,fr_preempt_current(%rip)
+    leaq fr_preempt_a_stack+16384(%rip),%rdi
+    leaq fr_preempt_worker_a(%rip),%rsi
+    call fr_preempt_prepare
+    movq %rax,fr_preempt_rsp+8(%rip)
+    leaq fr_preempt_b_stack+16384(%rip),%rdi
+    leaq fr_preempt_worker_b(%rip),%rsi
+    call fr_preempt_prepare
+    movq %rax,fr_preempt_rsp+16(%rip)
+    movq fr_irq_tick_count(%rip),%rax
+    addq $120,%rax
+    movq %rax,fr_preempt_target_tick(%rip)
+    movq $1,fr_preempt_enabled(%rip)
+    sti
+.Lpreempt_wait:
+    pause
+    movq fr_irq_tick_count(%rip),%rax
+    cmpq fr_preempt_target_tick(%rip),%rax
+    jb .Lpreempt_wait
+    cli
+    /* Host is executing, so no worker context can still be running. */
+    movq $0,fr_preempt_enabled(%rip)
+    sti
+    cmpq $0,fr_preempt_a_counter(%rip)
+    je .Lpreempt_bad
+    cmpq $0,fr_preempt_b_counter(%rip)
+    je .Lpreempt_bad
+    movq $1,%rdi
+    movq $1,%rsi
+    jmp fr_push
+.Lpreempt_bad:
+    xorq %rdi,%rdi
+    movq $1,%rsi
+    jmp fr_push
+
+.global fr_preempt_a_count
+fr_preempt_a_count:
+    movq fr_preempt_a_counter(%rip),%rdi
+    movq $1,%rsi
+    jmp fr_push
+
+.global fr_preempt_b_count
+fr_preempt_b_count:
+    movq fr_preempt_b_counter(%rip),%rdi
+    movq $1,%rsi
+    jmp fr_push
 
 fr_irq_fault:
     cli

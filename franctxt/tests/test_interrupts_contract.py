@@ -14,7 +14,7 @@ class InterruptContract(unittest.TestCase):
             subprocess.run(["as", "--64", "-o", str(obj), "stage4/runtime.S"],
                            cwd=ROOT, check=True, capture_output=True, text=True)
             lines = subprocess.check_output(["objdump", "-t", str(obj)], text=True).splitlines()
-            for name in ("fr_irq_start", "fr_irq_ticks", "fr_irq_stop"):
+            for name in ("fr_irq_start", "fr_irq_ticks", "fr_irq_stop", "fr_preempt_demo", "fr_preempt_a_count", "fr_preempt_b_count"):
                 hits = [s for s in lines if s.strip().endswith(name)]
                 self.assertEqual(len(hits), 1, name)
                 self.assertIn(".text", hits[0])

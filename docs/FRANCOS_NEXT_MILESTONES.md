@@ -97,3 +97,7 @@ The [network CI run 41652092097](https://github.com/Rsan0948/franc/actions/runs/
 ### UDP increment
 
 `stage4/udp.frac` sends a small UDP DNS A/IN query to the built-in QEMU resolver at `10.0.2.3:53`, with separately learned ARP, an IPv4 pseudoheader checksum, and strict receive address/length/response checks. The **optional** `FRANC_TEST_UDP=1` QEMU network check requires a real DNS reply, independent Ethernet packet capture, correct IP/UDP checksums, and successful RX descriptor reuse. This is not yet a general UDP socket API or external DNS client and must remain **unverified** until the isolated UDP integration workflow passes.
+
+### Preemption proof milestone
+
+`stage4/interrupts.S` now includes a ring-0 CPU context switching demo. IRQ0 saves and restores all 15 general-purpose registers and hardware IRET frames for the host plus two 16 KiB assembly-only worker stacks. The never-yielding workers require timer preemption to make independent progress. Their code deliberately avoids Franc rational global state and FPU/SIMD. This is **not yet the general Franc fiber scheduler**; kernel user processes, task-local state, nested IRQ handling and Ring 3 remain planned. The proof is separately gated by `FRANC_TEST_PREEMPT=1` in `.github/workflows/preempt.yml`.

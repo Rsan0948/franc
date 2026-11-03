@@ -1,0 +1,50 @@
+name: Franc timer-preempted CPU context switching proof
+on:
+  push:
+    branches: [stage4-roadmap-foundations]
+    paths:
+      - 'stage4/interrupts.S'
+      - 'stage4/runtime.S'
+      - 'stage4/aot.frac'
+      - 'stage4/bootstrap_seed.S'
+      - 'stage4/qemu_irq.py'
+      - 'stage4/Makefile.native'
+      - 'stage4/Makefile'
+      - 'franctxt/seed.lock.franctxt'
+      - 'franctxt/build.py'
+      - '.github/workflows/preempt.yml'
+  pull_request:
+    paths:
+      - 'stage4/interrupts.S'
+      - 'stage4/qemu_irq.py'
+      - 'stage4/runtime.S'
+      - 'stage4/aot.frac'
+      - 'stage4/qemu_irq.py'
+      - '.github/workflows/preempt.yml'
+permissions:
+  contents: read
+jobs:
+  timer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Franctxt native source and memory policy
+        run: python3 -m franctxt.build preflight
+      - name: Assemble timer and IDT primitives, verify executable symbols
+        run: python3 -m unittest discover -s franctxt/tests -p 'test_interrupts_contract.py' -v
+      - name: Install QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Compile Franc-generated native kernel with interrupt support
+        run: make -f stage4/Makefile.native native-seed
+      - name: Verify exact Franctxt build identity and packed guest
+        run: python3 -m franctxt.build verify-image --image stage4/native_seed.img --kernel stage4/native_seed.bin
+      - name: Timer-driven switching among host and two never-yielding CPU workers
+        run: FRANC_TEST_PREEMPT=1 python3 stage4/qemu_irq.py stage4/native_seed.img
+      - name: Publish tested IRQ image identity
+        run: python3 -m franctxt.build record --image stage4/native_seed.img --kernel stage4/native_seed.bin --passed native --output stage4/preempt-tested.franctxt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: franc-preempt-assembly-tested-build
+          path: stage4/irq-tested.franctxt
+          if-no-files-found: error
