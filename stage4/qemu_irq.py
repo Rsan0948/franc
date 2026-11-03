@@ -82,6 +82,8 @@ with tempfile.TemporaryDirectory(prefix="franc-timer-") as tmp:
         assert b"stage2: unsupported token" not in loaded, loaded[-1200:]
         key(b"r", b"Frac> ")
         assert number(line("irq-ticks .")) == 0
+        if os.getenv("FRANC_TEST_RING3") == "1":
+            assert number(line("ring3-probe .")) == 0, "Ring 3 must reject entry before protected IDT/TSS setup"
         if os.getenv("FRANC_TEST_PREEMPT") == "1":
             assert number(line("preempt-asm-demo .")) == 0, "Preempt demo without IRQ must fail closed"
         line("irq-start .", b"1\nFrac> ")
@@ -102,6 +104,17 @@ with tempfile.TemporaryDirectory(prefix="franc-timer-") as tmp:
             post_tick = number(line("irq-ticks ."))
             assert post_tick - prior_tick >= 120, (prior_tick, post_tick)
             print(f"PASS: independent, never-yielding assembly workers were preempted and resumed ({a}, {b} iterations)", flush=True)
+        if os.getenv("FRANC_TEST_RING3") == "1":
+            value = number(line("ring3-probe ."))
+            assert value == 1, f"Expected a valid user syscall and protected page fault, got {value}"
+            assert number(line("ring3-user-cpl .")) == 3
+            assert number(line("ring3-fault-seen .")) == 1
+            assert number(line("ring3-fault-address .")) == 65536
+            fault_code = number(line("ring3-fault-error ."))
+            assert fault_code & 5 == 5, f"Expected supervisor protection error from CPL3: {fault_code}"
+            assert number(line("ring3-probe .")) == 0, "One-shot TSS/IDT probe must reject repeated execution"
+            assert number(line("2 3 + .")) == 5, "Kernel failed to resume native Franc REPL after user fault"
+            print("PASS: genuine CPL3 INT80 return, user-mode kernel-memory #PF and Franc REPL recovery", flush=True)
         stopped = number(line("irq-stop ."))
         time.sleep(0.5)
         last = number(line("irq-ticks ."))

@@ -1253,3 +1253,5 @@ fr_mmio32_store:
 
 /* Native C-free timer and IDT entry points. */
 .include "stage4/interrupts.S"
+/* Experimental BIOS-only CPL3 page-table and TSS isolation proof. */
+.include "stage4/ring3.S"

@@ -80,7 +80,7 @@ Baseline test evidence: [AOT self-hosting](https://github.com/Rsan0948/franc/act
 | 2026-11-03 | Bounded IPv4 and ICMP echo request/reply | Verified — [QEMU network run 41654048287](https://github.com/Rsan0948/franc/actions/runs/41654048287) |
 | 2026-11-03 | UDP/DNS query and checksum validation | Implemented; isolated QEMU exchange awaiting verification |
 | 2026-11-03 | PIC/PIT timer IRQ + IDT foundation (not preemptive) | Verified QEMU — [CI run 41652092184](https://github.com/Rsan0948/franc/actions/runs/41652092184) |
-| 2026-11-03 | Ring 3 process isolation | Planned |
+| 2026-11-03 | BIOS CPL3/INT80/page-fault isolation experiment | Implemented, independent QEMU verification pending |
 
 **Status definitions:** planned = no implementation; implemented/pending = code exists, gate unresolved; verified = successful relevant CI/QEMU test at that commit; partial = a subset works; blocked = a known failing gate. Update this log with test links and the exact result as work proceeds.
 
@@ -103,3 +103,9 @@ The [network CI run 41652092097](https://github.com/Rsan0948/franc/actions/runs/
 ### Preemption proof milestone
 
 `stage4/interrupts.S` now includes a ring-0 CPU context switching demo. IRQ0 saves and restores all 15 general-purpose registers and hardware IRET frames for the host plus two 16 KiB assembly-only worker stacks. The never-yielding workers require timer preemption to make independent progress. Their code deliberately avoids Franc rational global state and FPU/SIMD. This is **not yet the general Franc fiber scheduler**; kernel user processes, task-local state, nested IRQ handling and Ring 3 remain planned. The proof is separately gated by `FRANC_TEST_PREEMPT=1` in `.github/workflows/preempt.yml`.
+
+### Experimental CPL3 isolation increment
+
+The opt-in `stage4/ring3.S` probe establishes a BIOS/QEMU-only 64-bit GDT and TSS kernel stack, creates *one* 4 KiB read/execute user page and *one* 4 KiB read/write user stack at virtual addresses `0x40000000` and `0x40001000`, and leaves kernel identity mappings supervisor-only. It enters CPL3 through a five-field `iretq` frame, makes an `int $0x80` return to the kernel, then attempts a **non-destructive read** of supervisor-mapped kernel memory. The #PF handler must record a user-mode protection fault at `0x10000`, and normal Franc execution must continue afterward.
+
+This is **not** a production Ring 3 process manager. It does not implement general syscall dispatch, arbitrary user executables, per-process CR3, ELF loading, signals, exception recovery for all traps, address-space reclamation, or FPU/SIMD task context switching. It refuses an unfamiliar CR3 layout and cannot run on UEFI. Its `ring3-probe` command is deliberately one-shot and the entire test is isolated behind `FRANC_TEST_RING3=1` and `.github/workflows/ring3.yml`. Do not label Ring 3 verified until the real QEMU privilege/fault test succeeds.
