@@ -6,6 +6,10 @@ def key-mode drop ;
 def eval s2-eval ;
 def home vc-home ;
 \ Deliberate scratch RAM reservations, outside framebuffer, bundle, and JIT.
+\ Wave 4 native app-loader dependency: the restricted CPL3 emitter needs the
+\ IDE scratch address before the full editor module is JIT-compiled. Both
+\ definitions use exactly the same Franctxt-reserved physical page.
+def ide-buffer $6b00000 ;
 def calc-buffer $300000 ;
 def history-buffer $310000 ;
 def pixel@ :px-y :px-x px-y 0 - if 0 exit then px-x 0 - if 0 exit then px-x 320 - if0 0 exit then px-y 200 - if0 0 exit then $A0000 px-y 320 * + px-x + b@ ;
