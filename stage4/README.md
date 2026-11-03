@@ -132,3 +132,48 @@ bignum library, binary64 decoder, infix translator and offline source
 package commands to the source bundle. See
 [`docs/STAGE4_PLUS_ROADMAP.md`](../docs/STAGE4_PLUS_ROADMAP.md)
 for the feature boundaries and outstanding UEFI/networking/isolation work.
+
+## FrancOS v1 Wave 1 integration (native BIOS/QEMU)
+
+The FrancOS v1 two-track contract is in
+[docs/FRANCOS_V1_DUAL_TRACK_ROADMAP.md](../docs/FRANCOS_V1_DUAL_TRACK_ROADMAP.md).
+The authoritative native acceptance driver is `stage4/qemu_home.py`;
+`.github/workflows/wave1.yml` runs it after the independent
+E820/CR3 process-owner probe. A passing source build alone does not close
+Wave 1.
+
+- **Home:** Boots directly to a 320x200 keyboard-first Home surface.
+  Up/Down and Enter select applications; 1–9 shortcuts work even before
+  loading the trusted native library bundle. The existing numeric menu,
+  REPL and diagnostic keys remain operational.
+- **Files:** `z` displays the persistent `FRANCFS1` directory; open,
+  new, rename and delete are accessible by visible letter shortcuts,
+  with invalid-name/capacity/disk failure messages and Esc return.
+  Deleting a file removes the directory entry before scrubbing data
+  sectors. Directory-sector replacement is still **not** power-fail
+  journaled or crash-atomic; do not advertise power-loss durability.
+- **Packages:** `m` displays the existing offline source package list
+  and guarded load command. This is an *accessible foundation*, not yet
+  the U3 manifest/hash/dependency/update/rollback lifecycle.
+- **IDE:** Home key 9 launches the native source IDE. The current editor
+  has bounded cursor insertion, Backspace and a viewport; additional
+  multiline visual/diagnostic acceptance belongs to Wave 2.
+- **Memory:** `space-probe` constructs two private 4KiB page-table
+  hierarchies from E820-authorized, generation-tagged leased frames,
+  traps a user read of another process's physical page, then executes
+  a surviving CPL3 context, tears down both roots and reclaims pages.
+  This is sequential assembly-probe execution, **not** concurrently
+  scheduled Franc user programs.
+
+The image now reserves four BIOS kernel extents (382 sectors total):
+LBA 1–127, 200–263, 264–390 and 391–454. The additional 391–454
+extent loads at physical 0x37c00; it never overlaps FRANCFS1 at
+128–199 or the disk source bundle at LBA 1024. This is still a 128 MiB
+QEMU-only experimental configuration, not a real-hardware map claim.
+
+**Gate:** Wave 1 closes only after an exact integrated seed/image
+passes the independent process CR3 test and the real keyboard-first
+Home/files/apps/cold-reboot QEMU journey, with a nonblank framebuffer
+capture inspected. Wave 2 adds timer-resumed CPL3 user contexts and a
+stronger editor; Wave 3 adds genuine Franc users and the real package
+lifecycle. Each status must be tied to a tested commit.
