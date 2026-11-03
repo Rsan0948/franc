@@ -65,6 +65,65 @@ with tempfile.TemporaryDirectory(prefix='franc-selfhost-') as tmp:
         subprocess.run(['as','--64','-o',str(obj),str(native)],check=True)
         sym=subprocess.check_output(['nm',str(obj)],text=True)
         assert 'T franc_aot_entry' in sym and 'fw_626f6f74' in sym,sym[-2000:]
+        # Link the complete Franc-generated kernel, without compiler.py or
+        # any other Python language translator. The runtime and font are
+        # permitted assembler-only objects.
+        native_elf=scratch/'gen2.elf'
+        native_bin=scratch/'gen2.bin'
+        subprocess.run([
+            'ld','-m','elf_x86_64','-nostdlib',
+            '-T',str(root/'kernel.ld'),'-o',str(native_elf),
+            str(root/'runtime.o'),str(root/'font.o'),str(obj)
+        ],check=True)
+        subprocess.run([
+            'objcopy','-O','binary','-j','.text','-j','.rodata',
+            '-j','.data',str(native_elf),str(native_bin)
+        ],check=True)
+        assert 0 < native_bin.stat().st_size <= 310*512, (
+            f'Franc-native full kernel exceeds 310-sector loader capacity: '
+            f'{native_bin.stat().st_size} bytes')
+        print(f'PASS: full Franc-native AOT kernel linked '
+              f'({native_bin.stat().st_size} bytes, zero C/Python compiler objects)')
+
+        # Preserve source bundle at LBA 513+ and file store at 128..199.
+        # Install native kernel into the exact extents the BIOS bootloader reads.
+        gen2=scratch/'gen2.img'
+        shutil.copyfile(disk,gen2)
+        for seek,count in [(1,127),(200,56),(256,127)]:
+            subprocess.run(['dd','if=/dev/zero',f'of={gen2}','bs=512',
+                            f'seek={seek}',f'count={count}','conv=notrunc',
+                            'status=none'],check=True)
+        for seek,count,skip in [(1,127,0),(200,56,127),(256,127,183)]:
+            subprocess.run(['dd',f'if={native_bin}',f'of={gen2}','bs=512',
+                            f'seek={seek}',f'count={count}',f'skip={skip}',
+                            'conv=notrunc','status=none'],check=True)
+        next_guest=subprocess.Popen([
+            qemu,'-m','128M','-accel','tcg','-display','none','-monitor','none',
+            '-no-reboot','-serial','stdio',
+            '-drive',f'file={gen2},format=raw,if=ide'
+        ],stdin=subprocess.PIPE,stdout=subprocess.PIPE,
+           stderr=subprocess.STDOUT,bufsize=0)
+        next_output=b''
+        next_poll=selectors.DefaultSelector()
+        next_poll.register(next_guest.stdout,selectors.EVENT_READ)
+        try:
+            deadline=time.monotonic()+180
+            while time.monotonic()<deadline and b'AOT BOOT OK' not in next_output:
+                if next_guest.poll() is not None:break
+                if next_poll.select(0.2):
+                    data=os.read(next_guest.stdout.fileno(),65536)
+                    if not data:break
+                    next_output+=data
+            assert b'AOT BOOT OK' in next_output and b'Franc> ' in next_output, (
+                'Full Franc-compiled generation-2 kernel failed cold boot: '
+                +repr(next_output[-2500:]))
+            assert b'JIT-SUM 5\n' in next_output, next_output[-2000:]
+            assert b'JIT-DEF 36\n' in next_output, next_output[-2000:]
+            print('PASS: full Franc-native generation-2 kernel cold boots '
+                  'with interactive JIT compiler functional')
+        finally:
+            next_guest.kill()
+            next_guest.wait()
         print(f'PASS: Franc emitted and GNU as assembled full kernel source '
               f'({len(assembly)} assembly bytes, {len(sources)} Franc files)')
     finally:
