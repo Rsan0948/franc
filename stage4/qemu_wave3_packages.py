@@ -16,9 +16,10 @@ import subprocess
 import sys
 import tempfile
 import time
-from franctxt.packages import manifest_for, plan_install
-
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from franctxt.packages import manifest_for, plan_install
 IMAGE = Path(sys.argv[1] if len(sys.argv) > 1 else ROOT / "stage4/native_seed.img").resolve()
 QEMU = shutil.which("qemu-system-x86_64")
 assert QEMU and IMAGE.exists(), "Native image and qemu-system-x86_64 required"
