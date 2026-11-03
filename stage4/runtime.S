@@ -1378,3 +1378,5 @@ fr_mmio32_store:
 .include "stage4/page_owners.S"
 /* BIOS-only E820-gated independent CPL3 address space validation. */
 .include "stage4/process_spaces.S"
+/* Wave 2 bounded user-IRQ scheduler is native assembly only. */
+.include "stage4/user_scheduler.S"
