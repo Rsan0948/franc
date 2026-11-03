@@ -13,8 +13,8 @@
 | Kernel / build | Native Franc self-hosting, repeatable generation-2/3 output, BIOS/OVMF QEMU boot | Relocation and real hardware |
 | Franctxt | Portable typed configuration, SHA-256, native persisted manifest, build source inventories, seed lock and static reservation checks | Authenticated secure boot and live policy enforcement |
 | Memory | 4 KiB checked bitmap arena, zeroed allocation, bounded heap | Firmware memory discovery and process page tables |
-| Scheduler | Round robin callbacks and two independently stacked cooperative fibers | Interrupts, preemption, process isolation |
-| Networking | e1000 BAR0 MMIO, reusable rings, two ARP RX/TX cycles and native IPv4/ICMP echo | UDP DNS exchange under test; TCP, DNS API and sockets unfinished |
+| Scheduler | Cooperative Franc fibers; QEMU-verified IRQ0 and assembly-worker CPU preemption | Real Franc JIT task preemption, lifecycle, register isolation and Ring 3 integration |
+| Networking | e1000 DMA rings, ARP, IPv4/ICMP, and one QEMU-verified UDP/DNS request/reply | Reusable UDP/DNS APIs, TCP, routing, sockets and production network handling |
 | UEFI | OVMF boot through C-only firmware adapter to C-free kernel | GOP graphics, full firmware map and real hardware |
 | Userland | Native IDE, twelve original apps, partial float/bignum/FrancLite/offline packages | Full arithmetic, language, package resolver and online install |
 
@@ -78,8 +78,8 @@ Baseline test evidence: [AOT self-hosting](https://github.com/Rsan0948/franc/act
 | 2026-11-03 | Physical pages and cooperatively resumed stacks | Verified foundation |
 | 2026-11-03 | Eight-slot e1000 TX/RX and repeated ARP exchange | Verified — [QEMU network run 41654048287](https://github.com/Rsan0948/franc/actions/runs/41654048287) |
 | 2026-11-03 | Bounded IPv4 and ICMP echo request/reply | Verified — [QEMU network run 41654048287](https://github.com/Rsan0948/franc/actions/runs/41654048287) |
-| 2026-11-03 | UDP/DNS query and checksum validation | Implemented; isolated QEMU exchange awaiting verification |
-| 2026-11-03 | PIC/PIT timer IRQ + IDT foundation (not preemptive) | Verified QEMU — [CI run 41652092184](https://github.com/Rsan0948/franc/actions/runs/41652092184) |
+| 2026-11-03 | QEMU-local UDP/DNS query and checksum validation | Verified — [UDP run 41657019106](https://github.com/Rsan0948/franc/actions/runs/41657019106) on commit `375d8a5`; malformed-response regression expansion pending this branch's CI |
+| 2026-11-03 | PIC/PIT IRQ, IDT and assembly-only context preemption | Verified — [timer run 41657885632](https://github.com/Rsan0948/franc/actions/runs/41657885632) on commit `52c90c3`; Franc rational-stack context isolation under review on this branch |
 | 2026-11-03 | BIOS CPL3/INT80/page-fault isolation experiment | Implemented, independent QEMU verification pending |
 
 **Status definitions:** planned = no implementation; implemented/pending = code exists, gate unresolved; verified = successful relevant CI/QEMU test at that commit; partial = a subset works; blocked = a known failing gate. Update this log with test links and the exact result as work proceeds.
@@ -98,14 +98,25 @@ The [network CI run 41652092097](https://github.com/Rsan0948/franc/actions/runs/
 
 ### UDP increment
 
-`stage4/udp.frac` sends a small UDP DNS A/IN query to the built-in QEMU resolver at `10.0.2.3:53`, with separately learned ARP, an IPv4 pseudoheader checksum, and strict receive address/length/response checks. The **optional** `FRANC_TEST_UDP=1` QEMU network check requires a real DNS reply, independent Ethernet packet capture, correct IP/UDP checksums, and successful RX descriptor reuse. This is not yet a general UDP socket API or external DNS client and must remain **unverified** until the isolated UDP integration workflow passes.
+`stage4/udp.frac` sends a small UDP DNS A/IN query to the built-in QEMU resolver at `10.0.2.3:53`, with separately learned ARP, an IPv4 pseudoheader checksum, and strict receive address/length/response checks. The **optional** `FRANC_TEST_UDP=1` QEMU network check requires a real DNS reply, independent Ethernet packet capture, correct IP/UDP checksums, and successful RX descriptor reuse. The isolated [UDP integration run 41657019106](https://github.com/Rsan0948/franc/actions/runs/41657019106) **passed** on commit `375d8a5`, including QEMU guest validation and an independently captured outbound UDP query. This branch adds malformed-response rejection/restoration cases and independent captured DNS reply checks; those additions are **pending CI**. No general UDP socket API, external DNS client, routing, or TCP is claimed.
 
 ### Preemption proof milestone
 
-`stage4/interrupts.S` now includes a ring-0 CPU context switching demo. IRQ0 saves and restores all 15 general-purpose registers and hardware IRET frames for the host plus two 16 KiB assembly-only worker stacks. The never-yielding workers require timer preemption to make independent progress. Their code deliberately avoids Franc rational global state and FPU/SIMD. This is **not yet the general Franc fiber scheduler**; kernel user processes, task-local state, nested IRQ handling and Ring 3 remain planned. The proof is separately gated by `FRANC_TEST_PREEMPT=1` in `.github/workflows/preempt.yml`.
+`stage4/interrupts.S` now includes a ring-0 CPU context switching demo. IRQ0 saves and restores all 15 general-purpose registers and hardware IRET frames for the host plus two 16 KiB assembly-only worker stacks. The never-yielding workers require timer preemption to make independent progress. Their code deliberately avoids Franc rational global state and FPU/SIMD. This is **not yet the general Franc fiber scheduler**; kernel user processes, task-local state, nested IRQ handling and Ring 3 remain planned. The proof was independently **verified** by [preemption run 41657885632](https://github.com/Rsan0948/franc/actions/runs/41657885632) on commit `52c90c3`. This branch additionally saves the Franc `ds_ptr` on each IRQ switch, gives each demonstration worker a private rational stack, and has workers run the Franc `fr_push`/`fr_pop` ABI on every iteration. The enhanced proof remains **pending CI** and is still not an arbitrary Franc JIT scheduler. The dedicated gate is `FRANC_TEST_PREEMPT=1` in `.github/workflows/preempt.yml`.
 
 ### Experimental CPL3 isolation increment
 
 The opt-in `stage4/ring3.S` probe establishes a BIOS/QEMU-only 64-bit GDT and TSS kernel stack, creates *one* 4 KiB read/execute user page and *one* 4 KiB read/write user stack at virtual addresses `0x40000000` and `0x40001000`, and leaves kernel identity mappings supervisor-only. It enters CPL3 through a five-field `iretq` frame, makes an `int $0x80` return to the kernel, then attempts a **non-destructive read** of supervisor-mapped kernel memory. The #PF handler must record a user-mode protection fault at `0x10000`, and normal Franc execution must continue afterward.
 
 This is **not** a production Ring 3 process manager. It does not implement general syscall dispatch, arbitrary user executables, per-process CR3, ELF loading, signals, exception recovery for all traps, address-space reclamation, or FPU/SIMD task context switching. It refuses an unfamiliar CR3 layout and cannot run on UEFI. Its `ring3-probe` command is deliberately one-shot and the entire test is isolated behind `FRANC_TEST_RING3=1` and `.github/workflows/ring3.yml`. Do not label Ring 3 verified until the real QEMU privilege/fault test succeeds.
+
+
+### Proposed next scheduler integration after the isolated context proof
+
+1. Introduce a bounded, typed task-control record (state, code pointer, CPU saved frame, rational-stack base/cursor/limit, ownership and generation ID). Do not reuse the existing cooperative callback table as a preemptive TCB.
+2. Add an explicitly opt-in Franc native JIT task launch ABI, with validated code pointers, independent 16 KiB CPU + rational stacks, bounded run/stop/finish rules and safe handling of accidental return. Preserve host REPL state, avoid concurrent JIT compilation and expose deterministic progress counters.
+3. Replace globally shared mutable-register assumptions with an explicit task-local policy or per-task state storage. Add stack underflow/overflow checks and nesting/critical-section rules before claiming general Franc preemption.
+4. Require a dedicated QEMU test where **two Franc-compiled never-yielding functions** advance under PIT interrupts while retaining distinct rational stack contents, preserving host state and rejecting invalid/finished task launches.
+5. Later, integrate timer scheduling with process boundaries and the CPL3 fault/syscall experiment. No process/Ring 3 guarantees should be inferred from this ring-0 proof.
+
+The current change does not introduce a new Franc primitive because editing the compiler's `stage4/aot.frac` requires atomically regenerating and pinning the Franc-generated bootstrap seed and Franctxt seed lock. Keep that as a separately verified integration step, rather than bypass the reproducible bootstrap contract.
