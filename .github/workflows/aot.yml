@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Check app/source register compatibility before expensive AOT generation
+        run: python3 -m franctxt.build check-apps
       - name: Build Franc AOT kernel without C objects
         run: |
           make -C stage4 legacy-all
@@ -43,9 +45,10 @@ jobs:
         if: github.ref == 'refs/heads/stage4-franc-native-bootstrap' || github.ref == 'refs/heads/stage4-roadmap-foundations'
         run: |
           cp stage4/native-build/gen3.S stage4/bootstrap_seed.S
+          python3 -m franctxt.build pin-seed
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add stage4/bootstrap_seed.S
+          git add stage4/bootstrap_seed.S franctxt/seed.lock.franctxt
           if ! git diff --cached --quiet; then
             git commit -m 'Pin reproducible Franc-generated bootstrap assembly seed'
             git push origin HEAD:"${{ github.ref }}"

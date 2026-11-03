@@ -25,6 +25,8 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+      - name: Franctxt verify seed and native application registry before QEMU
+        run: python3 -m franctxt.build preflight
       - name: Verify Franc compiler seed is committed, not downloaded or regenerated with Python
         shell: bash
         run: |

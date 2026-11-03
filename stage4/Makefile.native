@@ -3,7 +3,8 @@
 AS ?= as
 LD ?= ld
 OBJCOPY ?= objcopy
-.PHONY: all native-seed native-proof clean-native
+APP_SOURCES := $(shell sed '/^#/d; /^[[:space:]]*$/d' stage4/app_sources.list)
+.PHONY: all native-seed native-proof verified-native clean-native
 all: native-proof
 
 stage4/native_seed.o: stage4/bootstrap_seed.S
@@ -20,9 +21,13 @@ stage4/native_seed.elf: stage4/native_seed.o stage4/native_runtime.o stage4/nati
 	ld -m elf_x86_64 -nostdlib -T stage4/kernel.ld -o $@ stage4/native_runtime.o stage4/native_font.o stage4/native_seed.o
 stage4/native_seed.bin: stage4/native_seed.elf
 	objcopy -O binary -j .text -j .rodata -j .data $< $@
-stage4/native_seed.img: stage4/native_boot.bin stage4/native_seed.bin stage4/pack_native.sh franctxt/install_native.sh lib/franctxt.frac
+stage4/native_seed.img: stage4/native_boot.bin stage4/native_seed.bin stage4/pack_native.sh franctxt/install_native.sh stage4/app_sources.list stage4/seed_sources.list franctxt/build.franctxt $(APP_SOURCES) $(wildcard franctxt/seed.lock.franctxt)
 	sh stage4/pack_native.sh stage4/native_boot.bin stage4/native_seed.bin $@
 native-seed: stage4/native_seed.img
+verified-native:
+	python3 -m franctxt.build preflight
+	$(MAKE) -f stage4/Makefile.native native-seed
+	python3 -m franctxt.build verify-image --image stage4/native_seed.img --kernel stage4/native_seed.bin
 native-proof: stage4/native_seed.img
 	bash stage4/bootstrap.sh stage4/native_seed.img stage4/native-proof
 	cmp stage4/native_seed.bin stage4/native-proof/gen2.bin

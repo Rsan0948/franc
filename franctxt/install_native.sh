@@ -4,13 +4,14 @@
 # Slot 0 = kernel.franctxt, slot 1 = system.franctxt. Existing source
 # library bundles are outside FRANCFS1, so no sectors collide.
 set -eu
-if [ "$#" -ne 3 ]; then
-    echo "usage: sh franctxt/install_native.sh IMAGE KERNEL.bin GIT_REVISION" >&2
+if [ "$#" -ne 4 ]; then
+    echo "usage: sh franctxt/install_native.sh IMAGE KERNEL.bin GIT_REVISION BOOT.bin" >&2
     exit 2
 fi
 image=$1
 kernel=$2
 revision=$3
+boot=$4
 case "$revision" in
   *[!a-zA-Z0-9.-]*|'') echo "invalid source revision" >&2; exit 2;;
 esac
@@ -28,13 +29,34 @@ scheduler.max-tasks = 2
 schema = "francos.kernel.v1"
 system.name = "FrancOS"
 EOF
+# Exact NUL-terminated application bundle bytes are hashed in their
+# authoritative declared order; no second manually maintained source list.
+apps_hash=$(
+    {
+        while IFS= read -r src || [ -n "$src" ]; do
+            case "$src" in ''|'#'*) continue ;; esac
+            cat "$src"
+            printf '\n'
+        done < stage4/app_sources.list
+        printf '\000'
+    } | sha256sum | cut -d ' ' -f1
+)
+boot_hash=$(sha256sum "$boot" | cut -d ' ' -f1)
+seed_hash=$(sha256sum stage4/bootstrap_seed.S | cut -d ' ' -f1)
+registry_hash=$(sha256sum stage4/apps/registry.frac | cut -d ' ' -f1)
+runtime_hash=$(sha256sum stage4/runtime.S | cut -d ' ' -f1)
 kernel_hash=$(sha256sum "$kernel" | cut -d ' ' -f1)
 config_hash=$({ printf 'franctxt/1\000'; cat "$tmp/system.franctxt"; } | sha256sum | cut -d ' ' -f1)
 cat > "$tmp/kernel.franctxt" <<EOF
 franctxt 1
+build.apps-sha256 = "sha256:$apps_hash"
 build.arch = "x86_64"
+build.boot-sha256 = "sha256:$boot_hash"
 build.config-sha256 = "sha256:$config_hash"
 build.kernel-sha256 = "sha256:$kernel_hash"
+build.registry-sha256 = "sha256:$registry_hash"
+build.runtime-sha256 = "sha256:$runtime_hash"
+build.seed-assembly-sha256 = "sha256:$seed_hash"
 build.source-revision = "$revision"
 build.version = "0.6.0-dev"
 schema = "francos.kernel-build.v1"

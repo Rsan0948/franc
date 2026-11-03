@@ -23,6 +23,8 @@ jobs:
     timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
+      - name: Franctxt dependency preflight - reject stale native seed or missing registry words
+        run: python3 -m franctxt.build preflight
       - name: Install QEMU
         run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
       - name: Assemble committed Franc-generated native kernel (no Python/C compiler)
@@ -33,3 +35,12 @@ jobs:
         run: python3 stage4/qemu_roadmap.py stage4/native_seed.img
       - name: Verify e1000 Ethernet DMA packet I/O against QEMU SLIRP
         run: python3 stage4/qemu_net.py stage4/native_seed.img
+      - name: Generate tested-build Franctxt artifact after passing native QEMU suites
+        run: |
+          python3 -m franctxt.build record --image stage4/native_seed.img --kernel stage4/native_seed.bin --passed apps --passed network --passed native --output stage4/tested-build.franctxt
+          cat stage4/tested-build.franctxt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: franc-native-tested-build
+          path: stage4/tested-build.franctxt
+          if-no-files-found: error

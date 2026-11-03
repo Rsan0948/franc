@@ -1,0 +1,25 @@
+# Ordered native JIT application bundle sources. Order is part of bundle identity.
+stage4/apps/native-compat.frac
+lib/fixpt.frac
+lib/cf.frac
+lib/approx.frac
+lib/iv.frac
+lib/trans.frac
+lib/graphics.frac
+lib/ford.frac
+lib/spiro.frac
+lib/calc.frac
+lib/edit.frac
+lib/walk.frac
+lib/dd.frac
+stage4/apps/native-programs.frac
+lib/bignum.frac
+lib/float.frac
+lib/litetofrac.frac
+lib/pkg.frac
+lib/ide.frac
+stage4/pci.frac
+stage4/tasks.frac
+stage4/net.frac
+stage4/fibers.frac
+lib/franctxt.frac

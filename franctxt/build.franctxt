@@ -1,0 +1,12 @@
+franctxt 1
+build.abi = "franc-rat16-v1"
+build.app-list = "stage4/app_sources.list"
+build.arch = "x86_64"
+build.boot = "bios-and-uefi-experimental"
+build.kernel-language = "franc"
+build.kernel-runtime = "assembly"
+build.native-seed-required = true
+build.seed-list = "stage4/seed_sources.list"
+memory.ram-mib = 128
+schema = "francos.build-authority.v1"
+system.name = "FrancOS"

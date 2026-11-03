@@ -138,3 +138,70 @@ future, separately testable increments.
 Native commands for the current canonical disk documents:
     ft-config ft-hash type cr
     ft-verify-config .
+
+
+## FrancOS build authority (v1)
+
+The build now uses two authoritative, ordered source inventories:
+stage4/seed_sources.list for the compiled native kernel and
+stage4/app_sources.list for the disk-backed application source bundle.
+The bootstrapping and image packer both consume those lists.
+
+franctxt/build.franctxt declares the supported build profile.
+franctxt/seed.lock.franctxt binds the committed Franc-generated
+bootstrap assembly to the exact bytes of its ordered source inputs.
+Hashes include path, order and file content, not modification times.
+
+    python3 -m franctxt.build check-apps
+    python3 -m franctxt.build check-seed
+    python3 -m franctxt.build preflight
+    make -f stage4/Makefile.native verified-native
+
+A failed preflight exits **before QEMU** if the seed lock is stale or
+native app source declares a register not present in the compiled
+kernel registry. This directly detects a recurring cause of JIT
+"stage2: unsupported token" errors. It does not detect every possible
+compiler/ABI incompatibility; the native QEMU tests remain necessary.
+
+### Automatic pinning and fail-closed builds
+
+The C/Python-free AOT workflow still emits the kernel in Franc and
+assembly. After successful generation-2/3 self-hosting, CI writes
+both stage4/bootstrap_seed.S and franctxt/seed.lock.franctxt in one
+commit. The build-authority Python tool computes metadata only and
+does NOT compile the native Franc kernel.
+
+A kernel-source change can cause an initial preflight failure while
+the AOT job is rebuilding and pinning the matching seed. This is
+intentional fail-closed behavior. The pinned commit triggers fresh
+tests. A failed AOT generation never silently approves a stale seed.
+
+### Full native image identities
+
+The persisted kernel.franctxt manifest now fingerprints:
+- exact compiled kernel binary
+- initial canonical configuration
+- bootstrap assembly source
+- registry source
+- native ABI runtime source
+- BIOS boot sector
+- complete NUL-terminated application bundle bytes
+- Git source revision
+
+The CI image validator checks these against the real packed disk and
+the source inventory:
+
+    python3 -m franctxt.build verify-image --image stage4/native_seed.img --kernel stage4/native_seed.bin
+
+After successful integration tests, CI also creates a separate
+tested-build.franctxt artifact containing the exact image SHA-256,
+seed-lock identity, app digest and explicit passed test suites.
+This report is not cryptographically signed and a pass field alone
+is not proof that a test ran: only a trusted CI workflow supplies
+evidence of test execution.
+
+The native FrancOS reader displays these persisted identities,
+and native SHA-256 verifies its configuration digest against the
+manifest. Build orchestration currently runs on the host in CI;
+live kernel enforcement and signature-authenticated secure boot
+remain separate, unfinished milestones.

@@ -23,10 +23,16 @@ cleanup() {
     rm -rf "$scratch"
 }
 trap cleanup EXIT HUP INT TERM
-set -- stage3/ata.frac stage3/storage.frac stage4/display.frac \
-       stage4/keyboard.frac stage2/compiler.frac stage4/repl.frac \
-       stage4/upgrade.frac stage4/aot.frac stage4/bundle.frac \
-       stage4/apps/registry.frac stage4/kernel.frac
+# One authoritative, ordered kernel source list. Its identity is locked
+# by Franctxt before testing; no hidden second copy in this bootstrap.
+set --
+while IFS= read -r src || [ -n "$src" ]; do
+    case "$src" in ''|'#'*) continue ;; esac
+    case "$src" in *[!a-zA-Z0-9._/-]*|/*|*..*) echo "invalid seed source: $src" >&2; exit 1 ;; esac
+    test -f "$src" || { echo "missing kernel source: $src" >&2; exit 1; }
+    set -- "$@" "$src"
+done < stage4/seed_sources.list
+test "$#" -gt 0
 for generation in 2 3; do
     disk="$scratch/input-$generation.img"
     cp "$seed" "$disk"
