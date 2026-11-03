@@ -163,7 +163,8 @@ with tempfile.TemporaryDirectory(prefix="franc-roadmap-") as tmp:
         line("ide-buffer 2050 + b@ .", b"0\nFrac> ")
         line('ide-reset "wave1.frac" ide-load .', b"1\nFrac> ")
         line("ide-buffer type cr", b"abcdef\nFrac> ")
-        print("PASS: IDE cursor insertion/backspace, stable filename and persisted reload", flush=True)
+        line("ide-files", b"wave1.frac\nFrac> ")
+        print("PASS: IDE cursor insertion/backspace, on-screen file list and persisted reload", flush=True)
         line('pci-find-network 0 - if "PCI MISSING" type cr else "PCI NETWORK PRESENT" type cr then',
              b"PCI NETWORK PRESENT\nFrac> ")
         line('pci-find-e1000 0 - if "E1000 MISSING" type cr else "E1000 PRESENT" type cr then',
