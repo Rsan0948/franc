@@ -49,6 +49,31 @@ class ProcessIsolationContract(unittest.TestCase):
         runtime = (ROOT / "stage4/runtime.S").read_text()
         self.assertIn("call fr_e820_arena_usable", runtime)
 
+    def test_owner_leases_compile_and_guard_raw_frame_release(self):
+        runtime = (ROOT / "stage4/runtime.S").read_text()
+        source = (ROOT / "stage4/page_owners.S").read_text()
+        scheduler = (ROOT / "stage4/scheduler.S").read_text()
+        self.assertIn('.include "stage4/page_owners.S"', runtime)
+        self.assertIn("fr_lease_page_tags(%rip)", runtime)
+        self.assertIn("rep stosq", runtime)
+        for name in ("proc-lease-begin", "proc-lease-alloc",
+                     "proc-lease-free", "proc-lease-end"):
+            self.assertIn(f'.asciz "{name}"', scheduler)
+        for label in ("fr_lease_begin:", "fr_lease_alloc:",
+                      "fr_lease_free:", "fr_lease_end:",
+                      "fr_lease_check:", "fr_lease_page_tags:"):
+            self.assertIn(label, source)
+        with tempfile.TemporaryDirectory(prefix="franc-leases-") as tmp:
+            output = Path(tmp) / "runtime.o"
+            subprocess.run(["as", "--64", "-o", str(output),
+                            "stage4/runtime.S"], cwd=ROOT, check=True,
+                           capture_output=True, text=True)
+            symbols = subprocess.check_output(["objdump", "-t", str(output)],
+                                              text=True)
+            for symbol in ("fr_lease_begin", "fr_lease_alloc",
+                           "fr_lease_free", "fr_lease_end"):
+                self.assertIn(symbol, symbols)
+
     def test_distinct_user_physical_frames_and_fault_recovery(self):
         ring = (ROOT / "stage4/ring3.S").read_text()
         for token in (
