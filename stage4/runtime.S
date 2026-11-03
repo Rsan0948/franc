@@ -1203,6 +1203,7 @@ fr_ft_sha256:
 .include "franctxt/sha256_native.S"
 
 
+.section .text,"ax"
 /* Strictly 32-bit PCI BAR0 memory-mapped device registers.
  * QEMU 82540EM legacy e1000 I/O BAR is inert; PCI MMIO is necessary.
  * Only the 128KiB MMIO window above 128MiB guest RAM is addressable.
