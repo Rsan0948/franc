@@ -1,0 +1,54 @@
+name: FrancOS v1 Wave 1 — Home, files, process address spaces
+on:
+  push:
+    branches: [stage4-roadmap-foundations]
+    paths:
+      - 'stage4/**'
+      - 'stage3/**'
+      - 'lib/**'
+      - 'franctxt/**'
+      - '.github/workflows/wave1.yml'
+  pull_request:
+    paths:
+      - 'stage4/**'
+      - 'stage3/**'
+      - 'lib/**'
+      - 'franctxt/**'
+      - '.github/workflows/wave1.yml'
+permissions:
+  contents: read
+jobs:
+  wave1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate the native Franc seed and source/memory authority
+        run: python3 -m franctxt.build preflight
+      - name: Check native IDE controls and process ownership assembly
+        run: |
+          python3 -m unittest discover -s franctxt/tests -p 'test_ide_contract.py' -v
+          python3 -m unittest discover -s franctxt/tests -p 'test_process_isolation_contract.py' -v
+      - name: Install software QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Build exact pinned C-free native image
+        run: make -f stage4/Makefile.native native-seed
+      - name: Verify image source, kernel and app digests
+        run: python3 -m franctxt.build verify-image --image stage4/native_seed.img --kernel stage4/native_seed.bin
+      - name: Verify independent CPL3 CR3 roots and page reclamation
+        run: FRANC_TEST_PROC_ISO=1 python3 stage4/qemu_irq.py stage4/native_seed.img
+      - name: Boot Home, interact through keyboard, cold reboot and inspect VGA
+        env:
+          FRANC_CAPTURE_DIR: stage4/screenshots
+        run: python3 stage4/qemu_home.py stage4/native_seed.img
+      - name: Record tested image identity after paired acceptance
+        run: |
+          python3 -m franctxt.build record --image stage4/native_seed.img --kernel stage4/native_seed.bin --passed native --passed apps --output stage4/wave1-tested.franctxt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: francos-wave1-guest-screens-and-identity
+          path: |
+            stage4/screenshots/*.ppm
+            stage4/wave1-tested.franctxt
+          if-no-files-found: warn
