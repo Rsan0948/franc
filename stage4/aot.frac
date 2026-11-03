@@ -24,10 +24,10 @@ def aot-demo "2 3 + ." aot-source drop ;
 def aot-nibble :an-n an-n 10 - if an-n 48 + emit else an-n 10 - 97 + emit then ;
 def aot-name :an-name "fw_" type begin an-name byte@ :an-byte an-byte if0 exit then an-byte 16 / floor aot-nibble an-byte 16 % aot-nibble an-name 1 + :an-name again ;
 def aot-call :ac-name "  call " type ac-name aot-name 10 emit ;
-def aot-prog-token :apt-token apt-token aot-operator ifnz 1 exit then apt-token s2-number :apt-valid :apt-den :apt-num apt-valid ifnz apt-num apt-den aot-literal exit then apt-token aot-call 1 ;
+def aot-prog-token :apt-token apt-token byte@ 34 - if0 apt-token aot-string exit then apt-token byte@ 58 - if0 apt-token 1 + aot-reg-set exit then apt-token aot-operator ifnz 1 exit then apt-token s2-number :apt-valid :apt-den :apt-num apt-valid ifnz apt-num apt-den aot-literal exit then apt-token aot-reg-get ifnz 1 exit then apt-token aot-call 1 ;
 \ A true relocatable multi-definition unit. Static calls use symbolic function
 \ names and do not depend on addresses of the live kernel's JIT dictionary.
-def aot-program :s2p "FRANC-PROGRAM-BEGIN" type cr ".text" type cr ".global franc_aot_entry" type cr "franc_aot_entry:" type cr "main" aot-call "  ret" type cr 0 :ap-in-def 0 :s2sp 0 :ac-next-id begin s2-next :ap-token ap-token if0 ap-in-def ifnz "FRANC-PROGRAM-ERROR" type cr 0 exit then "FRANC-PROGRAM-END" type cr 1 exit then ap-token "def" s2-eq ifnz ap-in-def ifnz "FRANC-PROGRAM-ERROR" type cr 0 exit then s2-next :ap-name ap-name if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then ap-name aot-name ":" type cr 1 :ap-in-def else ap-token ";" s2-eq ifnz ap-in-def if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then s2sp ifnz "FRANC-PROGRAM-ERROR" type cr 0 exit then "  ret" type cr 0 :ap-in-def else ap-in-def if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then ap-token aot-program-word if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then then then again ;
+def aot-program :ap-input ap-input :s2p "FRANC-PROGRAM-BEGIN" type cr ".text" type cr ".global franc_aot_entry" type cr "franc_aot_entry:" type cr "main" aot-call "  ret" type cr 0 :ap-in-def 0 :s2sp 0 :ac-next-id s2p aot-reg-scan ap-input :s2p begin s2-next :ap-token ap-token if0 ap-in-def ifnz "FRANC-PROGRAM-ERROR" type cr 0 exit then "FRANC-PROGRAM-END" type cr 1 exit then ap-token "def" s2-eq ifnz ap-in-def ifnz "FRANC-PROGRAM-ERROR" type cr 0 exit then s2-next :ap-name ap-name if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then ap-name aot-name ":" type cr 1 :ap-in-def else ap-token ";" s2-eq ifnz ap-in-def if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then s2sp ifnz "FRANC-PROGRAM-ERROR" type cr 0 exit then "  ret" type cr 0 :ap-in-def else ap-in-def if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then ap-token aot-program-word if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then then then again ;
 def aot-program-demo "def square dup * ;\ndef main 7 square . ;" aot-program drop ;
 
 
@@ -47,3 +47,21 @@ def aot-repeat s2sp if0 -1 exit then s2-ctrl-pop :ar-end :ar-tag ar-tag 4 - ifnz
 def aot-control :act-t act-t "if" s2-eq ifnz "jns" aot-if exit then act-t "if0" s2-eq ifnz "jnz" aot-if exit then act-t "ifnz" s2-eq ifnz "jz" aot-if exit then act-t "else" s2-eq ifnz aot-else exit then act-t "then" s2-eq ifnz aot-then exit then act-t "begin" s2-eq ifnz aot-begin exit then act-t "while" s2-eq ifnz aot-while exit then act-t "again" s2-eq ifnz aot-again exit then act-t "repeat" s2-eq ifnz aot-repeat exit then 0 ;
 def aot-program-word :apw-token apw-token aot-control :apw-status apw-status if 0 exit then apw-status ifnz 1 exit then apw-token aot-prog-token ;
 def aot-control-demo "def choose dup 0 - if drop 11 else drop 22 then ;\ndef main -1 choose . 1 choose . ;" aot-program drop "FRANC-CONTROL-END" type cr ;
+
+
+\ String literals and named registers for relocatable AOT compilation.
+\ String bytes are emitted as .rodata; register cells use COMMON symbols.
+\ The prepass collects declared registers so reads can precede stores.
+def aot-data-byte :adb-n "  .byte " type adb-n aot-dec cr ;
+def aot-str-label :asl-id ".Laot_string_" type asl-id aot-dec ;
+def aot-string :astr-text aot-id :astr-id ".section .rodata" type cr astr-id aot-str-label ":" type cr astr-text 1 + :astr-pos begin astr-pos byte@ :astr-byte astr-byte if0 0 exit then astr-byte 34 - if0 0 aot-data-byte ".section .text" type cr "  leaq " type astr-id aot-str-label "(%rip), %rdi" type cr "  movq $1, %rsi" type cr "  call fr_push" type cr 1 exit then astr-byte 92 - if0 astr-pos 1 + :astr-pos astr-pos byte@ :astr-byte astr-byte if0 0 exit then astr-byte 110 - if0 10 :astr-byte then astr-byte 114 - if0 13 :astr-byte then astr-byte 116 - if0 9 :astr-byte then astr-byte 48 - if0 0 :astr-byte then then astr-byte aot-data-byte astr-pos 1 + :astr-pos again ;
+\ The Stage 2 line scratch buffer is available during AOT compilation.
+def aot-reg-end :are-pos begin s2-line-buffer are-pos + byte@ if0 are-pos 1 + exit then are-pos 1 + :are-pos again ;
+def aot-reg-find :arf-name 0 :arf-pos begin arf-pos aot-reg-used - if0 0 exit then s2-line-buffer arf-pos + arf-name s2-eq ifnz 1 exit then arf-pos aot-reg-end :arf-pos again ;
+def aot-reg-remember :arr-name arr-name aot-reg-find ifnz exit then aot-reg-used :arr-pos begin arr-name byte@ :arr-byte arr-pos 4095 - if0 exit then s2-line-buffer arr-pos + arr-byte b! arr-pos 1 + :arr-pos arr-name 1 + :arr-name arr-byte if0 arr-pos :aot-reg-used exit then again ;
+def aot-reg-scan :ars-source 0 :aot-reg-used ars-source :s2p begin s2-next :ars-token ars-token if0 exit then ars-token byte@ 58 - if0 ars-token 1 + aot-reg-remember then again ;
+def aot-reg-label :arl-name "reg_" type arl-name aot-name ;
+def aot-reg-addr :ara-name "  leaq " type ara-name aot-reg-label "(%rip), %rdi" type cr ;
+def aot-reg-set :ars-name ".comm " type ars-name aot-reg-label ",16,16" type cr ars-name aot-reg-addr "  call fr_reg_set" type cr 1 ;
+def aot-reg-get :arg-name arg-name aot-reg-find if0 0 exit then arg-name aot-reg-addr "  call fr_reg_get" type cr 1 ;
+def aot-string-reg-demo "def main 10 :saved \"Franc AOT\" type 10 emit saved . ;" aot-program drop "FRANC-STRING-END" type cr ;

@@ -80,6 +80,7 @@ try:
                           (b'a', b'FRANC-AOT-END\nFranc> '),
                           (b'c', b'FRANC-PROGRAM-END\nFranc> '),
                           (b'd', b'FRANC-CONTROL-END\nFranc> '),
+                          (b'e', b'FRANC-STRING-END\nFranc> '),
                           (b'b', b'SELFHOST OK\nFranc> '),
                           (b'\x1b', b'EXIT CONSOLE')]:
         time.sleep(0.5)
@@ -226,6 +227,59 @@ try:
             guest.wait()
 
     print('PASS: Franc AOT conditional program cold-booted and executed both branches correctly')
+
+    # Verify string literal relocation and register read/write semantics
+    # using a new independently booted image, not only source inspection.
+    strings = re.search(rb'FRANC-PROGRAM-BEGIN\n(.*?)FRANC-PROGRAM-END\nFRANC-STRING-END\n',transcript,re.S)
+    assert strings and b'FRANC-PROGRAM-ERROR' not in transcript,transcript
+    with TemporaryDirectory(prefix='franc-strings-aot-') as work:
+        source=Path(work)/'string-reg.S'
+        obj=Path(work)/'string-reg.o'
+        stub=Path(work)/'stub.o'
+        elf=Path(work)/'string-reg.elf'
+        native=Path(work)/'string-reg.bin'
+        disk=Path(work)/'string-reg.img'
+        assembly=strings.group(1).decode('ascii')
+        assert '.section .rodata' in assembly and 'call fr_reg_set' in assembly
+        assert 'call fr_reg_get' in assembly and 'call fr_type' in assembly
+        source.write_text(assembly)
+        subprocess.run(['as','--64','-o',str(obj),str(source)],check=True)
+        subprocess.run(['as','--64','-o',str(stub),str(root/'aot_stub.S')],check=True)
+        subprocess.run(['ld','-m','elf_x86_64','-nostdlib','-T',str(root/'kernel.ld'),
+            '-o',str(elf),str(root/'runtime.o'),str(root/'font.o'),
+            str(stub),str(obj)],check=True)
+        subprocess.run(['objcopy','-O','binary','-j','.text','-j','.rodata',
+            '-j','.data',str(elf),str(native)],check=True)
+        assert 0<native.stat().st_size<=127*512
+        dd('if=/dev/zero',f'of={disk}','bs=512','count=256')
+        dd(f'if={root/"boot.bin"}',f'of={disk}','conv=notrunc')
+        dd(f'if={native}',f'of={disk}','bs=512','count=127',
+           'seek=1','conv=notrunc')
+        dd(f'of={disk}','bs=512','seek=128','conv=notrunc',
+           data=b'FRANCFS1')
+        guest=subprocess.Popen([qemu,'-m','128M','-accel','tcg','-display','none',
+            '-monitor','none','-no-reboot','-serial','stdio',
+            '-drive',f'file={disk},format=raw,if=ide'],
+            stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,bufsize=0)
+        out=b''
+        try:
+            monitor=selectors.DefaultSelector()
+            monitor.register(guest.stdout,selectors.EVENT_READ)
+            deadline=time.monotonic()+90
+            while time.monotonic()<deadline and b'Franc AOT\n10\n' not in out:
+                if guest.poll() is not None:break
+                if monitor.select(0.2):
+                    chunk=os.read(guest.stdout.fileno(),8192)
+                    if not chunk:break
+                    out+=chunk
+            assert b'Franc AOT\n10\n' in out, (
+                'Franc AOT string/register cold boot mismatch: '+repr(out))
+        finally:
+            guest.kill()
+            guest.wait()
+    print('PASS: Franc AOT strings and named registers cold-boot and execute correctly')
+
 
 
     for marker in [b'SELFHOST START\n', b'GEN 2: 29\n', b'GEN 3: 29\n', b'42\n', b'SELFHOST OK\n']:

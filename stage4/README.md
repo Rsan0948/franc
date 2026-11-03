@@ -160,3 +160,12 @@ The control-flow CI check now also links its generated assembly against
 `runtime.S` and cold-boots a second independent QEMU disk image. It requires
 one negative and one positive input to produce `11` and `22` in order,
 proving the conditional branches execute correctly rather than merely assemble.
+
+## Native AOT string and register support
+
+The `e` menu test generates assembly with NUL-terminated string literals in
+`.rodata` and named register cells in `.bss` via assembler COMMON symbols.
+The Franc compiler performs a register-declaration prepass, so a register can
+be read before the first assignment. CI independently assembles, links and
+cold-boots this program, checking both text and stored values. This is still
+an incremental parity step, not a complete Python-free rebuild.
