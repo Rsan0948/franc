@@ -16126,6 +16126,60 @@ fw_6170702d72656769737465722d73656564:
 .comm reg_fw_69702d6c656e,16,16
   leaq reg_fw_69702d6c656e(%rip), %rdi
   call fr_reg_set
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
+.comm reg_fw_6e65742d646e732d7265616479,16,16
+  leaq reg_fw_6e65742d646e732d7265616479(%rip), %rdi
+  call fr_reg_set
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
+.comm reg_fw_6e65742d7461726765742d6f6374,16,16
+  leaq reg_fw_6e65742d7461726765742d6f6374(%rip), %rdi
+  call fr_reg_set
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
+.comm reg_fw_7564702d6c656e677468,16,16
+  leaq reg_fw_7564702d6c656e677468(%rip), %rdi
+  call fr_reg_set
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
+.comm reg_fw_7564702d6970,16,16
+  leaq reg_fw_7564702d6970(%rip), %rdi
+  call fr_reg_set
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
+.comm reg_fw_7564702d64617461,16,16
+  leaq reg_fw_7564702d64617461(%rip), %rdi
+  call fr_reg_set
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
+.comm reg_fw_7564702d69,16,16
+  leaq reg_fw_7564702d69(%rip), %rdi
+  call fr_reg_set
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
+.comm reg_fw_7564702d6376616c7565,16,16
+  leaq reg_fw_7564702d6376616c7565(%rip), %rdi
+  call fr_reg_set
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
+.comm reg_fw_7564702d6c656e,16,16
+  leaq reg_fw_7564702d6c656e(%rip), %rdi
+  call fr_reg_set
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
+.comm reg_fw_7564702d72782d636865636b,16,16
+  leaq reg_fw_7564702d72782d636865636b(%rip), %rdi
+  call fr_reg_set
   ret
 fw_62616e6e6572:
 .section .rodata
@@ -44400,6 +44454,392 @@ aot_set_fw_69702d6c656e:
   .quad .Laot_word_name_1486
   .quad aot_set_fw_69702d6c656e
 .section .text
+aot_get_fw_6e65742d646e732d7265616479:
+  leaq reg_fw_6e65742d646e732d7265616479(%rip), %rdi
+  jmp fr_reg_get
+aot_set_fw_6e65742d646e732d7265616479:
+  leaq reg_fw_6e65742d646e732d7265616479(%rip), %rdi
+  jmp fr_reg_set
+.section .rodata
+.Laot_word_name_1487:
+  .byte 110
+  .byte 101
+  .byte 116
+  .byte 45
+  .byte 100
+  .byte 110
+  .byte 115
+  .byte 45
+  .byte 114
+  .byte 101
+  .byte 97
+  .byte 100
+  .byte 121
+  .byte 0
+.section .data
+.Laot_word_entry_1487:
+  .quad .Laot_word_entry_1486
+  .quad .Laot_word_name_1487
+  .quad aot_get_fw_6e65742d646e732d7265616479
+.section .rodata
+.Laot_word_name_1488:
+  .byte 58
+  .byte 110
+  .byte 101
+  .byte 116
+  .byte 45
+  .byte 100
+  .byte 110
+  .byte 115
+  .byte 45
+  .byte 114
+  .byte 101
+  .byte 97
+  .byte 100
+  .byte 121
+  .byte 0
+.section .data
+.Laot_word_entry_1488:
+  .quad .Laot_word_entry_1487
+  .quad .Laot_word_name_1488
+  .quad aot_set_fw_6e65742d646e732d7265616479
+.section .text
+aot_get_fw_6e65742d7461726765742d6f6374:
+  leaq reg_fw_6e65742d7461726765742d6f6374(%rip), %rdi
+  jmp fr_reg_get
+aot_set_fw_6e65742d7461726765742d6f6374:
+  leaq reg_fw_6e65742d7461726765742d6f6374(%rip), %rdi
+  jmp fr_reg_set
+.section .rodata
+.Laot_word_name_1489:
+  .byte 110
+  .byte 101
+  .byte 116
+  .byte 45
+  .byte 116
+  .byte 97
+  .byte 114
+  .byte 103
+  .byte 101
+  .byte 116
+  .byte 45
+  .byte 111
+  .byte 99
+  .byte 116
+  .byte 0
+.section .data
+.Laot_word_entry_1489:
+  .quad .Laot_word_entry_1488
+  .quad .Laot_word_name_1489
+  .quad aot_get_fw_6e65742d7461726765742d6f6374
+.section .rodata
+.Laot_word_name_1490:
+  .byte 58
+  .byte 110
+  .byte 101
+  .byte 116
+  .byte 45
+  .byte 116
+  .byte 97
+  .byte 114
+  .byte 103
+  .byte 101
+  .byte 116
+  .byte 45
+  .byte 111
+  .byte 99
+  .byte 116
+  .byte 0
+.section .data
+.Laot_word_entry_1490:
+  .quad .Laot_word_entry_1489
+  .quad .Laot_word_name_1490
+  .quad aot_set_fw_6e65742d7461726765742d6f6374
+.section .text
+aot_get_fw_7564702d6c656e677468:
+  leaq reg_fw_7564702d6c656e677468(%rip), %rdi
+  jmp fr_reg_get
+aot_set_fw_7564702d6c656e677468:
+  leaq reg_fw_7564702d6c656e677468(%rip), %rdi
+  jmp fr_reg_set
+.section .rodata
+.Laot_word_name_1491:
+  .byte 117
+  .byte 100
+  .byte 112
+  .byte 45
+  .byte 108
+  .byte 101
+  .byte 110
+  .byte 103
+  .byte 116
+  .byte 104
+  .byte 0
+.section .data
+.Laot_word_entry_1491:
+  .quad .Laot_word_entry_1490
+  .quad .Laot_word_name_1491
+  .quad aot_get_fw_7564702d6c656e677468
+.section .rodata
+.Laot_word_name_1492:
+  .byte 58
+  .byte 117
+  .byte 100
+  .byte 112
+  .byte 45
+  .byte 108
+  .byte 101
+  .byte 110
+  .byte 103
+  .byte 116
+  .byte 104
+  .byte 0
+.section .data
+.Laot_word_entry_1492:
+  .quad .Laot_word_entry_1491
+  .quad .Laot_word_name_1492
+  .quad aot_set_fw_7564702d6c656e677468
+.section .text
+aot_get_fw_7564702d6970:
+  leaq reg_fw_7564702d6970(%rip), %rdi
+  jmp fr_reg_get
+aot_set_fw_7564702d6970:
+  leaq reg_fw_7564702d6970(%rip), %rdi
+  jmp fr_reg_set
+.section .rodata
+.Laot_word_name_1493:
+  .byte 117
+  .byte 100
+  .byte 112
+  .byte 45
+  .byte 105
+  .byte 112
+  .byte 0
+.section .data
+.Laot_word_entry_1493:
+  .quad .Laot_word_entry_1492
+  .quad .Laot_word_name_1493
+  .quad aot_get_fw_7564702d6970
+.section .rodata
+.Laot_word_name_1494:
+  .byte 58
+  .byte 117
+  .byte 100
+  .byte 112
+  .byte 45
+  .byte 105
+  .byte 112
+  .byte 0
+.section .data
+.Laot_word_entry_1494:
+  .quad .Laot_word_entry_1493
+  .quad .Laot_word_name_1494
+  .quad aot_set_fw_7564702d6970
+.section .text
+aot_get_fw_7564702d64617461:
+  leaq reg_fw_7564702d64617461(%rip), %rdi
+  jmp fr_reg_get
+aot_set_fw_7564702d64617461:
+  leaq reg_fw_7564702d64617461(%rip), %rdi
+  jmp fr_reg_set
+.section .rodata
+.Laot_word_name_1495:
+  .byte 117
+  .byte 100
+  .byte 112
+  .byte 45
+  .byte 100
+  .byte 97
+  .byte 116
+  .byte 97
+  .byte 0
+.section .data
+.Laot_word_entry_1495:
+  .quad .Laot_word_entry_1494
+  .quad .Laot_word_name_1495
+  .quad aot_get_fw_7564702d64617461
+.section .rodata
+.Laot_word_name_1496:
+  .byte 58
+  .byte 117
+  .byte 100
+  .byte 112
+  .byte 45
+  .byte 100
+  .byte 97
+  .byte 116
+  .byte 97
+  .byte 0
+.section .data
+.Laot_word_entry_1496:
+  .quad .Laot_word_entry_1495
+  .quad .Laot_word_name_1496
+  .quad aot_set_fw_7564702d64617461
+.section .text
+aot_get_fw_7564702d69:
+  leaq reg_fw_7564702d69(%rip), %rdi
+  jmp fr_reg_get
+aot_set_fw_7564702d69:
+  leaq reg_fw_7564702d69(%rip), %rdi
+  jmp fr_reg_set
+.section .rodata
+.Laot_word_name_1497:
+  .byte 117
+  .byte 100
+  .byte 112
+  .byte 45
+  .byte 105
+  .byte 0
+.section .data
+.Laot_word_entry_1497:
+  .quad .Laot_word_entry_1496
+  .quad .Laot_word_name_1497
+  .quad aot_get_fw_7564702d69
+.section .rodata
+.Laot_word_name_1498:
+  .byte 58
+  .byte 117
+  .byte 100
+  .byte 112
+  .byte 45
+  .byte 105
+  .byte 0
+.section .data
+.Laot_word_entry_1498:
+  .quad .Laot_word_entry_1497
+  .quad .Laot_word_name_1498
+  .quad aot_set_fw_7564702d69
+.section .text
+aot_get_fw_7564702d6376616c7565:
+  leaq reg_fw_7564702d6376616c7565(%rip), %rdi
+  jmp fr_reg_get
+aot_set_fw_7564702d6376616c7565:
+  leaq reg_fw_7564702d6376616c7565(%rip), %rdi
+  jmp fr_reg_set
+.section .rodata
+.Laot_word_name_1499:
+  .byte 117
+  .byte 100
+  .byte 112
+  .byte 45
+  .byte 99
+  .byte 118
+  .byte 97
+  .byte 108
+  .byte 117
+  .byte 101
+  .byte 0
+.section .data
+.Laot_word_entry_1499:
+  .quad .Laot_word_entry_1498
+  .quad .Laot_word_name_1499
+  .quad aot_get_fw_7564702d6376616c7565
+.section .rodata
+.Laot_word_name_1500:
+  .byte 58
+  .byte 117
+  .byte 100
+  .byte 112
+  .byte 45
+  .byte 99
+  .byte 118
+  .byte 97
+  .byte 108
+  .byte 117
+  .byte 101
+  .byte 0
+.section .data
+.Laot_word_entry_1500:
+  .quad .Laot_word_entry_1499
+  .quad .Laot_word_name_1500
+  .quad aot_set_fw_7564702d6376616c7565
+.section .text
+aot_get_fw_7564702d6c656e:
+  leaq reg_fw_7564702d6c656e(%rip), %rdi
+  jmp fr_reg_get
+aot_set_fw_7564702d6c656e:
+  leaq reg_fw_7564702d6c656e(%rip), %rdi
+  jmp fr_reg_set
+.section .rodata
+.Laot_word_name_1501:
+  .byte 117
+  .byte 100
+  .byte 112
+  .byte 45
+  .byte 108
+  .byte 101
+  .byte 110
+  .byte 0
+.section .data
+.Laot_word_entry_1501:
+  .quad .Laot_word_entry_1500
+  .quad .Laot_word_name_1501
+  .quad aot_get_fw_7564702d6c656e
+.section .rodata
+.Laot_word_name_1502:
+  .byte 58
+  .byte 117
+  .byte 100
+  .byte 112
+  .byte 45
+  .byte 108
+  .byte 101
+  .byte 110
+  .byte 0
+.section .data
+.Laot_word_entry_1502:
+  .quad .Laot_word_entry_1501
+  .quad .Laot_word_name_1502
+  .quad aot_set_fw_7564702d6c656e
+.section .text
+aot_get_fw_7564702d72782d636865636b:
+  leaq reg_fw_7564702d72782d636865636b(%rip), %rdi
+  jmp fr_reg_get
+aot_set_fw_7564702d72782d636865636b:
+  leaq reg_fw_7564702d72782d636865636b(%rip), %rdi
+  jmp fr_reg_set
+.section .rodata
+.Laot_word_name_1503:
+  .byte 117
+  .byte 100
+  .byte 112
+  .byte 45
+  .byte 114
+  .byte 120
+  .byte 45
+  .byte 99
+  .byte 104
+  .byte 101
+  .byte 99
+  .byte 107
+  .byte 0
+.section .data
+.Laot_word_entry_1503:
+  .quad .Laot_word_entry_1502
+  .quad .Laot_word_name_1503
+  .quad aot_get_fw_7564702d72782d636865636b
+.section .rodata
+.Laot_word_name_1504:
+  .byte 58
+  .byte 117
+  .byte 100
+  .byte 112
+  .byte 45
+  .byte 114
+  .byte 120
+  .byte 45
+  .byte 99
+  .byte 104
+  .byte 101
+  .byte 99
+  .byte 107
+  .byte 0
+.section .data
+.Laot_word_entry_1504:
+  .quad .Laot_word_entry_1503
+  .quad .Laot_word_name_1504
+  .quad aot_set_fw_7564702d72782d636865636b
+.section .text
 aot_get_fw_636f756e74:
   leaq reg_fw_636f756e74(%rip), %rdi
   jmp fr_reg_get
@@ -44407,7 +44847,7 @@ aot_set_fw_636f756e74:
   leaq reg_fw_636f756e74(%rip), %rdi
   jmp fr_reg_set
 .section .rodata
-.Laot_word_name_1487:
+.Laot_word_name_1505:
   .byte 99
   .byte 111
   .byte 117
@@ -44415,12 +44855,12 @@ aot_set_fw_636f756e74:
   .byte 116
   .byte 0
 .section .data
-.Laot_word_entry_1487:
-  .quad .Laot_word_entry_1486
-  .quad .Laot_word_name_1487
+.Laot_word_entry_1505:
+  .quad .Laot_word_entry_1504
+  .quad .Laot_word_name_1505
   .quad aot_get_fw_636f756e74
 .section .rodata
-.Laot_word_name_1488:
+.Laot_word_name_1506:
   .byte 58
   .byte 99
   .byte 111
@@ -44429,9 +44869,9 @@ aot_set_fw_636f756e74:
   .byte 116
   .byte 0
 .section .data
-.Laot_word_entry_1488:
-  .quad .Laot_word_entry_1487
-  .quad .Laot_word_name_1488
+.Laot_word_entry_1506:
+  .quad .Laot_word_entry_1505
+  .quad .Laot_word_name_1506
   .quad aot_set_fw_636f756e74
 .section .text
 aot_get_fw_73632d707472:
@@ -44441,7 +44881,7 @@ aot_set_fw_73632d707472:
   leaq reg_fw_73632d707472(%rip), %rdi
   jmp fr_reg_set
 .section .rodata
-.Laot_word_name_1489:
+.Laot_word_name_1507:
   .byte 115
   .byte 99
   .byte 45
@@ -44450,12 +44890,12 @@ aot_set_fw_73632d707472:
   .byte 114
   .byte 0
 .section .data
-.Laot_word_entry_1489:
-  .quad .Laot_word_entry_1488
-  .quad .Laot_word_name_1489
+.Laot_word_entry_1507:
+  .quad .Laot_word_entry_1506
+  .quad .Laot_word_name_1507
   .quad aot_get_fw_73632d707472
 .section .rodata
-.Laot_word_name_1490:
+.Laot_word_name_1508:
   .byte 58
   .byte 115
   .byte 99
@@ -44465,9 +44905,9 @@ aot_set_fw_73632d707472:
   .byte 114
   .byte 0
 .section .data
-.Laot_word_entry_1490:
-  .quad .Laot_word_entry_1489
-  .quad .Laot_word_name_1490
+.Laot_word_entry_1508:
+  .quad .Laot_word_entry_1507
+  .quad .Laot_word_name_1508
   .quad aot_set_fw_73632d707472
 .section .text
 aot_get_fw_63632d6b6579:
@@ -44477,7 +44917,7 @@ aot_set_fw_63632d6b6579:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   jmp fr_reg_set
 .section .rodata
-.Laot_word_name_1491:
+.Laot_word_name_1509:
   .byte 99
   .byte 99
   .byte 45
@@ -44486,12 +44926,12 @@ aot_set_fw_63632d6b6579:
   .byte 121
   .byte 0
 .section .data
-.Laot_word_entry_1491:
-  .quad .Laot_word_entry_1490
-  .quad .Laot_word_name_1491
+.Laot_word_entry_1509:
+  .quad .Laot_word_entry_1508
+  .quad .Laot_word_name_1509
   .quad aot_get_fw_63632d6b6579
 .section .rodata
-.Laot_word_name_1492:
+.Laot_word_name_1510:
   .byte 58
   .byte 99
   .byte 99
@@ -44501,14 +44941,14 @@ aot_set_fw_63632d6b6579:
   .byte 121
   .byte 0
 .section .data
-.Laot_word_entry_1492:
-  .quad .Laot_word_entry_1491
-  .quad .Laot_word_name_1492
+.Laot_word_entry_1510:
+  .quad .Laot_word_entry_1509
+  .quad .Laot_word_name_1510
   .quad aot_set_fw_63632d6b6579
 .section .data
 .global franc_dict_initial
 franc_dict_initial:
-  .quad .Laot_word_entry_1492
+  .quad .Laot_word_entry_1510
 .section .rodata
 .global franc_stage2_source
 franc_stage2_source:
