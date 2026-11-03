@@ -42,6 +42,8 @@ jobs:
         run: python3 -m unittest discover -s franctxt/tests -p 'test_build_authority.py' -v
       - name: QEMU memory reservations, collisions and code-address anchors
         run: python3 -m unittest discover -s franctxt/tests -p 'test_memory.py' -v
+      - name: Verify native 32-bit MMIO symbols stay in executable text
+        run: python3 -m unittest discover -s franctxt/tests -p 'test_mmio_contract.py' -v
       - name: Independent JavaScript Franctxt 1 implementation
         run: node franctxt/tests/test_cross_language.cjs
       - name: Byte-for-byte Python/Node normalized fixture and hash equality
