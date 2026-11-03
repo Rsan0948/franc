@@ -793,7 +793,7 @@ s2_dict_used: .skip 8
 s2_intern_used: .skip 8
 s2_token_buffer: .skip 1024
 s2_control_buffer: .skip 1024
-s2_line_buffer: .skip 4096
+s2_line_buffer: .skip 16384
 s2_dict_nodes: .skip 6144
 s2_dict_names: .skip 16384
 s2_intern_data: .skip 32768
