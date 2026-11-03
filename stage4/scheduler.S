@@ -10,6 +10,10 @@
 .Ltask_statea_name: .asciz "task-state-a"
 .Ltask_stateb_name: .asciz "task-state-b"
 .Ltask_generation_name: .asciz "task-generation"
+.Ltask_local_read_name: .asciz "task-local@"
+.Ltask_local_write_name: .asciz "task-local!"
+.Ltask_local_a_name: .asciz "task-local-a0"
+.Ltask_local_b_name: .asciz "task-local-b0"
 .section .data
 .balign 8
 /* Linked dictionary nodes: next, name, code. First next is set at boot. */
@@ -18,7 +22,11 @@ fr_task_dict_ainc: .quad fr_task_dict_run, .Ltask_ainc_name, fr_task_inc_a
 fr_task_dict_binc: .quad fr_task_dict_ainc, .Ltask_binc_name, fr_task_inc_b
 fr_task_dict_statea: .quad fr_task_dict_binc, .Ltask_statea_name, fr_task_state_a
 fr_task_dict_stateb: .quad fr_task_dict_statea, .Ltask_stateb_name, fr_task_state_b
-fr_task_dict_top: .quad fr_task_dict_stateb, .Ltask_generation_name, fr_task_generation_word
+fr_task_dict_localread: .quad fr_task_dict_stateb, .Ltask_local_read_name, fr_task_local_read
+fr_task_dict_localwrite: .quad fr_task_dict_localread, .Ltask_local_write_name, fr_task_local_write
+fr_task_dict_locala: .quad fr_task_dict_localwrite, .Ltask_local_a_name, fr_task_local_a0
+fr_task_dict_localb: .quad fr_task_dict_locala, .Ltask_local_b_name, fr_task_local_b0
+fr_task_dict_top: .quad fr_task_dict_localb, .Ltask_generation_name, fr_task_generation_word
 .section .bss
 .balign 8
 /* 0:host, 1:worker A, 2:worker B.
@@ -28,6 +36,12 @@ fr_task_states: .skip 24
 fr_task_codes: .skip 24
 fr_task_generation: .skip 8
 fr_task_fault: .skip 8
+.balign 16
+/* Eight bounded, integer scalar locals per worker (2 x 8 x 8 bytes).
+ * This is explicit task-local storage, NOT automatic virtualization of
+ * all historical Franc global named registers or arbitrary pointers.
+ */
+fr_task_locals: .skip 128
 .section .text,"ax"
 /* rdi=entrypoint, eax=1 iff exact registered JIT definition. */
 fr_task_validate:
@@ -131,6 +145,12 @@ fr_task_run:
     movq $0,fr_preempt_a_counter(%rip)
     movq $0,fr_preempt_b_counter(%rip)
     movq $0,fr_preempt_current(%rip)
+    /* New task generation starts with zeroed, independent local storage. */
+    leaq fr_task_locals(%rip),%rdi
+    movl $16,%ecx
+    xorl %eax,%eax
+    cld
+    rep stosq
     movq $1,fr_task_states(%rip)
     movq $1,fr_task_states+8(%rip)
     movq $1,fr_task_states+16(%rip)
@@ -213,5 +233,72 @@ fr_task_state_b:
     jmp fr_push
 fr_task_generation_word:
     movq fr_task_generation(%rip),%rdi
+    movq $1,%rsi
+    jmp fr_push
+
+/* Native Franc scalar locals. Index range 0..7. Only worker slots 1/2
+ * may read/write; the host receives zero for invalid/unowned access.
+ * Stack contracts: (index -- value) and (value index -- success).
+ * Values are exact signed i64 integers, canonical denominator 1.
+ */
+fr_task_local_read:
+    call fr_pop
+    cmpq $1,%rdx
+    jne .Ltlreadbad
+    cmpq $8,%rax
+    jae .Ltlreadbad
+    movq %rax,%r10
+    movq fr_preempt_current(%rip),%r11
+    cmpq $1,%r11
+    jb .Ltlreadbad
+    cmpq $2,%r11
+    ja .Ltlreadbad
+    decq %r11
+    shlq $6,%r11
+    leaq fr_task_locals(%rip),%r8
+    addq %r11,%r8
+    movq (%r8,%r10,8),%rdi
+    movq $1,%rsi
+    jmp fr_push
+.Ltlreadbad:
+    xorq %rdi,%rdi
+    movq $1,%rsi
+    jmp fr_push
+
+fr_task_local_write:
+    call fr_pop
+    cmpq $1,%rdx
+    jne .Ltlwritebad
+    cmpq $8,%rax
+    jae .Ltlwritebad
+    movq %rax,%r10
+    call fr_pop
+    cmpq $1,%rdx
+    jne .Ltlwritebad
+    movq fr_preempt_current(%rip),%r11
+    cmpq $1,%r11
+    jb .Ltlwritebad
+    cmpq $2,%r11
+    ja .Ltlwritebad
+    decq %r11
+    shlq $6,%r11
+    leaq fr_task_locals(%rip),%r8
+    addq %r11,%r8
+    movq %rax,(%r8,%r10,8)
+    movq $1,%rdi
+    movq $1,%rsi
+    jmp fr_push
+.Ltlwritebad:
+    xorq %rdi,%rdi
+    movq $1,%rsi
+    jmp fr_push
+
+/* Read-only post-run test inspection of per-worker local slot 0. */
+fr_task_local_a0:
+    movq fr_task_locals(%rip),%rdi
+    movq $1,%rsi
+    jmp fr_push
+fr_task_local_b0:
+    movq fr_task_locals+64(%rip),%rdi
     movq $1,%rsi
     jmp fr_push

@@ -129,3 +129,8 @@ Development branch: `stage4-franc-jit-preemption` atop `stage4-udp-scheduler-int
 Dedicated integration gate: `.github/workflows/preempt.yml` runs `FRANC_TEST_JIT_PREEMPT=1` to compile **two never-yielding Franc definitions inside QEMU** using `s2-eval`, verify both independent counters advance, ensure the host rational stack survives preemption, reject uninitialized/invalid/same-function launch, and test a third Franc word that returns normally. The old assembly-only proof remains separately exercised. These are implementation details, **not yet claims of verified behavior until CI passes**.
 
 **Remaining limits:** only one CPU and two trusted ring-0 JIT workers; a fixed 120-tick batch instead of a permanently running scheduler; no per-task Franc named-register state, secure syscall boundary, FPU/SIMD context, guarded CPU stacks, arbitrary task cancellation or recoverable general CPU faults. Task code must avoid JIT compilation, shared named-register mutation and unsafe native primitives. Do **not** claim a general multi-process OS scheduler based on this proof.
+
+
+### Explicit task-local scalar slots (integration test pending)
+
+The JIT scheduler now exposes `task-local@` and `task-local!` for eight bounded 64-bit integer slots per worker. They reject indices outside 0..7 and host/unowned access; the 2x8 slots are cleared at each launch generation. Two QEMU-compiled never-yielding Franc workers separately increment their own slot zero and the host reads `task-local-a0` / `task-local-b0` for independent-state validation. This is explicit opt-in local state, **not** a transparent conversion of Franc's existing `:named-registers` into task-local values. Until the augmented test passes, mark this increment pending.
