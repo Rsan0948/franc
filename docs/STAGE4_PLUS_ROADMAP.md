@@ -97,3 +97,27 @@ regions 0x06a00000 for callback entries and 0x06b00000 for IDE source.
 These addresses are not managed allocations. UEFI, network transfers,
 Ring 3, FPU arithmetic, preemptive scheduling, full-screen editor UI,
 and online packages are still separate milestones.
+
+## Increment 3: kernel memory and integer fast path
+
+- The assembly/Franc kernel now exports `alloc` (4 MiB fixed physical
+  arena, 16-byte alignment, returns 0 on exhaustion/invalid size) and
+  `heap-free` (bytes remaining). The arena is reserved at
+  `0x05400000..0x057fffff` on the current 128 MiB identity-mapped QEMU
+  target. Allocation is monotonic, not a managed heap: no `free`,
+  garbage collection, relocation, page allocation or physical memory map.
+- `shl`/`shr` (also `<<`/`>>`) are native signed integer bit
+  shifts. Shift count must be 0..63. Fractional operands and left-shift
+  overflow return Franc bottom; right shift is arithmetic (sign-extending).
+- Integer values with canonical denominator 1 skip the rational GCD path
+  in `fr_push`. This is an exactness-preserving integer fast path, not
+  a claim of specific speedup without benchmarks.
+- The new primitives are registered in Franc's self-hosted AOT/JIT
+  dictionary. QEMU regression checks the bounded allocator, memory
+  read/write, shift semantics, and preserves existing rational tests.
+- C remains confined to the separate UEFI firmware adapter. The native
+  kernel and its generation-2/generation-3 bootstrap stay C/Python-free.
+
+These are building blocks, not the full allocator, lazy-GCD rational engine,
+virtual memory manager, protected user processes or production-ready
+hardware abstraction layer.

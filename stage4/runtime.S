@@ -79,6 +79,11 @@ fr_push:
     movq $1,%rdi
     jmp .write
 .finite:
+    /* Integer fast path: canonical denominator 1 needs no Euclidean GCD.
+     * Avoids signed division on each literal and integer result.
+     */
+    cmpq $1,%rsi
+    je .write
     testq %rdi,%rdi
     jnz .signfix
     movq $1,%rsi
@@ -802,4 +807,93 @@ fr_outl:
     movl %r10d,%eax
     outl %eax,%dx
     ret
+.section .note.GNU-stack,"",@progbits
+
+/* Non-reclaiming 4 MiB 16-byte-aligned Franc kernel heap at 0x05400000.
+ * Caller is responsible for object lifetime and zero initialization.
+ * This range is outside JIT (0x00400000..0x02000000), editor (0x06b...),
+ * bignums (0x060...), and QEMU UEFI page tables (< 0x05000000).
+ */
+.section .data
+.balign 8
+fr_heap_next: .quad 0x05400000
+.section .text,"ax"
+.global fr_heap_alloc
+fr_heap_alloc:
+    call fr_pop
+    cmpq $1,%rdx
+    jne .Lalloc_fail
+    testq %rax,%rax
+    jle .Lalloc_fail
+    cmpq $0x400000,%rax
+    ja .Lalloc_fail
+    addq $15,%rax
+    andq $-16,%rax
+    movq fr_heap_next(%rip),%rdi
+    leaq (%rdi,%rax),%r8
+    cmpq $0x05800000,%r8
+    ja .Lalloc_fail
+    movq %r8,fr_heap_next(%rip)
+    movq $1,%rsi
+    jmp fr_push
+.Lalloc_fail:
+    xorq %rdi,%rdi
+    movq $1,%rsi
+    jmp fr_push
+
+.global fr_heap_available
+fr_heap_available:
+    movq $0x05800000,%rdi
+    subq fr_heap_next(%rip),%rdi
+    movq $1,%rsi
+    jmp fr_push
+
+/* Signed integer shifts. Nonintegral operands or invalid counts -> bottom.
+ * Left shift rejects overflow; right shift preserves sign.
+ */
+.global fr_lshift
+fr_lshift:
+    call fr_pop
+    cmpq $1,%rdx
+    jne .Lshl_bad
+    cmpq $63,%rax
+    ja .Lshl_bad
+    movq %rax,%r10
+    call fr_pop
+    cmpq $1,%rdx
+    jne .Lshl_bad
+    movq %r10,%rcx
+    movq %rax,%rdi
+    shlq %cl,%rdi
+    movq %rdi,%r8
+    sarq %cl,%r8
+    cmpq %rax,%r8
+    jne .Lshl_bad
+    movq $1,%rsi
+    jmp fr_push
+.Lshl_bad:
+    xorq %rdi,%rdi
+    xorq %rsi,%rsi
+    jmp fr_push
+
+.global fr_rshift
+fr_rshift:
+    call fr_pop
+    cmpq $1,%rdx
+    jne .Lshr_bad
+    cmpq $63,%rax
+    ja .Lshr_bad
+    movq %rax,%r10
+    call fr_pop
+    cmpq $1,%rdx
+    jne .Lshr_bad
+    movq %r10,%rcx
+    sarq %cl,%rax
+    movq %rax,%rdi
+    movq $1,%rsi
+    jmp fr_push
+.Lshr_bad:
+    xorq %rdi,%rdi
+    xorq %rsi,%rsi
+    jmp fr_push
 .section .note.GNU-stack,"",@progbits
