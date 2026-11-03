@@ -114,3 +114,12 @@ This first compiler supports bounded signed 32-bit rational literals and
 `+ - * / dup drop swap over .` in straight-line expressions; there is no
 control flow, new definitions, data emission, kernel relocation or image
 writer yet. It does not replace `stage4/compiler.py` for the full OS build.
+
+## Python-free BIOS image packaging
+
+`make -C stage4` now packages the 256-sector BIOS image with GNU `dd`
+instead of invoking `make_image.py`. The old Python packer is kept as a
+differential test oracle; CI checks byte-for-byte equality between both
+packers. **The compile step still uses Python `compiler.py`**, so this does
+not yet make the complete build self-hosted. GNU assembler, linker, and
+binary tools are deliberate permitted build tools.

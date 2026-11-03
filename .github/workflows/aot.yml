@@ -16,6 +16,8 @@ jobs:
           make -C stage4
           python3 stage4/test_compiler.py
           if nm stage4/kernel.elf | grep -Eq ' (U|T) (main|printf|malloc|free|memcpy|mmap)$'; then exit 1; fi
+      - name: Verify Python-free disk packer against original reference
+        run: python3 stage4/test_packaging.py
       - name: Install QEMU
         run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
       - name: Cold boot C-free AOT image in software QEMU
