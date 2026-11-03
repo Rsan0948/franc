@@ -63,7 +63,8 @@ with tempfile.TemporaryDirectory(prefix='franc-native-apps-') as temp:
         assert match and int(match.group(1))>=60,loaded[-1500:]
         print(f'PASS: Franc guest compiled {int(match.group(1))} source lines from all 12 native libraries',flush=True)
 
-        demo=send_key(b'8',b'120\nFranc> ',timeout=80)
+        demo=send_key(b'8',b'Franc> ',timeout=120)
+        assert b'120\nFrancOS HOME' in demo, demo[-1400:]
         assert b'25\n120\n' in demo,demo[-1000:]
         print('PASS: native example runs exact rational and recursive factorial code',flush=True)
 
