@@ -21,8 +21,8 @@ kernel.bin: kernel.elf
 # GNU binary tools package the 256-sector image; no Python packager.
 # Boot=sector 0, kernel=1..127 and tail=200..255, FRANCFS1=128..199.
 franos-aot.img: boot.bin kernel.bin
-	@test "$(wc -c < boot.bin)" -eq 512
-	@test "$(wc -c < kernel.bin)" -le 93696
+	@test "$(shell wc -c < boot.bin)" -eq 512
+	@test "$(shell wc -c < kernel.bin)" -le 93696
 	@dd if=/dev/zero of=$@ bs=512 count=256 status=none
 	@dd if=boot.bin of=$@ conv=notrunc status=none
 	@dd if=kernel.bin of=$@ bs=512 count=127 seek=1 conv=notrunc status=none
