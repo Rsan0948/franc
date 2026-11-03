@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install QEMU, OVMF, and mtools
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends qemu-system-x86 ovmf mtools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends qemu-system-x86 ovmf mtools lld
       - name: Verify clang/lld-link for UEFI PE32+
         run: |
           clang --version | head -1
