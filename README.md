@@ -1,3 +1,18 @@
+# FrancOS — start here (current release plan)
+
+**Canonical handoff document for another chat or contributor:** [FrancOS v1 dual-track release roadmap](docs/FRANCOS_V1_DUAL_TRACK_ROADMAP.md). This is the single entry point for the **definition of done**, the paired **Fundamentals/Networking** and **UX/IDE/Packages** tracks, currently verified behavior, remaining work and full release acceptance journey.
+
+Supporting references:
+- [Detailed Stage 4 engineering milestones and QEMU evidence](docs/FRANCOS_NEXT_MILESTONES.md)
+- [Implemented applications, IDE, package module and library inventory](stage4/apps/README.md)
+- [Current process-memory and fault-containment implementation boundaries](docs/FRANCOS_PROCESS_ISOLATION.md)
+- [Native build/runtime instructions](stage4/README.md)
+- [Earlier development and implementation history](docs/STAGE4_PLUS_ROADMAP.md)
+
+**Current verified baseline:** FrancOS has byte-reproducible Franc-compiled native builds, BIOS/UEFI QEMU boot, interactive JIT and native applications, limited offline package and IDE functionality, a tested UDP/DNS exchange, timer-preempted *kernel-mode* Franc tasks, BIOS E820 memory-map inventory and a **sequential** Ring 3 fault-survival proof. Full concurrent isolated Franc user processes, a usable graphical IDE/file interface and package lifecycle are **still release blockers**. v1 is planned as a **single-user experimental QEMU OS**, not production-grade security or portable hardware support. Historical size/hash and progress claims below are point-in-time snapshots, not current source-of-truth status.
+
+---
+
 # Franc — native-compiled rational language and miniature OS
 
 **Development status (November 2026):** The experimental
