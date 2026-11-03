@@ -45,6 +45,18 @@ class NativeIdeControls(unittest.TestCase):
         self.assertIn("ide-main", found)
         self.assertIn("ide-screen", found)
 
+    def test_trusted_ide_build_requires_current_entrypoint_and_bounded_lines(self):
+        source = (ROOT / "lib/ide.frac").read_text()
+        for symbol in ("ide-lines-safe", "ide-main-line", "ide-build", "ide-run"):
+            self.assertIn("def " + symbol + " ", source)
+        self.assertIn('"COMPILE FAILED | line "', source)
+        self.assertIn('"NO def main ENTRYPOINT"', source)
+        self.assertIn('"RUNNING main (trusted source)"', source)
+        self.assertIn("ide-n 240 -", source)
+        self.assertIn("ide-buffer 2051 +", source)
+        self.assertIn('ide-key 18 - if0 ide-run', source)
+        self.assertIn("ide-key 112 - if0 ide-run", source)
+
     def test_native_ide_stays_inside_declared_4096_byte_reservation(self):
         source = (ROOT / "lib/ide.frac").read_text()
         self.assertIn("def ide-buffer $6b00000", source)
