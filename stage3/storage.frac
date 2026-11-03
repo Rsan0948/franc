@@ -19,6 +19,14 @@ def fs-save :fs-data :fs-name hardware? if0 fs-name fs-data host-save 1 exit the
 \ One source buffer is shared by the reader; consumers must compile before next load.
 def fs-source :fsr-name hardware? if0 fsr-name host-source exit then fs-ready? if0 0 exit then 129 ata-read-sector if0 0 exit then fsr-name fs-find :fsr-slot fsr-slot 0 - if 0 exit then fsr-slot 32 * 24 + sector-byte@ :fsr-lo fsr-slot 32 * 25 + sector-byte@ 256 * fsr-lo + :fsr-length fsr-length 2048 - if0 0 exit then fsr-length 2048 - if 0 :fsr-too-long else 0 exit then 0 :fsr-block begin fsr-block fsr-length 511 + 512 / floor - while 136 fsr-slot 4 * + fsr-block + ata-read-sector if0 0 exit then 0 :fsr-i begin fsr-i 512 - while fsr-block 512 * fsr-i + :fsr-index fsr-index fsr-length - if fsr-index fsr-i sector-byte@ source-byte! then fsr-i 1 + :fsr-i repeat fsr-block 1 + :fsr-block repeat fsr-length 0 source-byte! source-buffer ;
 def fs-files hardware? if0 host-files exit then fs-ready? if0 exit then 129 ata-read-sector if0 exit then 0 :ffs-i begin ffs-i 12 - while ffs-i 32 * sector-byte@ ifnz sector-buffer ffs-i 32 * + type 10 emit then ffs-i 1 + :ffs-i repeat ;
+\ Wave 1 native file lifecycle. Directory is only one sector; single
+\ directory-sector writes are not journaled or power-fail atomic. Delete
+\ unpublishes metadata BEFORE scrubbing file sectors so a partial scrub
+\ never leaves a published truncated source. Never expand the 12 slots.
+def fs-delete :fd-name hardware? if0 0 exit then fs-ready? if0 0 exit then 129 ata-read-sector if0 0 exit then fd-name fs-find :fd-slot fd-slot 0 - if 0 exit then fd-slot 32 * :fd-offset 0 :fd-i begin fd-i 32 - while fd-offset fd-i + 0 sector-byte! fd-i 1 + :fd-i repeat 129 ata-write-sector if0 0 exit then 0 :fd-i begin fd-i 4 - while fs-zero 136 fd-slot 4 * + fd-i + ata-write-sector if0 0 exit then fd-i 1 + :fd-i repeat 1 ;
+\ (old-name new-name -- 1|0). Refuse duplicates, empty/long names and
+\ missing originals. Rewrites only the directory slot, not source data.
+def fs-rename :fr-new :fr-old fr-old fs-len :fr-oldlen fr-new fs-len :fr-newlen fr-oldlen if0 0 exit then fr-oldlen 24 - if0 0 exit then fr-oldlen 24 - if 0 :fr-checked else 0 exit then fr-newlen if0 0 exit then fr-newlen 24 - if0 0 exit then fr-newlen 24 - if 0 :fr-checked else 0 exit then fs-ready? if0 0 exit then 129 ata-read-sector if0 0 exit then fr-new fs-find 0 - if0 0 exit then fr-new fs-find 0 - if 0 :fr-checked else 0 exit then fr-old fs-find :fr-slot fr-slot 0 - if 0 exit then fr-slot 32 * :fr-offset 0 :fr-i begin fr-i 24 - while fr-offset fr-i + 0 sector-byte! fr-i 1 + :fr-i repeat 0 :fr-i begin fr-i fr-newlen - while fr-offset fr-i + fr-new fr-i + byte@ sector-byte! fr-i 1 + :fr-i repeat 129 ata-write-sector ;
 \ Rebind public API while retaining host versions for Linux tests/diagnostics.
 def source fs-source ;
 def save fs-save drop ;
