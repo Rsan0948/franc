@@ -123,3 +123,14 @@ differential test oracle; CI checks byte-for-byte equality between both
 packers. **The compile step still uses Python `compiler.py`**, so this does
 not yet make the complete build self-hosted. GNU assembler, linker, and
 binary tools are deliberate permitted build tools.
+
+## Multi-definition AOT compilation
+
+The `c` menu command invokes `aot-program` (Franc source) to emit a
+relocatable GNU assembly unit containing multiple `def` functions, including
+symbolic calls across definitions. The entry point calls a Franc word named
+`main`. Function names use deterministic hex-encoded linker symbols. CI
+assembles the output and proves the internal symbols resolve without using
+absolute JIT addresses. This remains a restricted straight-line subset:
+control flow, runtime registration, arbitrary memory, and text/data relocations
+must be added before it can compile the FrancOS kernel.

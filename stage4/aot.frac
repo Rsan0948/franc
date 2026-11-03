@@ -17,3 +17,15 @@ def aot-token :at-token at-token aot-operator ifnz 1 exit then at-token s2-numbe
 \ Emit one relocatable function. Errors are explicit, never accepted as output.
 def aot-source :s2p "FRANC-AOT-BEGIN" type 10 emit ".text" type 10 emit ".global franc_aot_entry" type 10 emit "franc_aot_entry:" type 10 emit begin s2-next :at-next at-next if0 "  ret" type 10 emit "FRANC-AOT-END" type 10 emit 1 exit then at-next aot-token if0 "FRANC-AOT-ERROR" type 10 emit 0 exit then again ;
 def aot-demo "2 3 + ." aot-source drop ;
+
+
+\ Deterministic symbol encoding: every UTF-8 byte becomes two hex digits.
+\ This avoids escaping and means forward references can be linked by GNU ld.
+def aot-nibble :an-n an-n 10 - if an-n 48 + emit else an-n 10 - 97 + emit then ;
+def aot-name :an-name "fw_" type begin an-name byte@ :an-byte an-byte if0 exit then an-byte 16 / floor aot-nibble an-byte 16 % aot-nibble an-name 1 + :an-name again ;
+def aot-call :ac-name "  call " type ac-name aot-name 10 emit ;
+def aot-prog-token :apt-token apt-token aot-operator ifnz 1 exit then apt-token s2-number :apt-valid :apt-den :apt-num apt-valid ifnz apt-num apt-den aot-literal exit then apt-token aot-call 1 ;
+\ A true relocatable multi-definition unit. Static calls use symbolic function
+\ names and do not depend on addresses of the live kernel's JIT dictionary.
+def aot-program :s2p "FRANC-PROGRAM-BEGIN" type cr ".text" type cr ".global franc_aot_entry" type cr "franc_aot_entry:" type cr "main" aot-call "  ret" type cr 0 :ap-in-def begin s2-next :ap-token ap-token if0 ap-in-def ifnz "FRANC-PROGRAM-ERROR" type cr 0 exit then "FRANC-PROGRAM-END" type cr 1 exit then ap-token "def" s2-eq ifnz ap-in-def ifnz "FRANC-PROGRAM-ERROR" type cr 0 exit then s2-next :ap-name ap-name if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then ap-name aot-name ":" type cr 1 :ap-in-def else ap-token ";" s2-eq ifnz ap-in-def if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then "  ret" type cr 0 :ap-in-def else ap-in-def if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then ap-token aot-prog-token if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then then then again ;
+def aot-program-demo "def square dup * ;\ndef main 7 square . ;" aot-program drop ;

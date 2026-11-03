@@ -78,6 +78,7 @@ try:
         assert marker in transcript, f'missing {marker!r}'
     for key, expected in [(b'\x1b', b'Franc> '),
                           (b'a', b'FRANC-AOT-END\nFranc> '),
+                          (b'c', b'FRANC-PROGRAM-END\nFranc> '),
                           (b'b', b'SELFHOST OK\nFranc> '),
                           (b'\x1b', b'EXIT CONSOLE')]:
         time.sleep(0.5)
@@ -101,6 +102,23 @@ try:
         sym = subprocess.check_output(['nm',str(obj_path)],text=True)
         assert 'T franc_aot_entry' in sym and 'U fr_add' in sym, sym
     print('PASS: Franc-generated relocatable AOT assembly assembled by GNU as')
+    # Multi-definition Franc AOT: forward reference and symbolic word call.
+    program_match = re.search(rb'FRANC-PROGRAM-BEGIN\n(.*?)FRANC-PROGRAM-END\n', transcript, re.S)
+    assert program_match is not None and b'FRANC-PROGRAM-ERROR' not in transcript, transcript
+    with TemporaryDirectory(prefix='franc-program-aot-') as work:
+        assembly = program_match.group(1).decode('ascii')
+        assert 'fw_737175617265:' in assembly, assembly
+        assert 'fw_6d61696e:' in assembly, assembly
+        assert 'call fw_737175617265' in assembly, assembly
+        file = Path(work)/'program.S'
+        obj = Path(work)/'program.o'
+        file.write_text(assembly)
+        subprocess.run(['as', '--64', '-o', str(obj), str(file)], check=True)
+        names = subprocess.check_output(['nm', str(obj)], text=True)
+        assert 'T franc_aot_entry' in names and 'fw_737175617265' in names, names
+        assert ' U fw_' not in names, names
+    print('PASS: Franc AOT emits multiple named functions and relocatable internal calls')
+
     for marker in [b'SELFHOST START\n', b'GEN 2: 29\n', b'GEN 3: 29\n', b'42\n', b'SELFHOST OK\n']:
         assert marker in transcript, f'missing {marker!r}: {transcript!r}'
     assert b'stage2: unsupported token' not in transcript, transcript
