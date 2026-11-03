@@ -207,3 +207,68 @@ verification pending" until their exact CI execution passes. A passing
 earlier image never proves newly edited code. This PR intentionally leaves
 `stage4/bootstrap_seed.S` and `franctxt/seed.lock.franctxt` unchanged;
 there is no new Franc kernel AOT source or named register declaration.
+
+## Wave 1 integrated acceptance — 2026-11-03 (supersedes the earlier PR #6 status above)
+
+**Status:** The paired Wave 1 **bounded BIOS/QEMU acceptance passed** on
+commit `9d7ca5afc1125d2e7ca77754cbfb546c1e8775d9` in
+[GitHub Actions run 41696093749](https://github.com/Rsan0948/franc/actions/runs/41696093749).
+The user-facing screenshot artifacts and the exact tested-build identity are
+[archived with that run](https://github.com/Rsan0948/franc/actions/runs/41696093749).
+The clean native bootstrap workflow
+[41696093927](https://github.com/Rsan0948/franc/actions/runs/41696093927)
+also passed. This is **Wave 1's bounded acceptance**, not the full
+seven-step FrancOS v1 release journey.
+
+### F1: real independent address spaces and reclaim under the exact test
+
+- `stage4/process_spaces.S` creates two independently allocated PML4/PDPT/
+  PD/PT roots and separate user code/stack physical frames from the approved
+  E820 8MiB arena using generation-tagged owner leases.
+- A CPL3 context attempts to read B's kernel-supervisor-only physical frame,
+  faults, and cannot cross the boundary. B executes separately under its own
+  CR3, advances and returns; all 12 frames are scrubbed and reclaimed.
+- The QEMU gate proves distinct roots (`0x7000000` and `0x7006000`),
+  fault recovery, exact reclamation, and return to the Franc REPL.
+  It does **not** prove general concurrent Franc-language user programs or
+  public syscall capabilities; the user examples here remain sequential,
+  minimal assembly snippets. Wave 2/3 implement the missing runtime.
+- The kernel still assumes BIOS/QEMU RAM; UEFI GetMemoryMap and production
+  guard pages/memory protection are outside the bounded claim.
+
+### U1: real Home, files and app navigation in the guest
+
+- `stage4/kernel.frac` now boots to a VGA/serial `FrancOS HOME` with an
+  arrow-selected 1–9 app list, direct lazy-loading app shortcuts, file UI
+  `z`, package UI `m`, REPL `r`, help, and Esc/back paths.
+- `stage3/storage.frac` adds bounded delete and rename; the Home file
+  surface supports keyboard-only create/open/rename/delete with errors.
+  A real QEMU test creates and renames source, cold-boots a second guest to
+  verify persistence, deletes it and cold-boots a third guest to verify
+  absence. This is **not** a journaled power-loss-safe filesystem.
+- The 320x200 BIOS VGA raster now uses correctly ordered
+  `vc-glyph` arguments. A previous QEMU screenshot exposed garbled glyphs
+  despite correct serial output; the fix was regenerated/pinned into the
+  Franc self-hosted seed and verified by comparing the Home's first glyph
+  against the compiled font. Five real Home/selection/Files/Packages/IDE
+  framebuffer captures from the passing run were reviewed for legibility.
+- Original apps and the native IDE remain accessible. The existing package
+  UI exposes the **bounded source** manager, not the Wave 3 offline manifest,
+  dependencies, update or rollback requirement.
+
+### Handoff into Wave 2
+
+Work has begun in
+[`francos-v1-wave2-ring3-scheduler-ide`](https://github.com/Rsan0948/franc/tree/francos-v1-wave2-ring3-scheduler-ide)
+([PR #7](https://github.com/Rsan0948/franc/pull/7)). Its F2 milestone
+includes IRQ0-preempted CPL3 assembly contexts, private CR3/TSS kernel-stack
+switching, bounded retirement and A-fault/B-survivor checks. The first F2-only
+[QEMU run 41693664594](https://github.com/Rsan0948/franc/actions/runs/41693664594)
+passed. This is **not yet Franc-compiled userland or a complete syscall ABI**.
+The U2 side builds the IDE's line home/end, forward delete, full-buffer
+feedback and compile/run a newly defined `main`; its expanded QEMU gate
+must pass on the same updated branch before claiming full Wave 2 acceptance.
+
+**Release discipline:** Do not mark any additional Wave completed or tag v1
+based on this section. Each requires the paired gates in
+[the binding v1 contract](FRANCOS_V1_DUAL_TRACK_ROADMAP.md).
