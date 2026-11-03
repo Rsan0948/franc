@@ -25,6 +25,23 @@ class UserSourceEmitterContract(unittest.TestCase):
         self.assertNotIn("ide-buffer 4096 +", text)
         self.assertIn("user-code-base ide-i + ide-n b!", text)
 
+    def test_native_dictionary_capacity_covers_wave3_bundle(self):
+        native = (ROOT / "stage4/runtime.S").read_text()
+        self.assertIn("cmpq $512,%r9", native)
+        self.assertIn("s2_dict_nodes: .skip 12288", native)
+        self.assertIn("s2_dict_names: .skip 32768", native)
+        source_paths = [
+            line for line in (ROOT / "stage4/app_sources.list").read_text().splitlines()
+            if line and not line.startswith("#")
+        ]
+        source_definitions = sum(
+            len([line for line in (ROOT / source).read_text().splitlines()
+                 if line.startswith("def ")])
+            for source in source_paths
+        )
+        self.assertLess(source_definitions, 512,
+                        "Native JIT names table cannot hold the app bundle")
+
     def test_whitelisted_source_and_encoded_machine_code_contract(self):
         text = (ROOT / "lib/user_aot.frac").read_text()
         self.assertIn('s2-next "def" s2-eq', text)
