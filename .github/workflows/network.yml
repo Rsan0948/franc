@@ -1,0 +1,47 @@
+name: Franc e1000 Ethernet packet smoke (QEMU PCAP + SLIRP)
+on:
+  push:
+    branches: [stage4-roadmap-foundations]
+    paths:
+      - 'stage4/net.frac'
+      - 'stage4/pci.frac'
+      - 'stage4/qemu_net.py'
+      - 'stage4/bootstrap_seed.S'
+      - 'stage4/app_sources.list'
+      - 'stage4/pack_native.sh'
+      - 'franctxt/seed.lock.franctxt'
+      - 'franctxt/build.py'
+      - 'franctxt/memory.franctxt'
+      - '.github/workflows/network.yml'
+  pull_request:
+    paths:
+      - 'stage4/net.frac'
+      - 'stage4/pci.frac'
+      - 'stage4/qemu_net.py'
+      - 'stage4/bootstrap_seed.S'
+      - '.github/workflows/network.yml'
+permissions:
+  contents: read
+jobs:
+  ethernet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject stale bootstrap or overlapping DMA reservations
+        run: python3 -m franctxt.build preflight
+      - name: Install QEMU software emulator
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Build native Franc kernel plus exact app source bundle
+        run: make -f stage4/Makefile.native native-seed
+      - name: Verify exact packed Franctxt kernel and e1000 source identities
+        run: python3 -m franctxt.build verify-image --image stage4/native_seed.img --kernel stage4/native_seed.bin
+      - name: Native e1000 descriptor TX/RX and host-observed ARP proof
+        run: python3 stage4/qemu_net.py stage4/native_seed.img
+      - name: Record tested network image and seed identity
+        run: python3 -m franctxt.build record --image stage4/native_seed.img --kernel stage4/native_seed.bin --passed network --output stage4/network-tested.franctxt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: franctxt-e1000-tested-build
+          if-no-files-found: error
+          path: stage4/network-tested.franctxt
