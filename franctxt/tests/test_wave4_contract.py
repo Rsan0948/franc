@@ -88,6 +88,7 @@ class Wave4Integration(unittest.TestCase):
         self.assertIn("user-compiled-relaunch", ide)
         self.assertIn("ide-key 121 - if0 ide-run-user", ide)
         self.assertIn("def pkg-run-pair pkg-dependency-valid", pkg)
+        self.assertIn("def pkg-install-verified :pc-bus :pc-fn :pc-dev", pkg)
         self.assertIn("user-compiled-probe", pkg)
         # Installation never calls the privileged JIT compiler on uploaded
         # source: execution is exclusively the audited user-mode grammar.
