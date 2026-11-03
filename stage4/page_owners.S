@@ -74,10 +74,11 @@ fr_lease_alloc:
     pushq %r13
     call fr_pop
     movq %rax,%r13
-    cmpq $1,%rdx
-    jne .Llease_alloc_bad
+    movq %rdx,%r10
     call fr_pop
     movq %rax,%r12
+    cmpq $1,%r10
+    jne .Llease_alloc_bad
     cmpq $1,%rdx
     jne .Llease_alloc_bad
     call fr_lease_check
@@ -111,14 +112,16 @@ fr_lease_free:
     pushq %r14
     call fr_pop
     movq %rax,%r14
-    cmpq $1,%rdx
-    jne .Llease_free_bad
+    movq %rdx,%r10
     call fr_pop
     movq %rax,%r13
-    cmpq $1,%rdx
-    jne .Llease_free_bad
+    movq %rdx,%r11
     call fr_pop
     movq %rax,%r12
+    cmpq $1,%r10
+    jne .Llease_free_bad
+    cmpq $1,%r11
+    jne .Llease_free_bad
     cmpq $1,%rdx
     jne .Llease_free_bad
     call fr_lease_check
@@ -167,10 +170,11 @@ fr_lease_end:
     pushq %r15
     call fr_pop
     movq %rax,%r13
-    cmpq $1,%rdx
-    jne .Llease_end_bad
+    movq %rdx,%r10
     call fr_pop
     movq %rax,%r12
+    cmpq $1,%r10
+    jne .Llease_end_bad
     cmpq $1,%rdx
     jne .Llease_end_bad
     call fr_lease_check
