@@ -47,6 +47,23 @@ def stage_offline(disk, package, source):
     disk.write_bytes(raw)
 
 
+def inject_torn_inactive_bank(disk):
+    """Model power loss after publishing source but before its manifest."""
+    raw = bytearray(disk.read_bytes())
+    slot = next((n for n in range(2, 10)
+                 if raw[FS_DIRECTORY + n * 32] == 0), None)
+    assert slot is not None, "No unused source directory slot for torn write"
+    name = b"pkg-app1.frac"
+    source = b"def main 99 count fault ;"
+    offset = FS_DIRECTORY + slot * 32
+    raw[offset:offset + 32] = (name.ljust(24, b"\0")
+                               + len(source).to_bytes(2, "little")
+                               + b"\0" * 6)
+    sector = (136 + slot * 4) * 512
+    raw[sector:sector + 2048] = source.ljust(2048, b"\0")
+    disk.write_bytes(raw)
+
+
 class Guest:
     def __init__(self, disk, tmp, name):
         self.disk = disk
@@ -334,6 +351,25 @@ with tempfile.TemporaryDirectory(prefix="franc-v1-journey-") as dirname:
         g.close()
 
     stage_offline(disk, update, app_update_source)
+    # An interrupted update may publish the inactive source data without its
+    # verified manifest. On a forked copy, a cold boot must still select and
+    # run the *previous* signed-by-content package generation. The main
+    # v1 disk remains untouched and continues its own upgrade/rollback.
+    interrupted = tmp / "torn-upgrade.img"
+    shutil.copyfile(disk, interrupted)
+    inject_torn_inactive_bank(interrupted)
+    g = Guest(interrupted, tmp, "torn-upgrade")
+    try:
+        g.ready()
+        g.packages()
+        status = g.show_packages()
+        assert b"app version 1.0.0" in status, status[-1400:]
+        g.screenshot("v1-13-interrupted-upgrade-safe")
+        g.key(b"\x1b", b"Franc> ")
+        print("PASS: cold boot ignores an interrupted, unverified inactive source bank", flush=True)
+    finally:
+        g.close()
+
     # Boot 3: update, run new version, rollback, run original version.
     g = Guest(disk, tmp, "boot3")
     try:
