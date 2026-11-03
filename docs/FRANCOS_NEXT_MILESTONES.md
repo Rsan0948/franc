@@ -76,12 +76,16 @@ Baseline test evidence: [AOT self-hosting](https://github.com/Rsan0948/franc/act
 | 2026-11-03 | Franctxt build authority, fixed memory layout, seed identity | Verified foundation |
 | 2026-11-03 | e1000 DMA ARP transmission and reception | Verified foundation |
 | 2026-11-03 | Physical pages and cooperatively resumed stacks | Verified foundation |
-| 2026-11-03 | Multi-use Ethernet descriptors, IPv4, ICMP, UDP | In progress — awaiting feature tests |
-| 2026-11-03 | PIC/PIT timer IRQ + IDT foundation (not preemptive) | Implemented; QEMU test pending |
+| 2026-11-03 | Eight-slot e1000 TX/RX and repeated ARP exchange | Partial QEMU proof passed; full network CI pending |\n| 2026-11-03 | IPv4 and ICMP echo request/reply | Implemented, QEMU receive-validation failing |\n| 2026-11-03 | UDP | Planned |
+| 2026-11-03 | PIC/PIT timer IRQ + IDT foundation (not preemptive) | Verified QEMU — [CI run 41652092184](https://github.com/Rsan0948/franc/actions/runs/41652092184) |
 | 2026-11-03 | Ring 3 process isolation | Planned |
 
 **Status definitions:** planned = no implementation; implemented/pending = code exists, gate unresolved; verified = successful relevant CI/QEMU test at that commit; partial = a subset works; blocked = a known failing gate. Update this log with test links and the exact result as work proceeds.
 
 ## Increment in progress: first native hardware timer
 
-`stage4/interrupts.S` installs a 256-gate x86-64 IDT, remaps PIC IRQ0 to vector 32, programs a nominal 100 Hz PIT, and exposes `irq-start`, `irq-ticks`, and `irq-stop` through the Franc native ABI. A dedicated QEMU test measures real timer progress and verifies ticks stop after disabling interrupts. **This is a hardware interrupt foundation, not a preemptive scheduler:** it does not switch tasks, preserve per-process register contexts, use a per-CPU IRQ stack, handle recoverable exceptions, or implement Ring 3. Unexpected vectors deliberately fail closed. Do not mark IRQ functionality verified until `.github/workflows/interrupts.yml` passes.
+`stage4/interrupts.S` installs a 256-gate x86-64 IDT, remaps PIC IRQ0 to vector 32, programs a nominal 100 Hz PIT, and exposes `irq-start`, `irq-ticks`, and `irq-stop` through the Franc native ABI. A dedicated QEMU test measures real timer progress and verifies ticks stop after disabling interrupts. **This is a hardware interrupt foundation, not a preemptive scheduler:** it does not switch tasks, preserve per-process register contexts, use a per-CPU IRQ stack, handle recoverable exceptions, or implement Ring 3. Unexpected vectors deliberately fail closed. The dedicated [IRQ integration workflow](https://github.com/Rsan0948/franc/actions/runs/41652092184) passed: ticks advanced 148 to 287 and then stopped under CLI/masking. This validates hardware IRQ delivery and counter behavior only, not timer-driven task switching.
+
+### Network acceptance update (2026-11-03)
+
+The [network CI run 41652092097](https://github.com/Rsan0948/franc/actions/runs/41652092097) observed two completed e1000 TX descriptor slots, two received/released/rearmed RX descriptors, and successful basic IPv4 checksum and packet-size checks inside QEMU. **The full job failed** when the guest rejected the expected ICMP reply; packet/header diagnostics are underway. The ring proof is a partial result, not evidence that IPv4/ICMP/UDP are complete. No source-level claim substitutes for a full green network test.
