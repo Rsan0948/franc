@@ -92,9 +92,9 @@ with tempfile.TemporaryDirectory(prefix="franc-roadmap-") as tmp:
         line("ide-compile .", b"2\nFrac> ")
         line("nine forty + .", b"49\nFrac> ")
         print("PASS: native multiline IDE source, persistence and JIT compile", flush=True)
-        line('pci-find-network 0 - if "PCI NETWORK PRESENT" type cr else "PCI MISSING" type cr then',
+        line('pci-find-network 0 - if "PCI MISSING" type cr else "PCI NETWORK PRESENT" type cr then',
              b"PCI NETWORK PRESENT\nFrac> ")
-        line('pci-find-e1000 0 - if "E1000 PRESENT" type cr else "E1000 MISSING" type cr then',
+        line('pci-find-e1000 0 - if "E1000 MISSING" type cr else "E1000 PRESENT" type cr then',
              b"E1000 PRESENT\nFrac> ")
         print("PASS: real QEMU PCI e1000 enumerated with Franc port I/O", flush=True)
         line("task-reset 'task-counter-a task-spawn . 'task-counter-b task-spawn .", b"1\n2\nFrac> ")
