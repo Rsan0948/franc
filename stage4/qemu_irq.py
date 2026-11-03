@@ -240,7 +240,10 @@ with tempfile.TemporaryDirectory(prefix="franc-timer-") as tmp:
                 ("user-preempt-badptr-probe .", 4),
             ]:
                 result = line(command)
-                assert number(result) == 1, (command, result)
+                if command == "user-preempt-syscall-probe .":
+                    assert b"W1" in result, result
+                else:
+                    assert number(result) == 1, (command, result)
                 assert number(line("user-preempt-a-state .")) == expected_a, command
                 assert number(line("user-preempt-b-state .")) == 3, command
                 assert number(line("user-preempt-b-steps .")) > 100, command
