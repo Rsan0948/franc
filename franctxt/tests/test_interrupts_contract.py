@@ -20,6 +20,27 @@ class InterruptContract(unittest.TestCase):
                 self.assertIn(".text", hits[0])
             self.assertGreater(obj.stat().st_size, 4096)
 
+    def test_ia32e_synthetic_frame_has_five_slots_and_full_register_state(self):
+        code = (ROOT / "stage4/interrupts.S").read_text()
+        frame = code.split("fr_preempt_prepare:", 1)[1].split(
+            "fr_preempt_worker_a:", 1
+        )[0]
+        for required in ("subq $40,%rdi", "movq %rsi,0(%rdi)",
+                         "movq %rax,8(%rdi)", "movq $0x202,16(%rdi)",
+                         "movq %r8,24(%rdi)", "movw %ss,%ax",
+                         "movq %rax,32(%rdi)", "subq $120,%rdi",
+                         "movl $15,%ecx"):
+            self.assertIn(required, frame)
+        timer = code.split("fr_irq_timer:", 1)[1].split(
+            "fr_preempt_prepare:", 1
+        )[0]
+        for reg in ("rax", "rbx", "rcx", "rdx", "rsi", "rdi",
+                    "rbp", "r8", "r9", "r10", "r11", "r12",
+                    "r13", "r14", "r15"):
+            self.assertIn("pushq %" + reg, timer)
+            self.assertIn("popq %" + reg, timer)
+        self.assertIn("iretq", timer)
+
     def test_idt_pic_pit_and_iret_are_explicit(self):
         code = (ROOT / "stage4/interrupts.S").read_text()
         for token in ("lidt", "iretq", "outb %al,$0x20", "outb %al,$0x43",
