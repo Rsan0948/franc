@@ -24,6 +24,10 @@
 .Lproc_b_state_name: .asciz "process-b-state"
 .Lproc_b_steps_name: .asciz "process-b-steps"
 .Lproc_survivor_name: .asciz "process-survived?"
+.Llease_begin_name: .asciz "proc-lease-begin"
+.Llease_alloc_name: .asciz "proc-lease-alloc"
+.Llease_free_name: .asciz "proc-lease-free"
+.Llease_end_name: .asciz "proc-lease-end"
 .section .data
 .balign 8
 /* Linked dictionary nodes: next, name, code. First next is set at boot. */
@@ -46,7 +50,11 @@ fr_task_dict_proc_probe: .quad fr_task_dict_e820_arena, .Lproc_probe_name, fr_pr
 fr_task_dict_proc_a: .quad fr_task_dict_proc_probe, .Lproc_a_state_name, fr_proc_state_a
 fr_task_dict_proc_b: .quad fr_task_dict_proc_a, .Lproc_b_state_name, fr_proc_state_b
 fr_task_dict_proc_steps: .quad fr_task_dict_proc_b, .Lproc_b_steps_name, fr_proc_b_steps
-fr_task_dict_top: .quad fr_task_dict_proc_steps, .Lproc_survivor_name, fr_proc_survivor_ok
+fr_task_dict_proc_survivor: .quad fr_task_dict_proc_steps, .Lproc_survivor_name, fr_proc_survivor_ok
+fr_task_dict_lease_begin: .quad fr_task_dict_proc_survivor, .Llease_begin_name, fr_lease_begin
+fr_task_dict_lease_alloc: .quad fr_task_dict_lease_begin, .Llease_alloc_name, fr_lease_alloc
+fr_task_dict_lease_free: .quad fr_task_dict_lease_alloc, .Llease_free_name, fr_lease_free
+fr_task_dict_top: .quad fr_task_dict_lease_free, .Llease_end_name, fr_lease_end
 .section .bss
 .balign 8
 /* 0:host, 1:worker A, 2:worker B.
