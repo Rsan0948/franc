@@ -1,0 +1,20 @@
+\ Franctxt v1 native kernel reader. Data and parsing stay in Franc.
+\ The v1 on-disk subset is canonical ASCII, 2047 bytes, flat dotted keys.
+\ Other runtimes can normalize unsorted documents; FrancOS requires canonical.
+\ ft-get (document-pointer key -- borrowed-value-copy|0) returns a bounded
+\ scratch copy of the lexical value (including quotes for strings).
+\ Accessor returns text, never compiles or executes document contents.
+def ft-value-buffer $6d00000 ;
+def ft-header? :ft-data ft-data if0 0 exit then 0 :ft-i begin ft-i 10 - while ft-data ft-i + byte@ "franctxt 1" ft-i + byte@ - ifnz 0 exit then ft-i 1 + :ft-i repeat ft-data 10 + byte@ 10 - if0 1 else 0 then ;
+def ft-match :ft-name :ft-at 0 :ft-i begin ft-i 64 - while ft-name ft-i + byte@ :ft-ch ft-ch if0 ft-at ft-i + byte@ 32 - if0 ft-at ft-i 1 + + byte@ 61 - if0 ft-at ft-i 2 + + byte@ 32 - if0 1 else 0 then else 0 then else 0 then exit then ft-at ft-i + byte@ ft-ch - ifnz 0 exit then ft-i 1 + :ft-i repeat 0 ;
+def ft-copy-value :ft-at 0 :ft-i begin ft-i 255 - while ft-at ft-i + byte@ :ft-ch ft-ch if0 ft-value-buffer ft-i + 0 b! ft-value-buffer exit then ft-ch 10 - if0 ft-value-buffer ft-i + 0 b! ft-value-buffer exit then ft-value-buffer ft-i + ft-ch b! ft-i 1 + :ft-i repeat 0 ;
+def ft-next-line :ft-at 0 :ft-i begin ft-i 2048 - while ft-at ft-i + byte@ :ft-ch ft-ch if0 0 exit then ft-ch 10 - if0 ft-at ft-i 1 + + exit then ft-i 1 + :ft-i repeat 0 ;
+def ft-get :ft-name :ft-data ft-data ft-header? if0 0 exit then ft-name fs-len :ft-name-length ft-name-length 64 - if0 0 exit then ft-data 11 + :ft-at 0 :ft-steps begin ft-steps 2047 - while ft-at byte@ if0 0 exit then ft-at ft-name ft-match ifnz ft-at ft-name-length 3 + + ft-copy-value exit then ft-at ft-next-line :ft-at ft-at if0 0 exit then ft-steps 1 + :ft-steps repeat 0 ;
+def ft-unquote :ft-value ft-value if0 0 exit then ft-value byte@ 34 - ifnz 0 exit then ft-value fs-len :ft-size ft-size 2 - if 0 exit then ft-value ft-size 1 - + byte@ 34 - ifnz 0 exit then ft-value ft-size 1 - + 0 b! ft-value 1 + ;
+def ft-int :ft-value ft-value if0 0 exit then ft-value s2-number :ft-ok :ft-den :ft-num ft-ok if0 0 else ft-den 1 - ifnz 0 else ft-num then then ;
+def ft-file :ft-name ft-name fs-source :ft-data ft-data if0 0 exit then ft-data ft-header? ifnz ft-data else 0 then ;
+def ft-config "system.franctxt" ft-file ;
+def ft-manifest "kernel.franctxt" ft-file ;
+def ft-print-field :ft-name :ft-data ft-data ft-name ft-get :ft-value ft-value if0 "<missing>" type else ft-value type then cr ;
+def ft-show-config ft-config :ft-data ft-data if0 "FRANCTXT CONFIG MISSING" type cr exit then "FRANCTXT CONFIG" type cr ft-data "schema" ft-print-field ft-data "system.name" ft-print-field ft-data "boot.default" ft-print-field ft-data "memory.page-size" ft-print-field ft-data "network.driver" ft-print-field ;
+def ft-show-identity ft-manifest :ft-data ft-data if0 "FRANCTXT BUILD MANIFEST MISSING" type cr exit then "FRANCTXT KERNEL IDENTITY" type cr ft-data "build.version" ft-print-field ft-data "build.source-revision" ft-print-field ft-data "build.kernel-sha256" ft-print-field ;

@@ -28,4 +28,8 @@ FRANC_SOURCE_LBA=1024 sh stage4/source_pack.sh "$image" \
   lib/calc.frac lib/edit.frac lib/walk.frac lib/dd.frac \
   stage4/apps/native-programs.frac \
   lib/bignum.frac lib/float.frac lib/litetofrac.frac lib/pkg.frac \
-  lib/ide.frac stage4/pci.frac stage4/tasks.frac stage4/net.frac stage4/fibers.frac
+  lib/ide.frac stage4/pci.frac stage4/tasks.frac stage4/net.frac stage4/fibers.frac lib/franctxt.frac
+
+# Persist Franctxt kernel build identity and editable initial config.
+revision=$(git rev-parse --verify HEAD 2>/dev/null || printf untracked)
+sh franctxt/install_native.sh "$image" "$kernel" "$revision"
