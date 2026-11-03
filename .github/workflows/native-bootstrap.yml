@@ -4,6 +4,7 @@ on:
     branches: [stage4-franc-native-bootstrap]
     paths:
       - 'stage4/**'
+      - 'lib/**'
       - 'stage2/compiler.frac'
       - 'stage3/ata.frac'
       - 'stage3/storage.frac'
@@ -11,6 +12,7 @@ on:
   pull_request:
     paths:
       - 'stage4/**'
+      - 'lib/**'
       - 'stage2/compiler.frac'
       - 'stage3/ata.frac'
       - 'stage3/storage.frac'

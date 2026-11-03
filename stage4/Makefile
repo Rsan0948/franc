@@ -9,7 +9,7 @@ native-all:
 # Historical Python seed is an explicitly selected compatibility target.
 legacy-all: franos-aot.img verify
 kernel.generated.S: compiler.py kernel.frac ../stage2/compiler.frac ../stage3/ata.frac ../stage3/storage.frac display.frac keyboard.frac repl.frac upgrade.frac aot.frac bundle.frac
-	python3 compiler.py ../stage3/ata.frac ../stage3/storage.frac display.frac keyboard.frac ../stage2/compiler.frac repl.frac upgrade.frac aot.frac bundle.frac kernel.frac -o $@
+	python3 compiler.py ../stage3/ata.frac ../stage3/storage.frac display.frac keyboard.frac ../stage2/compiler.frac repl.frac upgrade.frac aot.frac bundle.frac apps/registry.frac kernel.frac -o $@
 program.o: kernel.generated.S
 	$(AS) --64 -o $@ $<
 runtime.o: runtime.S

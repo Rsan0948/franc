@@ -21,6 +21,9 @@ if [ "$bytes" -gt 131071 ]; then
     exit 1
 fi
 sectors=$(( (bytes + 511) / 512 ))
-dd if=/dev/zero of="$image" bs=512 seek=512 count=$((sectors + 1)) conv=notrunc status=none
-printf FRANCSRC | dd of="$image" bs=512 seek=512 conv=notrunc status=none
-dd if="$scratch" of="$image" bs=512 seek=513 conv=notrunc status=none
+marker=${FRANC_SOURCE_LBA:-512}
+case "$marker" in ''|*[!0-9]*) echo 'FRANC_SOURCE_LBA must be numeric' >&2; exit 2;; esac
+if [ "$marker" -ne 512 ] && [ "$marker" -ne 1024 ]; then echo 'source marker must be LBA 512 or 1024' >&2; exit 2; fi
+dd if=/dev/zero of="$image" bs=512 seek="$marker" count=$((sectors + 1)) conv=notrunc status=none
+printf FRANCSRC | dd of="$image" bs=512 seek="$marker" conv=notrunc status=none
+dd if="$scratch" of="$image" bs=512 seek=$((marker + 1)) conv=notrunc status=none

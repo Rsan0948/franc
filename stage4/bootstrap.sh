@@ -26,7 +26,7 @@ trap cleanup EXIT HUP INT TERM
 set -- stage3/ata.frac stage3/storage.frac stage4/display.frac \
        stage4/keyboard.frac stage2/compiler.frac stage4/repl.frac \
        stage4/upgrade.frac stage4/aot.frac stage4/bundle.frac \
-       stage4/kernel.frac
+       stage4/apps/registry.frac stage4/kernel.frac
 for generation in 2 3; do
     disk="$scratch/input-$generation.img"
     cp "$seed" "$disk"

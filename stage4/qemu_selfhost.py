@@ -15,7 +15,7 @@ sources = [
     repo/'stage3/ata.frac',repo/'stage3/storage.frac',
     root/'display.frac',root/'keyboard.frac',
     repo/'stage2/compiler.frac',root/'repl.frac',root/'upgrade.frac',
-    root/'aot.frac',root/'bundle.frac',root/'kernel.frac'
+    root/'aot.frac',root/'bundle.frac',root/'apps/registry.frac',root/'kernel.frac'
 ]
 qemu=shutil.which('qemu-system-x86_64')
 assert qemu, 'QEMU is needed for native Franc compiler proof'

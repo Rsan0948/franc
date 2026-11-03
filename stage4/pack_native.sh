@@ -18,3 +18,12 @@ dd if="$kernel" of="$image" bs=512 count=127 seek=1 conv=notrunc status=none
 dd if="$kernel" of="$image" bs=512 skip=127 count=56 seek=200 conv=notrunc status=none
 dd if="$kernel" of="$image" bs=512 skip=183 count=127 seek=256 conv=notrunc status=none
 printf FRANCFS1 | dd of="$image" bs=512 seek=128 conv=notrunc status=none
+
+# Preserve the original Franc libraries as a disk-backed native source bundle.
+# The C-free OS JIT-compiles these sources on demand; no C or Python tool.
+FRANC_SOURCE_LBA=1024 sh stage4/source_pack.sh "$image" \
+  stage4/apps/native-compat.frac \
+  lib/fixpt.frac lib/cf.frac lib/approx.frac lib/iv.frac lib/trans.frac \
+  lib/graphics.frac lib/ford.frac lib/spiro.frac \
+  lib/calc.frac lib/edit.frac lib/walk.frac lib/dd.frac \
+  stage4/apps/native-programs.frac
