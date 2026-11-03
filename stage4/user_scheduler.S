@@ -469,6 +469,25 @@ fr_user_run:
 .Luser_write_code:
     leaq fr_space_pages(%rip),%rbx
     movq 32(%rbx),%rdi
+    /* F3: exact Franc-emitted byte streams were independently validated and
+     * sealed by user-code-stage. Copy only into generation-owned code frames;
+     * user PTE is RX, never RW or supervisor-accessible from CPL3.
+     */
+    movq fr_user_mode(%rip),%rax
+    cmpq $6,%rax
+    jb .Luser_legacy_code
+    cmpq $7,%rax
+    ja .Luser_legacy_code
+    leaq fr_compiled_code(%rip),%rsi
+    movq fr_compiled_length(%rip),%rcx
+    cld
+    rep movsb
+    movq 80(%rbx),%rdi
+    leaq fr_compiled_code+64(%rip),%rsi
+    movq fr_compiled_length+8(%rip),%rcx
+    rep movsb
+    jmp .Luser_frames_ready
+.Luser_legacy_code:
     cmpq $1,fr_user_mode(%rip)
     jne .Luser_try_exit
     leaq fr_user_code_a_fault(%rip),%rsi
@@ -509,6 +528,7 @@ fr_user_run:
     movl $(fr_user_code_b_end-fr_user_code_b),%ecx
     rep movsb
 
+.Luser_frames_ready:
     leaq fr_user_kstacks(%rip),%rbx
     movq (%rbx),%rdi
     addq $4096,%rdi
@@ -562,6 +582,10 @@ fr_user_run:
     movq fr_user_mode(%rip),%rax
     testq %rax,%rax
     jz .Luser_success
+    cmpq $6,%rax
+    je .Luser_compiled_fault_expected
+    cmpq $7,%rax
+    je .Luser_compiled_loop_expected
     /* Any abnormal A exit must still leave B runnable until timeout. */
     cmpq $3,fr_user_states+16(%rip)
     jne .Luser_cleanup_cli
@@ -570,6 +594,27 @@ fr_user_run:
     cmpq $4,fr_user_states+8(%rip)
     jne .Luser_cleanup_cli
     cmpq $0x10000,fr_user_fault_addr(%rip)
+    jne .Luser_cleanup_cli
+    jmp .Luser_success
+.Luser_compiled_fault_expected:
+    cmpq $4,fr_user_states+8(%rip)
+    jne .Luser_cleanup_cli
+    cmpq $3,fr_user_states+16(%rip)
+    jne .Luser_cleanup_cli
+    cmpq $0x10000,fr_user_fault_addr(%rip)
+    jne .Luser_cleanup_cli
+    /* A ran Franc-generated code at least 1..255 iterations and B made
+     * independent, IRQ-preempted progress in its own memory mapping.
+     */
+    cmpq $0,fr_user_a_progress(%rip)
+    je .Luser_cleanup_cli
+    jmp .Luser_success
+.Luser_compiled_loop_expected:
+    cmpq $3,fr_user_states+8(%rip)
+    jne .Luser_cleanup_cli
+    cmpq $3,fr_user_states+16(%rip)
+    jne .Luser_cleanup_cli
+    cmpq $0,fr_user_fault_addr(%rip)
     jne .Luser_cleanup_cli
     jmp .Luser_success
 .Luser_check_exit:
