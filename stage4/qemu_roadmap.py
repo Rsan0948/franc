@@ -154,7 +154,8 @@ with tempfile.TemporaryDirectory(prefix="franc-roadmap-") as tmp:
 
         print("PASS: native multiline IDE source, persistence and JIT compile", flush=True)
         line('ide-start "def main 18 . ;" ide-add-line .', b"1\nFrac> ")
-        positive = line("ide-run", b"18\nRUN COMPLETE\nFrac> ")\n        assert b"COMPILE OK | lines " in positive, positive
+        positive = line("ide-run", b"18\nRUN COMPLETE\nFrac> ")
+        assert b"COMPILE OK | lines " in positive, positive
         line('ide-start "def main 7 bad-token . ;" ide-add-line .', b"1\nFrac> ")
         failed = line("ide-run", b"COMPILE FAILED | line 1\n", allow_compiler_error=True)
         assert b"RUN COMPLETE" not in failed, failed
