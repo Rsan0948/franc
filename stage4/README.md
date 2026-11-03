@@ -206,3 +206,7 @@ result and asserts the boot and native compiler symbols. This is an
 **intermediate compiler-completeness gate**, not an assertion that a rebuilt
 image boots yet. The QEMU test harness itself is Python; eventual bootstrapping
 must eliminate it from the production build path.
+
+## Native two-generation shell bootstrap
+
+Run `bash stage4/bootstrap.sh PATH_TO_SEED.img OUTPUT_DIR`. This runner uses only Franc inside QEMU, x86-64 assembly objects, GNU assembler/linker/objcopy and shell disk tools. It builds a generation-2 native kernel, boots that image and attempts a generation-3 rebuild, then requires byte-for-byte kernel identity. No Python or C is called in this rebuild path. An already bootable seed image remains necessary. If that seed was originally built by Python, this is not yet a source-only initial bootstrap proof.
