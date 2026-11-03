@@ -1,0 +1,14 @@
+\ IEEE-754 binary64 *bit pattern* inspection, not hardware FPU arithmetic.
+\ Call with a pointer to 8 little-endian bytes (e.g. $6600000). Complete
+\ finite values are represented exactly as (signed significand, base-2 exponent).
+\ Converting to a single 64-bit Rat returns bottom if it cannot fit.
+def f64-sign :fsign-p fsign-p 7 + b@ 128 band ifnz -1 else 1 then ;
+def f64-exp-bits :fexp-p fexp-p 7 + b@ 127 band 16 * fexp-p 6 + b@ 16 / floor + ;
+def f64-mantissa :fman-p 0 :fman-v 1 :fman-scale 0 :fman-i begin fman-i 6 - while fman-v fman-p fman-i + b@ fman-scale * + :fman-v fman-scale 256 * :fman-scale fman-i 1 + :fman-i repeat fman-p 6 + b@ 16 % fman-scale * fman-v + ;
+\ Class: 0 = zero, 1 = normal, 2 = infinity, 3 = NaN, 4 = subnormal.
+def f64-class :fcl-p fcl-p f64-exp-bits :fcl-e fcl-p f64-mantissa :fcl-m fcl-e 2047 - if0 fcl-m if0 2 else 3 then exit then fcl-e if0 fcl-m if0 0 else 4 then exit then 1 ;
+\ (ptr -- signed-significand power-of-two-exponent). Applies to finite floats.
+def f64-scaled :fsc-p fsc-p f64-exp-bits :fsc-e fsc-p f64-mantissa :fsc-m fsc-e if0 fsc-m -1074 else fsc-m 4503599627370496 + fsc-e 1075 - then :fsc-shift :fsc-v fsc-v fsc-p f64-sign * fsc-shift ;
+def f64-reduce :fred-e :fred-s begin fred-e 0 - while fred-s 2 % ifnz fred-s fred-e exit then fred-s 2 / floor :fred-s fred-e 1 + :fred-e repeat fred-s fred-e ;
+\ Returns bottom (0/0) on overflow/unrepresentable exponent or nonfinite input.
+def f64-to-rat :ftr-p ftr-p f64-class :ftr-class ftr-class if0 0 exit then ftr-class 2 - if0 0/0 exit then ftr-class 3 - if0 0/0 exit then ftr-p f64-scaled f64-reduce :ftr-e :ftr-s ftr-e 0 - if ftr-e -62 - if 0/0 exit then 1 :ftr-d begin ftr-e if0 ftr-s ftr-d / exit then ftr-d 2 * :ftr-d ftr-e 1 + :ftr-e again else begin ftr-e if0 ftr-s exit then ftr-s abs 4611686018427387904 - if ftr-s 2 * :ftr-s ftr-e 1 - :ftr-e else 0/0 exit then again then ;

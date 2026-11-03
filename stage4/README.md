@@ -125,3 +125,11 @@ numerical correctness guarantee exists.
 
 For the historical sequence of Stage 4 compiler/driver milestones,
 see [the archived development notes](../docs/STAGE4_DEV_HISTORY.md).
+
+## Stage 4+ experimental userland
+
+The `stage4-roadmap-foundations` feature branch adds an initial Franc-only
+bignum library, binary64 decoder, infix translator and offline source
+package commands to the source bundle. See
+[`docs/STAGE4_PLUS_ROADMAP.md`](../docs/STAGE4_PLUS_ROADMAP.md)
+for the feature boundaries and outstanding UEFI/networking/isolation work.

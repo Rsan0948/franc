@@ -109,3 +109,18 @@ qemu-system-x86_64 -m 128M -accel tcg -display none -monitor none \
 This does not use a package registry, dependency solver, dynamic linker or
 software distribution service. The "packages" are ordered source modules
 loaded by Franc's own compiler. Updates require repacking the source bundle.
+
+## Stage 4+ roadmap additions (experimental)
+
+The `stage4-roadmap-foundations` branch additionally ships four Franc-only
+source modules: `bignum.frac` (unsigned multi-limb integer operations),
+`float.frac` (IEEE-754 binary64 bit decoding and checked Rat conversion),
+`litetofrac.frac` (a small infix expression translator/evaluator), and
+`pkg.frac` (offline source-file install and load). These load with `l`;
+their definitions can be used in the `r` REPL. The original 12 source
+libraries and eight menu launch options remain unchanged.
+
+A separate native QEMU test runs representative bignum, floating-point,
+infix and package examples; see
+[`docs/STAGE4_PLUS_ROADMAP.md`](../../docs/STAGE4_PLUS_ROADMAP.md) for
+memory reservations, exact limitations and remaining roadmap items.

@@ -1,0 +1,17 @@
+\ Minimal FrancLite infix-to-Franc compiler: integers + - * / ( ), not statements.
+\ Uses 2 KiB output at 0x6800000 and 128 operator bytes at 0x6810000.
+\ Shared scratch registers mean compilation is intentionally non-reentrant.
+def lite-digit? :ld-ch ld-ch 48 - if 0 exit then ld-ch 58 - if 1 else 0 then ;
+def lite-op? :lop-ch lop-ch 43 - if0 1 exit then lop-ch 45 - if0 1 exit then lop-ch 42 - if0 1 exit then lop-ch 47 - if0 1 exit then 0 ;
+def lite-prec :lpc-ch lpc-ch 42 - if0 2 exit then lpc-ch 47 - if0 2 exit then lpc-ch 43 - if0 1 exit then lpc-ch 45 - if0 1 exit then 0 ;
+def lite-put :lput-ch lc-len 2047 - if $6800000 lc-len + lput-ch b! lc-len 1 + :lc-len 1 else 1 :lc-error 0 then ;
+def lite-push :lpush-ch lc-sp 128 - if $6810000 lc-sp + lpush-ch b! lc-sp 1 + :lc-sp 1 else 1 :lc-error 0 then ;
+def lite-top lc-sp if0 0 else $6810000 lc-sp 1 - + b@ then ;
+def lite-pop lc-sp if0 0 else lc-sp 1 - :lc-sp $6810000 lc-sp + b@ then ;
+def lite-emit lite-put drop 32 lite-put drop ;
+def lite-number begin lc-p byte@ lite-digit? if0 32 lite-put drop 0 :lc-want exit then lc-p byte@ lite-put drop lc-p 1 + :lc-p again ;
+def lite-operator :loperator-ch lc-want ifnz 0 exit then begin lc-sp if0 loperator-ch lite-push drop 1 :lc-want 1 exit then lite-top :loperator-top loperator-top 40 - if0 loperator-ch lite-push drop 1 :lc-want 1 exit then loperator-top lite-prec loperator-ch lite-prec - if loperator-ch lite-push drop 1 :lc-want 1 exit then lite-pop lite-emit again ;
+def lite-close lc-want ifnz 0 exit then begin lc-sp if0 0 exit then lite-pop :lclose-c lclose-c 40 - if0 0 :lc-want 1 exit then lclose-c lite-emit again ;
+def lite-finish lc-want ifnz 0 exit then begin lc-sp if0 lc-error ifnz 0 exit then $6800000 lc-len + 0 b! $6800000 exit then lite-pop :lfinish-c lfinish-c 40 - if0 0 exit then lfinish-c lite-emit again ;
+def lite-compile :lc-p 0 :lc-sp 0 :lc-len 0 :lc-error 1 :lc-want begin lc-p byte@ :lc-ch lc-ch if0 lite-finish exit then lc-ch 33 - if lc-p 1 + :lc-p else lc-ch lite-digit? ifnz lc-want if0 0 exit then lite-number else lc-ch 40 - if0 lc-want if0 0 exit then lc-ch lite-push drop lc-p 1 + :lc-p else lc-ch 41 - if0 lite-close if0 0 exit then lc-p 1 + :lc-p else lc-ch lite-op? ifnz lc-ch lite-operator if0 0 exit then lc-p 1 + :lc-p else 0 exit then then then then then again ;
+def lite-run lite-compile :lrun-code lrun-code if0 0/0 exit then lrun-code s2-eval ;

@@ -1,0 +1,8 @@
+\ Offline package-management foundation for the 12-file FRANCFS1 source store.
+\ No HTTP, downloads, dependency resolution or signature verification yet.
+\ pkg-install (name source -- success), pkg-load (name -- compiled-line-count).
+\ A file currently holds at most 2047 bytes; caller must trust the source.
+def pkg-install :pkg-source :pkg-name pkg-name pkg-source fs-save ;
+def pkg-load :pkg-name pkg-name fs-source :pkg-loaded pkg-loaded if0 0 else pkg-loaded s2-source then ;
+def pkg-list fs-files ;
+def pkg-ready fs-ready? ;

@@ -1,7 +1,7 @@
 name: Franc C-free experimental AOT boot
 on:
   push:
-    branches: [stage4-cfree-aot, stage4-franc-native-bootstrap]
+    branches: [stage4-cfree-aot, stage4-franc-native-bootstrap, stage4-roadmap-foundations]
   pull_request:
     paths:
       - 'stage4/**'
@@ -40,7 +40,7 @@ jobs:
             stage4/native-build/gen3.S
             stage4/native-build/gen3.bin
       - name: Freeze verified Franc-native bootstrap seed on development branch
-        if: github.ref == 'refs/heads/stage4-franc-native-bootstrap'
+        if: github.ref == 'refs/heads/stage4-franc-native-bootstrap' || github.ref == 'refs/heads/stage4-roadmap-foundations'
         run: |
           cp stage4/native-build/gen3.S stage4/bootstrap_seed.S
           git config user.name 'github-actions[bot]'
@@ -48,7 +48,7 @@ jobs:
           git add stage4/bootstrap_seed.S
           if ! git diff --cached --quiet; then
             git commit -m 'Pin reproducible Franc-generated bootstrap assembly seed'
-            git push origin HEAD:refs/heads/stage4-franc-native-bootstrap
+            git push origin HEAD:"${{ github.ref }}"
           fi
       - name: Rebuild FrancOS from assembly seed without Python or C
         run: |

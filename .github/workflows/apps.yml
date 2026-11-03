@@ -1,7 +1,7 @@
 name: Franc native applications — end-to-end QEMU
 on:
   push:
-    branches: [stage4-franc-native-bootstrap]
+    branches: [stage4-franc-native-bootstrap, stage4-roadmap-foundations]
     paths:
       - 'stage4/**'
       - 'stage2/compiler.frac'
@@ -29,3 +29,5 @@ jobs:
         run: make -f stage4/Makefile.native native-seed
       - name: Check original Franc libraries and apps execute in native JIT
         run: python3 stage4/qemu_apps.py stage4/native_seed.img
+      - name: Verify Stage 4+ roadmap libraries in the native guest
+        run: python3 stage4/qemu_roadmap.py stage4/native_seed.img
