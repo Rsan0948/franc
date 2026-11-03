@@ -12,17 +12,19 @@ class MemoryLayoutError(FranctxtError):
     pass
 
 
+# Every fixed reservation must match its actual code declaration, not merely
+# appear somewhere in a comment or an unrelated buffer constant.
 ANCHORS = {
-    "heap": "stage4/runtime.S",
-    "bignumarena": "lib/bignum.frac",
-    "bignumstate": "lib/bignum.frac",
-    "bignumprint": "lib/bignum.frac",
-    "tasks": "stage4/tasks.frac",
-    "ide": "lib/ide.frac",
-    "net": "stage4/net.frac",
-    "franctxt": "lib/franctxt.frac",
-    "pages": "stage4/runtime.S",
-    "lite": "lib/litetofrac.frac",
+    "heap": ("stage4/runtime.S", "fr_heap_next:"),
+    "bignumarena": ("lib/bignum.frac", "def bn-base"),
+    "bignumstate": ("lib/bignum.frac", "def bn-state"),
+    "bignumprint": ("lib/bignum.frac", "def bn-print"),
+    "tasks": ("stage4/tasks.frac", "def task-base"),
+    "ide": ("lib/ide.frac", "def ide-buffer"),
+    "net": ("stage4/net.frac", "def net-txdesc"),
+    "franctxt": ("lib/franctxt.frac", "def ft-value-buffer"),
+    "pages": ("stage4/runtime.S", "fr_page_alloc:"),
+    "lite": ("lib/litetofrac.frac", "def lite-put"),
 }
 MAX_RAM = 128 * 1024 * 1024
 
@@ -59,10 +61,16 @@ def validate_layout(state: dict, root: Path | None = None) -> list[tuple[str, in
                 f"overlapping FrancOS physical memory: {prev[0]} and {nxt[0]}"
             )
     if root:
-        for name, path in ANCHORS.items():
+        for name, (path, prefix) in ANCHORS.items():
             source = (root / path).read_text("utf-8")
+            if prefix == "fr_page_alloc:":
+                fragment = source.split(prefix, 1)[1].split(
+                    ".global fr_page_free", 1)[0]
+            else:
+                fragment = next((line for line in source.splitlines()
+                                 if line.startswith(prefix)), "")
             base = state[f"region.{name}.base"]
-            if not any(token in source for token in (
+            if not any(token in fragment for token in (
                 f"0x{base:08x}", f"0x{base:x}", "$" + format(base, "x")
             )):
                 raise MemoryLayoutError(
