@@ -146,3 +146,37 @@ process isolation.
 
 All three are exercised in the independent QEMU roadmap test while the
 prior bignum/float/FrancLite/package implementations remain unchanged.
+
+## FrancOS v1 Wave 1 application UX increment (PR #6)
+
+The v1 [paired release contract](../../docs/FRANCOS_V1_DUAL_TRACK_ROADMAP.md)
+makes file access, an editor and an integrated home/launcher **release
+requirements**, not optional graphics polish.
+
+The existing `9` menu entry still opens `lib/ide.frac` after `l` has loaded
+the trusted application bundle. In its `ide>` menu:
+
+- `e`: redraw a bounded VGA/serial edit viewport with a source cursor;
+  PS/2 arrow events move the cursor, printable keys insert at the cursor,
+  Enter inserts a newline, Backspace deletes one byte. Tab or Ctrl-S saves,
+  Esc or Ctrl-Q returns to the parent IDE menu. Ctrl shortcuts are supported
+  over serial; the PS/2 fallback uses Tab/Esc.
+- `f`: list the live, bounded `FRANCFS1` directory on VGA and serial.
+  `o`: prompt for an existing filename and open its source.
+  `n`: prompt for a new filename and reset the editing buffer.
+- `s`, `c`, `v`, `i`, `x`, `q`: preserve the prior save, compile,
+  view, add-line, clear and quit menu operations.
+
+The 2047-byte source cap, 12 disk slots, 23-byte filename cap, shared
+`FRANCFS1` read scratch, and single-foreground-editor policy are unchanged.
+A 4KiB editor reservation provides temporary character/dirty-state/filename
+storage. The status line fits the native 40-column VGA text viewport.
+No general filesystem, project browser, rename/delete, undo history,
+syntax highlighting, independent user process, app switcher or complete
+home screen is claimed. Compiler calls still execute trusted source in
+kernel context.
+
+`franctxt/tests/test_ide_contract.py` rejects unmatched editor control
+structures; `stage4/qemu_roadmap.py` additionally checks cursor changes,
+insertion, deletion, save/open and a real `FRANCFS1` file listing in QEMU.
+Visual appearance and reboot-level IDE workflow remain independent gates.
