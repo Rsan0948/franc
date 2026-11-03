@@ -145,3 +145,65 @@ The [isolated QEMU run 41677382606](https://github.com/Rsan0948/franc/actions/ru
 The same run executed two **sequential assembly CPL3 contexts** backed by different physical code/stack pages at the same user virtual addresses. A faults on a supervisor-only read; the #PF handler records the fault and replaces both user PTEs, reloads CR3, then B executes 50,000 private-memory writes, completes through INT80, and the native Franc REPL resumes. The full proof is documented in [FRANCOS_PROCESS_ISOLATION.md](FRANCOS_PROCESS_ISOLATION.md).
 
 This **does not complete the advertised general multi-process acceptance**. Real concurrent fault tolerance needs a separate TCB and CR3 per Ring 3 process, TSS RSP0 switching, timer-IRQ handoff through user/kernel privilege transitions, a restricted Franc runtime/syscall ABI for user code, and fault isolation for arbitrary user tasks. UEFI GetMemoryMap, guarded stacks and FPU/SIMD state are also still pending. Preserve this distinction in project status.
+
+## FrancOS v1 paired Wave 1: generation-tagged frames and IDE/file surface
+
+**Development PR:** [#6](https://github.com/Rsan0948/franc/pull/6).
+**Release state:** Wave 1 remains **open** until both F1 and U1 criteria in
+[the binding two-track roadmap](FRANCOS_V1_DUAL_TRACK_ROADMAP.md) pass.
+
+### Track F1 — implemented partial, not process isolation
+
+`stage4/page_owners.S` adds two explicit trusted-kernel page leases:
+`proc-lease-begin` (owner -> generation),
+`proc-lease-alloc` (owner generation -> zeroed physical page or 0),
+`proc-lease-free` (owner generation page -> success),
+and `proc-lease-end` (owner generation -> reclaimed count).
+Pages are selected only by the existing BIOS E820-approved 8 MiB arena
+allocator. The allocator's legacy `page-free` cannot release a tagged page
+while its lease is active, and released pages are scrubbed. A stale lease
+generation, foreign-owner page, out-of-range frame, double-free or inactive
+owner is rejected. The generation counter does not wrap or silently
+reissue an exhausted token.
+
+**This is a kernel-side lifecycle/bookkeeping increment, not an access-control
+boundary for privileged code.** It neither installs per-process CR3 page table
+roots nor restricts identity-mapped memory from trusted Franc kernel code.
+Do not advertise it as F1 acceptance, concurrent CPL3, or production process
+isolation. Next F1 implementation should assign frames to two distinct,
+reservation-aware process address-space roots, enforce supervisor/user PTE
+permissions, and prove teardown and cross-process fault isolation in QEMU.
+
+### Track U1/U2 — implemented partial, not an integrated shell
+
+`lib/ide.frac` retains the existing native key-9 source IDE and adds:
+cursor insert/delete, line navigation, bounded VGA edit viewport, dirty-state
+and file-name storage, in-guest `FRANCFS1` directory listing, and open/new
+file prompts. Tab/ESC provide PS/2 keyboard save/back fallbacks while
+Ctrl-S/Ctrl-Q remain available over serial. It has a hard source limit
+of 2047 bytes; source still runs in the trusted kernel.
+
+**This is not the required v1 home/launcher or package lifecycle.** A
+persistent shell with file launch/error states, more complete IDE visual
+interaction and a manifest-hashed install/update/rollback/uninstall path
+remain to be implemented and tested. See
+[the native applications inventory](../stage4/apps/README.md).
+
+### Verification and handoff
+
+- `franctxt/tests/test_process_isolation_contract.py`: assembly symbols,
+  owner lease declarations and raw-free guardrails
+- `franctxt/tests/test_ide_contract.py`: static rejection of unmatched
+  JIT source controls (which previously produced a generic unsupported
+  token) and IDE reservation anchors
+- `stage4/qemu_roadmap.py`: actual guest checks for lease misuse, generation
+  renewal, reclamation, IDE cursor insertion/backspace/save/reload and
+  VGA/serial directory listing
+- `stage4/qemu_apps.py` and the existing native bootstrap, networking,
+  CPL3 and preemption workflows: regression gates
+
+**Status convention:** commits with source and tests are "implemented,
+verification pending" until their exact CI execution passes. A passing
+earlier image never proves newly edited code. This PR intentionally leaves
+`stage4/bootstrap_seed.S` and `franctxt/seed.lock.franctxt` unchanged;
+there is no new Franc kernel AOT source or named register declaration.
