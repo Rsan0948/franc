@@ -77,12 +77,30 @@ try:
     for marker in [b'JIT-SUM 5\n', b'JIT-DEF 36\n']:
         assert marker in transcript, f'missing {marker!r}'
     for key, expected in [(b'\x1b', b'Franc> '),
+                          (b'a', b'FRANC-AOT-END\nFranc> '),
                           (b'b', b'SELFHOST OK\nFranc> '),
                           (b'\x1b', b'EXIT CONSOLE')]:
         time.sleep(0.5)
         offset = len(transcript)
         os.write(p.stdin.fileno(), key)
         transcript = read_until(expected, timeout=150 if key == b'b' else 45, after=offset)
+    # Franc must emit self-contained relocatable assembly, not JIT addresses.
+    import re
+    from tempfile import TemporaryDirectory
+    assert b'FRANC-AOT-ERROR' not in transcript, transcript
+    aot_match = re.search(rb'FRANC-AOT-BEGIN\n(.*?)FRANC-AOT-END\n', transcript, re.S)
+    assert aot_match is not None, transcript
+    with TemporaryDirectory(prefix='franc-native-aot-') as work:
+        asm_path = Path(work)/'from-franc.S'
+        obj_path = Path(work)/'from-franc.o'
+        asm_source = aot_match.group(1).decode('ascii')
+        assert 'call fr_add' in asm_source and 'call fr_dot' in asm_source, asm_source
+        assert 'movabsq $2, %rdi' in asm_source and 'movabsq $3, %rdi' in asm_source
+        asm_path.write_text(asm_source)
+        subprocess.run(['as', '--64', '-o', str(obj_path), str(asm_path)], check=True)
+        sym = subprocess.check_output(['nm',str(obj_path)],text=True)
+        assert 'T franc_aot_entry' in sym and 'U fr_add' in sym, sym
+    print('PASS: Franc-generated relocatable AOT assembly assembled by GNU as')
     for marker in [b'SELFHOST START\n', b'GEN 2: 29\n', b'GEN 3: 29\n', b'42\n', b'SELFHOST OK\n']:
         assert marker in transcript, f'missing {marker!r}: {transcript!r}'
     assert b'stage2: unsupported token' not in transcript, transcript

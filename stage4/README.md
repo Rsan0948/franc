@@ -103,3 +103,14 @@ boots the same writable disk image again, and expects the startup word to run.
 This is runtime source-driven startup; the immutable seed image itself is still
 created by the host Python AOT bridge and GNU assembly tools. Startup programs
 execute with kernel privileges and must be trusted.
+
+## Franc-generated relocatable AOT assembly (first supported subset)
+
+Run `a` from the standalone FrancOS menu to use `stage4/aot.frac`.
+The Franc-authored compiler emits **GNU x86-64 relocatable assembly source**
+through COM1. GitHub Actions extracts and assembles the output with `as`,
+checking the exported entry symbol and external primitive references.
+This first compiler supports bounded signed 32-bit rational literals and
+`+ - * / dup drop swap over .` in straight-line expressions; there is no
+control flow, new definitions, data emission, kernel relocation or image
+writer yet. It does not replace `stage4/compiler.py` for the full OS build.

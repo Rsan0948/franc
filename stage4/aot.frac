@@ -1,0 +1,19 @@
+\ Franc-authored relocatable x86-64 assembly emitter (first AOT subset).
+\ Unlike s2-compile, emit calls by SYMBOL, not absolute JIT helper addresses.
+\ This initially supports bounded integer/fraction literals and basic stack
+\ operators. No definitions, control flow, strings, or kernel rebuild yet.
+\ Output is GNU assembler source on COM1, bracketed for a host assembly test.
+\ Only input from trusted source; there is no runtime sandbox.
+
+\ Convert signed 32-bit integer to decimal ASCII without division overflow.
+\ Uses global registers, never recurses (Franc registers are not locals).
+def aot-dec :ad-n 0 :ad-start 1000000000 :ad-place begin ad-place if0 ad-start if0 48 emit then exit then ad-n ad-place / floor 10 % :ad-digit ad-digit ifnz 1 :ad-start then ad-start ifnz ad-digit 48 + emit then ad-place 10 / floor :ad-place again ;
+def aot-signed :as-n as-n 0 - if 45 emit as-n neg aot-dec else as-n aot-dec then ;
+def aot-fits32 :af-v af-v 0 - if af-v neg :af-v then af-v 2147483648 - if 1 else 0 then ;
+def aot-literal :al-den :al-num al-num aot-fits32 if0 0 exit then al-den aot-fits32 if0 0 exit then "  movabsq $" type al-num aot-signed ", %rdi" type 10 emit "  movabsq $" type al-den aot-signed ", %rsi" type 10 emit "  call fr_push" type 10 emit 1 ;
+\ The AOT subset explicitly recognizes address-independent primitive names.
+def aot-operator :ao-t ao-t "+" s2-eq ifnz "  call fr_add" type 10 emit 1 exit then ao-t "-" s2-eq ifnz "  call fr_sub" type 10 emit 1 exit then ao-t "*" s2-eq ifnz "  call fr_mul" type 10 emit 1 exit then ao-t "/" s2-eq ifnz "  call fr_div" type 10 emit 1 exit then ao-t "dup" s2-eq ifnz "  call fr_dup" type 10 emit 1 exit then ao-t "drop" s2-eq ifnz "  call fr_drop" type 10 emit 1 exit then ao-t "swap" s2-eq ifnz "  call fr_swap" type 10 emit 1 exit then ao-t "over" s2-eq ifnz "  call fr_over" type 10 emit 1 exit then ao-t "." s2-eq ifnz "  call fr_dot" type 10 emit 1 exit then 0 ;
+def aot-token :at-token at-token aot-operator ifnz 1 exit then at-token s2-number :at-valid :at-den :at-num at-valid if0 0 exit then at-num at-den aot-literal ;
+\ Emit one relocatable function. Errors are explicit, never accepted as output.
+def aot-source :s2p "FRANC-AOT-BEGIN" type 10 emit ".text" type 10 emit ".global franc_aot_entry" type 10 emit "franc_aot_entry:" type 10 emit begin s2-next :at-next at-next if0 "  ret" type 10 emit "FRANC-AOT-END" type 10 emit 1 exit then at-next aot-token if0 "FRANC-AOT-ERROR" type 10 emit 0 exit then again ;
+def aot-demo "2 3 + ." aot-source drop ;
