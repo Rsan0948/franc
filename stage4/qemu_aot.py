@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
 """QEMU evidence for Franc AOT, no C runtime, no C object files."""
 from pathlib import Path
-import os, selectors, shutil, subprocess, sys, time
+import os, selectors, shutil, subprocess, sys, time, tempfile
 root=Path(__file__).resolve().parent
 qemu=shutil.which('qemu-system-x86_64')
 if not qemu:sys.exit('QEMU missing: boot cannot be claimed verified')
-p=subprocess.Popen([qemu,'-m','128M','-accel','tcg','-display','none',
-                    '-monitor','none','-no-reboot','-serial','stdio',
-                    '-drive',f'file={root/"franos-aot.img"},format=raw,if=ide'],
-                   stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,bufsize=0)
+# Never mutate the built image during persistence tests. Both boots use one
+# disposable writable clone of the exact verified AOT image.
+temporary_disk=tempfile.TemporaryDirectory(prefix='franc-aot-')
+test_image=Path(temporary_disk.name)/'franos-aot.img'
+shutil.copyfile(root/'franos-aot.img',test_image)
+cmd=[qemu,'-m','128M','-accel','tcg','-display','none',
+     '-monitor','none','-no-reboot','-serial','stdio',
+     '-drive',f'file={test_image},format=raw,if=ide']
+p=subprocess.Popen(cmd,stdin=subprocess.PIPE,stdout=subprocess.PIPE,
+                   stderr=subprocess.STDOUT,bufsize=0)
 selector=selectors.DefaultSelector();selector.register(p.stdout,selectors.EVENT_READ)
 buffer=b''
 try:
@@ -115,3 +121,4 @@ try:
 finally:
     p2.kill()
     p2.wait()
+temporary_disk.cleanup()
