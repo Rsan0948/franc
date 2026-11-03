@@ -101,7 +101,7 @@ class Guest:
             time.sleep(0.1)
         content = target.read_bytes()
         import re
-        header = re.match(rb"P6\\s+(\\d+)\\s+(\\d+)\\s+255\\s", content)
+        header = re.match(rb"P6\s+(\d+)\s+(\d+)\s+255\s", content)
         assert header, (name, content[:100])
         width, height = map(int, header.groups())
         # QEMU screendump often doubles BIOS mode 13h to 640x400 while
