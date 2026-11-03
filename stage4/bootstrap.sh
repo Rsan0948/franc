@@ -69,12 +69,18 @@ for generation in 2 3; do
     wait "$guest_pid" 2>/dev/null || true
     guest_pid=""
     output="$dest/gen$generation.S"
-    awk '
-      /FRANC-PROGRAM-BEGIN$/ { inside=1; count++; next }
-      /^FRANC-PROGRAM-END$/ { inside=0; done++; next }
+    if ! awk '
+      index($0,"FRANC-PROGRAM-BEGIN") { inside=1; count++; next }
+      index($0,"FRANC-PROGRAM-END") { inside=0; done++; next }
       inside { print }
       END { if(count!=1 || done!=1) exit 1 }
-    ' "$log" > "$output"
+    ' "$log" > "$output"; then
+        echo "gen$generation assembly delimiter mismatch" >&2
+        grep -F 'FRANC-PROGRAM-' "$log" | tail -n 8 >&2 || true
+        tail -c 1600 "$log" >&2 || true
+        exit 1
+    fi
+    echo "gen$generation emitted $(wc -c < "$output") assembly bytes"
     as --64 -o "$dest/gen$generation.o" "$output"
     ld -m elf_x86_64 -nostdlib -T stage4/kernel.ld \
         -o "$dest/gen$generation.elf" \
