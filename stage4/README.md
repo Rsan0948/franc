@@ -1,6 +1,8 @@
 # Stage 4 — Native, self-hosting FrancOS (development branch)
 
-**Current status (2026-11-02):** FrancOS cold-boots as a C-free
+**Current finish line:** [FrancOS v1 dual-track roadmap](../docs/FRANCOS_V1_DUAL_TRACK_ROADMAP.md). Kernel/process/network correctness **and** a usable IDE, packages, file workflow, launcher and consistent UI are jointly required; neither is deferred to v2. See [current milestones](../docs/FRANCOS_NEXT_MILESTONES.md) and [native software inventory](apps/README.md) for verified scope.
+
+**Historical implementation snapshot (2026-11-02):** FrancOS cold-boots as a C-free
 x86-64 kernel, runs the Franc native JIT and interactive console,
 compiles **all 11 Franc kernel source modules** into relocatable x86-64
 assembly, and produces a second and third identical generation of the
@@ -9,10 +11,7 @@ with no C or Python compiler calls. The original twelve Franc libraries
 and apps are also shipped on a separate disk bundle, loaded by Franc's
 JIT, and exercised by QEMU integration tests.
 
-The native kernel is **124,592 bytes**. The boot source's Franc-produced
-assembly is **658,558 bytes**, compared byte-for-byte with the
-committed `bootstrap_seed.S`. Verified kernel SHA-256:
-`ca92072d6f649f2af4249e52123b140e0aba6295034550fce883c6a5a7cace89`.
+That snapshot's image size and SHA-256 are **not current release identities**. The later [full Franc AOT QEMU integration](https://github.com/Rsan0948/franc/actions/runs/41678295866) verified a **159,130-byte** Franc-produced generation-2/3 kernel and byte-for-byte reproducibility at its tested commit. Always obtain the current exact image hash from the latest passing tested-build record rather than this README.
 
 ## Build
 

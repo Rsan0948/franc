@@ -6,6 +6,8 @@
 
 > This is the actionable milestone plan. The older [development log](STAGE4_PLUS_ROADMAP.md) records the previous implementation increments. A commit is not a completed milestone; only an explicit integration test can establish that.
 
+> **FrancOS v1 now has two first-class tracks.** The binding release scope, paired milestones and end-to-end UX acceptance live in [FRANCOS_V1_DUAL_TRACK_ROADMAP.md](FRANCOS_V1_DUAL_TRACK_ROADMAP.md). This file remains the detailed subsystem backlog. An IDE, package lifecycle, file UX and integrated visual shell are **v1 requirements**, not leftover optional P4 polish.
+
 ## Verified foundations
 
 | Subsystem | Demonstrated | Unfinished |
@@ -51,15 +53,11 @@ Baseline test evidence: [AOT self-hosting](https://github.com/Rsan0948/franc/act
 
 **Acceptance:** QEMU proves user-mode code cannot write protected kernel memory and a faulty process cannot crash a healthy one. Requires sound exception/interrupt infrastructure.
 
-## P4 — Language, developer environment, packages and portability
+## Track U — developer experience, packages and visual usability (v1 required)
 
-- `float.frac`: IEEE-754 operations, rounding, infinity/NaN and signed zero tests.
-- `bignum.frac`: signed numbers, general division, conversions and safe allocation.
-- `litetofrac.frac`: variables, declarations, functions and diagnostics.
-- `ide.frac`: cursor movement, fullscreen editing, highlighting and larger persistent files.
-- `pkg.frac`: dependency resolution, semantic versions, signatures and secure network-based installation.
-- UEFI: GOP framebuffer support, true memory handoff and hardware-safe relocation.
-- Performance: benchmark integer/rational paths and retain exactness tests; never assert speedups without measurements.
+**This is an equal release track, not optional P4 polish.** The actionable U1–U4 milestones and integrated acceptance are defined in [FrancOS v1 two-track release contract](FRANCOS_V1_DUAL_TRACK_ROADMAP.md). Native IDE, launcher, file workflows, usable package management and coherent graphical/text interaction all block the v1 tag until independently QEMU-tested.
+
+The legacy language/portability backlog remains: IEEE-754 arithmetic, signed bignum, expanded FrancLite, general dependency resolution, signed public repositories, UEFI GOP rendering, real hardware/relocation and performance benchmarks. These enhancements must not displace the **bounded** v1 experience gates. The existing `lib/ide.frac`, `lib/pkg.frac` and native applications are starting points, not finished UI.
 
 ## Build discipline and verification
 
