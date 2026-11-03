@@ -1,4 +1,4 @@
-/* FrancOS Stage4 BIOS loader: 310 kernel sectors, preserving FRANCFS1. */
+/* FrancOS Stage4 BIOS loader: 318 kernel sectors, preserving FRANCFS1. */
 .code16
 .section .text
 .global _start
@@ -23,7 +23,7 @@ _start:
   movb boot_drive,%dl
   int $0x13
   jc disk_error
-  /* Stage4 extra kernel extent, physical 0x26e00, LBA 256..382. */
+  /* Stage4 extra kernel extent, physical 0x27e00, LBA 264..390. */
   movw $dap_third,%si
   movb $0x42,%ah
   movb boot_drive,%dl
@@ -136,14 +136,14 @@ dap:
 .align 4
 dap_extra:
   .byte 0x10,0
-  .word 56
+  .word 64
   .word 0,0x1fe0
   .quad 200
 .align 4
 dap_third:
   .byte 0x10,0
   .word 127
-  .word 0,0x26e0
-  .quad 256
+  .word 0,0x27e0
+  .quad 264
 .org 510
 .word 0xaa55

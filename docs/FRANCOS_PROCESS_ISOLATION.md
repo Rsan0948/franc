@@ -25,3 +25,8 @@ This probe executes **two user-mode assembly snippets sequentially**, not two si
 The next work should allocate separate address-space roots using the firmware-authorized/reservation-aware page allocator; install Ring 3-compatible timer scheduling with per-process kernel stacks/TSS RSP0, address-space switching, and a strictly validated syscall ABI; then run **two actual Franc user programs**, fault one while the other is actively runnable, and prove continued progress after the fault. The existing ring-0 JIT compiler/runtime cannot simply execute unchanged at CPL3 because its native helpers and mutable dictionary are supervisor-owned.
 
 Never relabel these successive isolation tests as concurrent fault-tolerant multiprocess execution.
+
+
+## Image capacity and Franctxt reservation
+
+The native kernel grew past the former 310-sector/158,720-byte boot extent. The BIOS loader and GNU packer now agree on 318 sectors (162,816 bytes): 127 sectors at LBA 1–127, 64 sectors at LBA 200–263, and 127 at LBA 264–390; the physical destination remains contiguous from 0x10000. The FRANCFS1 partition (LBA 128–199) and app source bundle (LBA 1024+) are unchanged. The Franctxt seed reservation is 163,840 bytes (40 KiB multiples), covering the full newly loaded extent. No source list/compiled Franc seed changes are required, but every full bootstrap and image-integrity gate must be rerun.
