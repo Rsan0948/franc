@@ -122,7 +122,7 @@ with tempfile.TemporaryDirectory(prefix="franc-timer-") as tmp:
             # Both functions are compiled by the Franc Stage 2 JIT INSIDE QEMU,
             # perform arithmetic on distinct rational stacks, never yield and
             # increment independent native counters.
-            result = line("101 202 'task-one 'task-two task-preempt-run . . .", timeout=170)
+            result = line("101 202 'task-one 'task-two task-preempt-run . . .")
             assert b"1\n202\n101\nFrac> " in result, (
                 f"Native Franc JIT preemption or host Rat stack preservation failed: {result!r}"
             )
@@ -136,7 +136,7 @@ with tempfile.TemporaryDirectory(prefix="franc-timer-") as tmp:
             print(f"PASS: two independently stacked never-yielding Franc JIT words ran under IRQ0 ({a}, {b} iterations)", flush=True)
             # A normally returning Franc JIT word must retire safely;
             # the other worker continues until the fixed timer budget expires.
-            line("'task-short 'task-two task-preempt-run .", b"0\nFrac> ", timeout=170)
+            line("'task-short 'task-two task-preempt-run .", b"0\nFrac> ")
             assert number(line("task-state-a .")) == 2
             assert number(line("task-state-b .")) == 3
             assert number(line("task-generation .")) == 2
