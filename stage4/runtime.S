@@ -1380,3 +1380,5 @@ fr_mmio32_store:
 .include "stage4/process_spaces.S"
 /* Wave 2 bounded user-IRQ scheduler is native assembly only. */
 .include "stage4/user_scheduler.S"
+/* Wave 3: copy only audited Franc-emitted CPL3 byte templates. */
+.include "stage4/user_compiled.S"
