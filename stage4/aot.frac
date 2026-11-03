@@ -27,5 +27,23 @@ def aot-call :ac-name "  call " type ac-name aot-name 10 emit ;
 def aot-prog-token :apt-token apt-token aot-operator ifnz 1 exit then apt-token s2-number :apt-valid :apt-den :apt-num apt-valid ifnz apt-num apt-den aot-literal exit then apt-token aot-call 1 ;
 \ A true relocatable multi-definition unit. Static calls use symbolic function
 \ names and do not depend on addresses of the live kernel's JIT dictionary.
-def aot-program :s2p "FRANC-PROGRAM-BEGIN" type cr ".text" type cr ".global franc_aot_entry" type cr "franc_aot_entry:" type cr "main" aot-call "  ret" type cr 0 :ap-in-def begin s2-next :ap-token ap-token if0 ap-in-def ifnz "FRANC-PROGRAM-ERROR" type cr 0 exit then "FRANC-PROGRAM-END" type cr 1 exit then ap-token "def" s2-eq ifnz ap-in-def ifnz "FRANC-PROGRAM-ERROR" type cr 0 exit then s2-next :ap-name ap-name if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then ap-name aot-name ":" type cr 1 :ap-in-def else ap-token ";" s2-eq ifnz ap-in-def if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then "  ret" type cr 0 :ap-in-def else ap-in-def if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then ap-token aot-prog-token if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then then then again ;
+def aot-program :s2p "FRANC-PROGRAM-BEGIN" type cr ".text" type cr ".global franc_aot_entry" type cr "franc_aot_entry:" type cr "main" aot-call "  ret" type cr 0 :ap-in-def 0 :s2sp 0 :ac-next-id begin s2-next :ap-token ap-token if0 ap-in-def ifnz "FRANC-PROGRAM-ERROR" type cr 0 exit then "FRANC-PROGRAM-END" type cr 1 exit then ap-token "def" s2-eq ifnz ap-in-def ifnz "FRANC-PROGRAM-ERROR" type cr 0 exit then s2-next :ap-name ap-name if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then ap-name aot-name ":" type cr 1 :ap-in-def else ap-token ";" s2-eq ifnz ap-in-def if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then s2sp ifnz "FRANC-PROGRAM-ERROR" type cr 0 exit then "  ret" type cr 0 :ap-in-def else ap-in-def if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then ap-token aot-program-word if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then then then again ;
 def aot-program-demo "def square dup * ;\ndef main 7 square . ;" aot-program drop ;
+
+
+\ Scoped assembly control-flow labels, using the Stage 2 Franc control stack.
+\ The stack holds (tag,label-id): IF=1, ELSE=2, BEGIN=3, WHILE=4.
+def aot-id ac-next-id 1 + :ac-next-id ac-next-id ;
+def aot-label :ac-id ".Lfranc_" type ac-id aot-dec ;
+def aot-mark :ac-id ac-id aot-label ":" type cr ;
+def aot-jump :ac-target :ac-op "  " type ac-op type " " type ac-target aot-label 10 emit ;
+def aot-if :ai-op s2sp 63 - if0 -1 exit then aot-id :ai-id "  call fr_condition" type cr "  testq %rax, %rax" type cr ai-op ai-id aot-jump 1 ai-id s2-ctrl-push if0 -1 else 1 then ;
+def aot-begin s2sp 63 - if0 -1 exit then aot-id :ab-id ab-id aot-mark 3 ab-id s2-ctrl-push if0 -1 else 1 then ;
+def aot-else s2sp if0 -1 exit then s2-ctrl-pop :ae-old :ae-tag ae-tag 1 - ifnz -1 exit then aot-id :ae-end "jmp" ae-end aot-jump ae-old aot-mark 2 ae-end s2-ctrl-push if0 -1 else 1 then ;
+def aot-then s2sp if0 -1 exit then s2-ctrl-pop :at-id :at-tag at-tag 1 - if0 at-id aot-mark 1 exit then at-tag 2 - if0 at-id aot-mark 1 exit then -1 ;
+def aot-while s2sp if0 -1 exit then s2-ctrl-pop :aw-begin :aw-tag aw-tag 3 - ifnz -1 exit then 3 aw-begin s2-ctrl-push drop aot-id :aw-end "  call fr_condition" type cr "  testq %rax, %rax" type cr "jns" aw-end aot-jump 4 aw-end s2-ctrl-push if0 -1 else 1 then ;
+def aot-again s2sp if0 -1 exit then s2-ctrl-pop :aa-start :aa-tag aa-tag 3 - ifnz -1 exit then "jmp" aa-start aot-jump 1 ;
+def aot-repeat s2sp if0 -1 exit then s2-ctrl-pop :ar-end :ar-tag ar-tag 4 - ifnz -1 exit then s2sp if0 -1 exit then s2-ctrl-pop :ar-start :ar-btag ar-btag 3 - ifnz -1 exit then "jmp" ar-start aot-jump ar-end aot-mark 1 ;
+def aot-control :act-t act-t "if" s2-eq ifnz "jns" aot-if exit then act-t "if0" s2-eq ifnz "jnz" aot-if exit then act-t "ifnz" s2-eq ifnz "jz" aot-if exit then act-t "else" s2-eq ifnz aot-else exit then act-t "then" s2-eq ifnz aot-then exit then act-t "begin" s2-eq ifnz aot-begin exit then act-t "while" s2-eq ifnz aot-while exit then act-t "again" s2-eq ifnz aot-again exit then act-t "repeat" s2-eq ifnz aot-repeat exit then 0 ;
+def aot-program-word :apw-token apw-token aot-control :apw-status apw-status if 0 exit then apw-status ifnz 1 exit then apw-token aot-prog-token ;
+def aot-control-demo "def choose dup 0 - if drop 11 else drop 22 then ;\ndef main -1 choose . 1 choose . ;" aot-program drop "FRANC-CONTROL-END" type cr ;

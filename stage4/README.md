@@ -145,3 +145,13 @@ cold-boots that image and requires the example Franc program to print `49`.
 The test harness is Python, but the demonstration program's native code is
 produced by Franc, not by `compiler.py`. The full FrancOS image still has a
 Python AOT seed compiler and is not yet independently rebuilding itself.
+
+## AOT control-flow lowering
+
+`d` from the FrancOS menu compiles a conditional multi-function Franc
+program into relocatable x86-64 assembly. The Franc AOT emitter now supports
+`if/if0/ifnz/else/then` and `begin/while/repeat/again` using symbolic
+branch labels and Stage 2's bounded control-frame stack. The integration test
+assembles a conditional example and checks `fr_condition` relocations.
+This is not yet parity with the Python AOT compiler: full string/data section
+emission and register handling are outstanding.

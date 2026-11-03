@@ -79,6 +79,7 @@ try:
     for key, expected in [(b'\x1b', b'Franc> '),
                           (b'a', b'FRANC-AOT-END\nFranc> '),
                           (b'c', b'FRANC-PROGRAM-END\nFranc> '),
+                          (b'd', b'FRANC-CONTROL-END\nFranc> '),
                           (b'b', b'SELFHOST OK\nFranc> '),
                           (b'\x1b', b'EXIT CONSOLE')]:
         time.sleep(0.5)
@@ -169,6 +170,21 @@ try:
     print('PASS: Franc AOT program linked with assembly-only runtime and cold-booted in QEMU')
 
     print('PASS: Franc AOT emits multiple named functions and relocatable internal calls')
+
+    matches = list(re.finditer(rb'FRANC-PROGRAM-BEGIN\n(.*?)FRANC-PROGRAM-END\n', transcript, re.S))
+    assert len(matches) >= 2 and b'FRANC-PROGRAM-ERROR' not in transcript, transcript
+    with TemporaryDirectory(prefix='franc-control-aot-') as work:
+        assembly=matches[-1].group(1).decode('ascii')
+        assert 'call fr_condition' in assembly and 'jns .Lfranc_' in assembly
+        assert 'jmp .Lfranc_' in assembly and 'fw_63686f6f7365:' in assembly
+        source=Path(work)/'conditional.S'
+        native=Path(work)/'conditional.o'
+        source.write_text(assembly)
+        subprocess.run(['as','--64','-o',str(native),str(source)],check=True)
+        names=subprocess.check_output(['nm',str(native)],text=True)
+        assert 'fw_6d61696e' in names and 'U fr_condition' in names, names
+    print('PASS: Franc AOT lowers symbolic conditionals and nested function calls')
+
 
     for marker in [b'SELFHOST START\n', b'GEN 2: 29\n', b'GEN 3: 29\n', b'42\n', b'SELFHOST OK\n']:
         assert marker in transcript, f'missing {marker!r}: {transcript!r}'
