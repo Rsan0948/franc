@@ -1,0 +1,17 @@
+\ FrancOS Wave 4 F4: bounded, reusable native storage and e1000/UDP service
+\ adapters. Existing hardware and DNS parsers remain authoritative.
+\ Return contracts: 1 success, -1 network unavailable, -2 DNS peer unknown,
+\ -3 TX refused, -4 no valid reply within bounded polls, -5 malformed reply.
+\ Purely polled on one kernel core; no sockets, TCP, TLS or unsafe pointers.
+\ Uses four dormant fiber register ABI cells while no fiber task is active.
+def svc-storage-ready fs-ready? ifnz 1 else -1 then ;
+def svc-storage-load :fib-a svc-storage-ready 1 - ifnz 0 exit then fib-a fs-source ;
+def svc-net-open net-active ifnz 1 else net-init ifnz 1 else -1 then then ;
+def svc-net-ready net-active if0 -1 exit then net-dns-ready if0 -2 exit then 1 ;
+\ (max-polls -- status). Consume malformed RX immediately; never leave a
+\ descriptor stuck waiting for UI input. All paths are strictly bounded.
+def svc-dns-poll :fib-n fib-n 1 - if 0 exit then fib-n 2049 - if0 -4 exit then 0 :fib-a 0 :fib-b begin fib-a fib-n - while net-rx-ready? ifnz udp-dns-reply? :fib-i net-rx-consume drop fib-i ifnz 1 exit then 1 :fib-b then fib-a 1 + :fib-a repeat fib-b ifnz -5 else -4 then ;
+\ (poll-budget -- status) requires explicit net initialization and DNS ARP
+\ binding; status only, NEVER blocks forever or performs implicit network I/O.
+def svc-dns-request :fib-n svc-net-ready 1 - ifnz svc-net-ready exit then udp-dns-query if0 -3 exit then fib-n svc-dns-poll ;
+def svc-net-info "Network" ui-frame "e1000 / IPv4 / UDP DNS" ui-status svc-net-ready :fib-i fib-i 1 - if0 "DNS peer ready" ui-ok else fib-i -1 - if0 "NIC not initialized" ui-error else "DNS peer not bound" ui-error then then "No TCP/HTTP/TLS | Esc Home" ui-help ;
