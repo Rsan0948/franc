@@ -77,6 +77,12 @@ with tempfile.TemporaryDirectory(prefix="franc-net-") as tmp:
         until(b"Franc> ", timeout=180)
         key(b"l", b"APPS READY", timeout=310)
         key(b"r", b"Frac> ")
+        # Independent in-guest checksum and bounded-length tests before DMA.
+        line("net-frame 2 net-zero net-frame 8 b! net-frame 2 ip-checksum .",
+             b"63487\nFrac> ")
+        line("-1 1 ip-header .", b"0\nFrac> ")
+        line("1481 1 ip-header .", b"0\nFrac> ")
+        print("PASS: Franc IPv4 checksum arithmetic and packet-size rejection", flush=True)
         line("net-init .", b"1\nFrac> ")
         print("PASS: e1000 IO BAR and DMA descriptor initialization", flush=True)
         line("net-active .", b"1\nFrac> ")
