@@ -124,6 +124,8 @@ with tempfile.TemporaryDirectory(prefix="franc-net-") as tmp:
         time.sleep(1.5)
         line("ip-rx-valid? .", b"1\nFrac> ")
         line("ip-icmp-reply? .", b"1\nFrac> ")
+        line("net-rx-ptr 22 + dup b@ 1 + 256 % b! ip-rx-valid? .", b"0\nFrac> ")
+        print("PASS: invalidated IPv4 header checksum rejected in native Franc", flush=True)
         line("net-rx-consume .", b"1\nFrac> ")
         line("net-sent .", b"3\nFrac> ")
         line("net-received .", b"3\nFrac> ")
@@ -175,6 +177,19 @@ with tempfile.TemporaryDirectory(prefix="franc-net-") as tmp:
         and packet[38:42] == b"\x12\x34\x00\x01"
         and packet[42:50] == b"FRANCOS!"
     ]
+    def checksum16(data):
+        if len(data) % 2:
+            data += bytes((0,))
+        words = sum((data[i] << 8) + data[i + 1]
+                    for i in range(0, len(data), 2))
+        while words > 65535:
+            words = (words & 65535) + (words >> 16)
+        return (~words) & 65535
+
+    assert all(checksum16(packet[14:34]) == 0 and
+               checksum16(packet[34:50]) == 0 for packet in icmp), (
+        "Guest-generated IPv4 or ICMP checksum is invalid"
+    )
     assert icmp, "QEMU capture contains no Franc-origin valid ICMP echo request"
     print("PASS: host packet capture proves a real IPv4 ICMP echo request", flush=True)
 
