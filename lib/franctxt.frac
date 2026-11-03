@@ -18,3 +18,14 @@ def ft-manifest "kernel.franctxt" ft-file ;
 def ft-print-field :ft-name :ft-data ft-data ft-name ft-get :ft-value ft-value if0 "<missing>" type else ft-value type then cr ;
 def ft-show-config ft-config :ft-data ft-data if0 "FRANCTXT CONFIG MISSING" type cr exit then "FRANCTXT CONFIG" type cr ft-data "schema" ft-print-field ft-data "system.name" ft-print-field ft-data "boot.default" ft-print-field ft-data "memory.page-size" ft-print-field ft-data "network.driver" ft-print-field ;
 def ft-show-identity ft-manifest :ft-data ft-data if0 "FRANCTXT BUILD MANIFEST MISSING" type cr exit then "FRANCTXT KERNEL IDENTITY" type cr ft-data "build.version" ft-print-field ft-data "build.source-revision" ft-print-field ft-data "build.kernel-sha256" ft-print-field ;
+
+
+\ SHA-256 exact semantic identity over canonical Franctxt bytes.
+\ Native primitive prepends "franctxt/1" and NUL before SHA-256.
+\ On-disk files are canonically emitted by the packer; this reader does
+\ not yet canonicalize arbitrary reordered or escaped input itself.
+def ft-hash :ft-data ft-data ft-header? if0 0 exit then ft-data ft-data fs-len ft-sha256 ;
+\ Compare live on-disk config with separately persisted manifest digest.
+\ This checks *integrity consistency*, not release authorization:
+\ both files are untrusted without a verified release signature.
+def ft-verify-config ft-manifest :ft-data ft-data if0 0 exit then ft-data "build.config-sha256" ft-get ft-unquote :ft-steps ft-steps if0 0 exit then ft-config :ft-data ft-data if0 0 exit then ft-data ft-hash :ft-value ft-value if0 0 exit then ft-steps 7 + ft-value s2-eq ;

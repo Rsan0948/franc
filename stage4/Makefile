@@ -12,8 +12,8 @@ kernel.generated.S: compiler.py kernel.frac ../stage2/compiler.frac ../stage3/at
 	python3 compiler.py ../stage3/ata.frac ../stage3/storage.frac display.frac keyboard.frac ../stage2/compiler.frac repl.frac upgrade.frac aot.frac bundle.frac apps/registry.frac kernel.frac -o $@
 program.o: kernel.generated.S
 	$(AS) --64 -o $@ $<
-runtime.o: runtime.S
-	$(AS) --64 -o $@ $<
+runtime.o: runtime.S ../franctxt/sha256_native.S
+	$(AS) --64 -I .. -o $@ $<
 boot.bin: boot.S
 	$(AS) --64 -o boot.o $<
 	$(LD) -m elf_x86_64 --oformat binary -Ttext 0x7c00 -o $@ boot.o

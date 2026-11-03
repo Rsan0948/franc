@@ -1161,3 +1161,43 @@ fr_page_free_count:
     movq $1,%rsi
     jmp fr_push
 .section .note.GNU-stack,"",@progbits
+
+
+/* Franctxt semantic SHA-256 primitive. Native Franc parser owns documents;
+ * assembly supplies deterministic cryptographic arithmetic, no C/Python.
+ * (canonical-document-pointer byte-length -- lowercase-hex-pointer|0)
+ */
+.section .text,"ax"
+.global fr_ft_sha256
+fr_ft_sha256:
+    pushq %r12
+    pushq %r13
+    pushq %rbx
+    call fr_pop
+    movq %rax,%r12
+    movq %rdx,%r13
+    call fr_pop
+    cmpq $1,%r13
+    jne .Lft_sha_abi_fail
+    cmpq $1,%rdx
+    jne .Lft_sha_abi_fail
+    cmpq $2047,%r12
+    ja .Lft_sha_abi_fail
+    testq %rax,%rax
+    jz .Lft_sha_abi_fail
+    movq %rax,%rdi
+    movq %r12,%rsi
+    call ft_sha256_canonical
+    jmp .Lft_sha_abi_end
+.Lft_sha_abi_fail:
+    xorq %rax,%rax
+.Lft_sha_abi_end:
+    popq %rbx
+    popq %r13
+    popq %r12
+    movq %rax,%rdi
+    movq $1,%rsi
+    jmp fr_push
+
+/* SHA-256 compression source is shared with the independent Linux ABI test. */
+.include "franctxt/sha256_native.S"

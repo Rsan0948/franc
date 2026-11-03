@@ -86,9 +86,12 @@ integer and rational lexical values. It does not compile input data,
 and the parser never executes config values. Configuration changes
 are stored but are NOT automatically applied as kernel policies.
 
-CRITICAL: The native Franc reader does not yet calculate SHA-256 or
-verify Ed25519 signatures in the guest. Host CI validates the actual
-kernel and config digests. Printing a build hash is NOT secure boot.
+CRITICAL: Native Franc uses a freestanding x86-64 assembly SHA-256 primitive to
+recompute canonical Franctxt document identities and compare the initial
+configuration against its separate persisted manifest. This is an
+integrity consistency check only. It does NOT verify Ed25519 signatures
+inside the guest, verify the authenticity of the manifest, protect
+private keys, or implement secure boot.
 
 ## Optional authenticated signatures
 
@@ -131,3 +134,7 @@ protocol, secure boot chain, encrypted secrets format, or transactional
 state journal. Standardized richer types, kernel-side cryptographic
 verification, atomic config updates, and signed release policy are
 future, separately testable increments.
+
+Native commands for the current canonical disk documents:
+    ft-config ft-hash type cr
+    ft-verify-config .

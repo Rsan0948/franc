@@ -5,6 +5,7 @@ Replaces only the *test disk's* app bundle with Franc compatibility and
 Franctxt source; the committed production bundle is left unchanged.
 """
 from pathlib import Path
+import hashlib
 import os
 import selectors
 import shutil
@@ -20,6 +21,12 @@ assert base.is_file() and shutil.which("qemu-system-x86_64")
 with tempfile.TemporaryDirectory(prefix="franctxt-native-") as temp:
     disk = Path(temp) / "disk.img"
     shutil.copyfile(base, disk)
+    original = disk.read_bytes()
+    directory = 129 * 512 + 32
+    size = int.from_bytes(original[directory + 24:directory + 26], "little")
+    config = original[140 * 512:140 * 512 + size]
+    canonical_sha = hashlib.sha256(b"franctxt/1" + bytes((0,)) + config).hexdigest()
+
     subprocess.run(
         ["sh", str(root / "source_pack.sh"), str(disk),
          str(root / "apps" / "native-compat.frac"),
@@ -83,6 +90,10 @@ with tempfile.TemporaryDirectory(prefix="franctxt-native-") as temp:
                  b"francos.kernel.v1\nFrac> ")
             line("ft-show-config", b"FRANCTXT CONFIG")
             line("ft-show-identity", b"FRANCTXT KERNEL IDENTITY")
+            line("ft-config ft-hash type cr", canonical_sha.encode("ascii") + bytes((10,)) + b"Frac> ")
+            line("ft-verify-config .", b"1" + bytes((10,)) + b"Frac> ")
+            print("PASS: native FrancOS SHA-256 exactly matches independent host digest", flush=True)
+
             if persist:
                 line('"saved.franctxt" ft-config fs-save .', b"1\nFrac> ")
             else:

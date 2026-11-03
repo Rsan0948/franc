@@ -179,3 +179,10 @@ hardware abstraction layer.
   inside the running kernel, implement secure boot, or dynamically
   apply configuration. A hash in an untrusted manifest is not evidence
   of provenance. No release private keys are stored in the repository.
+
+- A freestanding assembly SHA-256 compressor (no C, libc or x86 SHA
+  extensions) implements the native Franctxt semantic digest primitive.
+  Independent tests compare 20 message sizes and actual canonical
+  documents against Python hashlib; native Franc exposes
+  `ft-config ft-hash` and `ft-verify-config` for on-disk consistency.
+  This still does not authenticate or securely boot the kernel.
