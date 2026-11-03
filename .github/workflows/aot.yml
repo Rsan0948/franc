@@ -1,7 +1,7 @@
 name: Franc C-free experimental AOT boot
 on:
   push:
-    branches: [stage4-cfree-aot, stage4-franc-native-bootstrap, stage4-roadmap-foundations]
+    branches: [stage4-cfree-aot, stage4-franc-native-bootstrap, stage4-roadmap-foundations, stage4-roadmap-systems]
   pull_request:
     paths:
       - 'stage4/**'
@@ -40,7 +40,7 @@ jobs:
             stage4/native-build/gen3.S
             stage4/native-build/gen3.bin
       - name: Freeze verified Franc-native bootstrap seed on development branch
-        if: github.ref == 'refs/heads/stage4-franc-native-bootstrap' || github.ref == 'refs/heads/stage4-roadmap-foundations'
+        if: github.ref == 'refs/heads/stage4-franc-native-bootstrap' || github.ref == 'refs/heads/stage4-roadmap-foundations' || github.ref == 'refs/heads/stage4-roadmap-systems'
         run: |
           cp stage4/native-build/gen3.S stage4/bootstrap_seed.S
           git config user.name 'github-actions[bot]'

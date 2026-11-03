@@ -1,7 +1,7 @@
 name: Franc clean source bootstrap — assembly + Franc only
 on:
   push:
-    branches: [stage4-franc-native-bootstrap, stage4-roadmap-foundations]
+    branches: [stage4-franc-native-bootstrap, stage4-roadmap-foundations, stage4-roadmap-systems]
     paths:
       - 'stage4/**'
       - 'lib/**'

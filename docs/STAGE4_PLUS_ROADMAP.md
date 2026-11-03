@@ -69,3 +69,27 @@ returned as zero pointer, and operations never mutate their operands except
 
 Success criteria: every hardware claim requires QEMU proof; do not equate
 passing a source-compilation test to all paths or failure modes working.
+
+## Increment 2: first OS services (systems branch)
+
+This independent branch leaves Increment 1's four libraries unchanged.
+
+- `stage4/apps/ide.frac`: native 320x200 VGA editor with a 2047-byte
+  multi-line edit buffer, arrows, delete/backspace, Enter, Ctrl-S persistent
+  save, Ctrl-L reload, Ctrl-R trusted-source compilation, Escape to menu.
+  The viewport currently displays the first 22 text rows and does not
+  scroll to later pages. File storage still uses 12 FRANCFS1 slots.
+- `stage4/apps/task.frac`: deterministic 8-slot round-robin step-function
+  scheduler. A task voluntarily finishes each call. There are no context
+  switches, independent stacks, interrupts, preemption or isolation.
+- `stage4/apps/pci.frac`: 32-bit PCI configuration reads/writes through
+  `io32@`/`io32!` assembly ABI primitives, RTL8139 vendor/device scan
+  on PCI bus 0, I/O BAR and MAC register reads. No NIC initialization,
+  Ethernet frames, IP/TCP, DHCP, IRQs or sockets yet.
+
+The QEMU systems suite requires `-device rtl8139`; only a successful
+native guest probe establishes the hardware detection claim.
+The fixed RAM assumptions (IDE at 0x06900000, tasks at 0x06a00000)
+are suitable only for the current 128 MiB QEMU identity-mapped test guest.
+The 32-bit port I/O helpers are architecture-specific **assembly**,
+not C, preserving the C-free kernel build.

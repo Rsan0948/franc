@@ -1,0 +1,33 @@
+\ Franc-native VGA multi-line editor. Bounded by FRANCFS1 (2047 bytes).
+\ Edit buffer 0x6900000 (2048 bytes), filename 0x6901000 (24 bytes).
+\ Keys: Esc exit, Ctrl-S save, Ctrl-L reload, Ctrl-R compile, arrows, Del/BS, Enter.
+\ All code is privileged. Compile/run only sources you trust.
+def ide-buffer $6900000 ;
+def ide-nameptr $6901000 ;
+def ide-init 0 :ide-len 0 :ide-cur ide-buffer 0 b! ;
+def ide-setname :isn-p 0 :isn-i begin isn-i 23 - while isn-p isn-i + b@ :isn-ch ide-nameptr isn-i + isn-ch b! isn-ch if0 1 exit then isn-i 1 + :isn-i repeat ide-nameptr 23 + 0 b! 1 ;
+def ide-settext :ist-p ide-init 0 :ist-i begin ist-i 2047 - while ist-p ist-i + b@ :ist-ch ist-ch if0 ide-buffer ist-i + 0 b! ist-i :ide-len 1 exit then ide-buffer ist-i + ist-ch b! ist-i 1 + :ist-i repeat ide-buffer 2047 + 0 b! 2047 :ide-len 0 ;
+def ide-load ide-nameptr fs-source :ild-p ild-p if0 ide-init 0 exit then ild-p ide-settext ;
+def ide-open ide-setname drop ide-load ;
+def ide-save ide-nameptr ide-buffer fs-save ;
+def ide-compile ide-buffer s2-source ;
+def ide-insert :iin-ch ide-len 2047 - if ide-len :iin-i begin ide-cur iin-i - 1 - while ide-buffer iin-i + b@ ide-buffer iin-i 1 + + swap b! iin-i 1 - :iin-i repeat ide-buffer ide-cur + iin-ch b! ide-len 1 + :ide-len ide-cur 1 + :ide-cur 1 else 0 then ;
+def ide-delete ide-cur ide-len - if ide-cur :idl-i begin idl-i ide-len - while ide-buffer idl-i 1 + + b@ ide-buffer idl-i + swap b! idl-i 1 + :idl-i repeat ide-len 1 - :ide-len 1 else 0 then ;
+def ide-backspace ide-cur if0 0 exit then ide-cur 1 - :ide-cur ide-delete ;
+def ide-left ide-cur if0 0 else ide-cur 1 - :ide-cur 1 then ;
+def ide-right ide-cur ide-len - if 1 ide-cur + :ide-cur 1 else 0 then ;
+def ide-start :istart-p begin istart-p if0 0 exit then ide-buffer istart-p 1 - + b@ 10 - if0 istart-p exit then istart-p 1 - :istart-p again ;
+def ide-end :iend-p begin iend-p ide-len - if0 iend-p exit then ide-buffer iend-p + b@ 10 - if0 iend-p exit then iend-p 1 + :iend-p again ;
+def ide-column :icol-p icol-p icol-p ide-start - ;
+def ide-goto :igoto-col :igoto-start igoto-start ide-end :igoto-end igoto-start igoto-col + :igoto-target igoto-end igoto-target - if igoto-end else igoto-target then ;
+def ide-up ide-cur ide-column :iup-col ide-cur ide-start :iup-start iup-start if0 0 exit then iup-start 1 - ide-start iup-col ide-goto :ide-cur 1 ;
+def ide-down ide-cur ide-column :idown-col ide-cur ide-end :idown-end idown-end ide-len - if0 0 exit then idown-end 1 + idown-col ide-goto :ide-cur 1 ;
+def ide-home ide-cur ide-start :ide-cur ;
+def ide-lineend ide-cur ide-end :ide-cur ;
+\ Draw directly into Mode 13h; no UART flood on every edit.
+def ide-draw-label :idl-y :idl-x :idl-text begin idl-text b@ :idl-char idl-char if0 exit then idl-x 40 - if0 exit then idl-x 8 * idl-y 8 * idl-char vc-glyph idl-x 1 + :idl-x idl-text 1 + :idl-text again ;
+def ide-draw 0 vc-clear "FrancOS IDE | Ctrl-S Save | ESC Exit" 0 0 ide-draw-label ide-nameptr 0 1 ide-draw-label "Ctrl-L Load | Ctrl-R Compile" 0 24 ide-draw-label 0 :idr-i 0 :idr-x 2 :idr-y 0 :idr-cx 2 :idr-cy begin idr-i ide-len - while idr-i ide-cur - if0 idr-x :idr-cx idr-y :idr-cy then idr-y 24 - if0 exit then ide-buffer idr-i + b@ :idr-ch idr-ch 10 - if0 0 :idr-x idr-y 1 + :idr-y else idr-ch 32 - if idr-ch 127 - if idr-x 40 - if0 0 :idr-x idr-y 1 + :idr-y then idr-y 24 - if0 exit then idr-x 8 * idr-y 8 * idr-ch vc-glyph idr-x 1 + :idr-x then then then idr-i 1 + :idr-i repeat idr-i ide-cur - if0 idr-x :idr-cx idr-y :idr-cy then idr-cy 24 - if idr-cx 40 - if idr-cx 8 * idr-cy 8 * 95 vc-glyph then then ;
+def ide-handle :ih-key ih-key 27 - if0 -1 exit then ih-key 19 - if0 ide-save ifnz "IDE SAVED" type cr else "IDE SAVE FAILED" type cr then 0 exit then ih-key 12 - if0 ide-load drop 1 exit then ih-key 18 - if0 ide-compile . 0 exit then ih-key 1003 - if0 ide-left exit then ih-key 1004 - if0 ide-right exit then ih-key 1001 - if0 ide-up exit then ih-key 1002 - if0 ide-down exit then ih-key 8 - if0 ide-backspace exit then ih-key 127 - if0 ide-delete exit then ih-key 10 - if0 10 ide-insert exit then ih-key 13 - if0 10 ide-insert exit then ih-key 32 - if 0 exit then ih-key 127 - if ih-key ide-insert exit then 0 ;
+def ide-paste :ipaste-p begin ipaste-p b@ :ipaste-ch ipaste-ch if0 exit then ipaste-ch ide-insert drop ipaste-p 1 + :ipaste-p again ;
+def ide-main ide-open drop "IDE READY | Ctrl-S save Ctrl-L load Ctrl-R compile ESC exit" type cr ide-draw begin dk-key ide-handle :ih-result ih-result 0 - if "IDE EXIT" type cr vc-init exit then ih-result ifnz ide-draw then again ;
+def app-ide "notes.frac" ide-main ;

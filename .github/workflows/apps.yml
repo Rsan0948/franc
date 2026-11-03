@@ -1,7 +1,7 @@
 name: Franc native applications — end-to-end QEMU
 on:
   push:
-    branches: [stage4-franc-native-bootstrap, stage4-roadmap-foundations]
+    branches: [stage4-franc-native-bootstrap, stage4-roadmap-foundations, stage4-roadmap-systems]
     paths:
       - 'stage4/**'
       - 'stage2/compiler.frac'
@@ -31,3 +31,5 @@ jobs:
         run: python3 stage4/qemu_apps.py stage4/native_seed.img
       - name: Verify Stage 4+ roadmap libraries in the native guest
         run: python3 stage4/qemu_roadmap.py stage4/native_seed.img
+      - name: Verify IDE, cooperative tasks and PCI NIC probe in native guest
+        run: python3 stage4/qemu_systems.py stage4/native_seed.img

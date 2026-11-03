@@ -124,3 +124,19 @@ A separate native QEMU test runs representative bignum, floating-point,
 infix and package examples; see
 [`docs/STAGE4_PLUS_ROADMAP.md`](../../docs/STAGE4_PLUS_ROADMAP.md) for
 memory reservations, exact limitations and remaining roadmap items.
+
+## Stage 4+ hardware and OS foundations (systems branch)
+
+The `stage4-roadmap-systems` branch adds `stage4/apps/ide.frac` (multiline
+buffer editing, native VGA text rendering, arrow navigation, source persistence
+and compilation), `stage4/apps/task.frac` (bounded round-robin **step callbacks**)
+and `stage4/apps/pci.frac` (PCI configuration via native 32-bit PIO; probe
+for a QEMU RTL8139 device, its BAR and MAC bytes). Press `l`, then `i` for
+IDE, `t` for cooperative task demo, or `n` for NIC probe. The `r` REPL
+exposes all functions. The IDE edits `notes.frac` by default.
+
+The task module does not save program counters or stacks and is **not**
+preemptive multitasking; the PCI probe does **not** transmit Ethernet frames,
+load a NIC driver, or implement TCP/IP. Userland and kernel remain a
+single trusted x86-64 address space. QEMU CI supplies an explicit RTL8139
+device and checks its identification.

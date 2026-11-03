@@ -1,0 +1,12 @@
+\ PCI configuration mechanism #1 from Franc source; QEMU x86 PCI hardware only.
+\ Requires new 32-bit x86 I/O primitives in the assembly ABI. All reads
+\ are synchronous/polled. No Ethernet driver or network stack is claimed.
+def pci-address :pa-reg :pa-fn :pa-slot :pa-bus 2147483648 pa-bus 65536 * + pa-slot 2048 * + pa-fn 256 * + pa-reg 252 band + ;
+def pci-cfg@ :pc-reg :pc-fn :pc-slot :pc-bus pc-bus pc-slot pc-fn pc-reg pci-address $CF8 swap io32! $CFC io32@ ;
+def pci-cfg! :pw-data :pw-reg :pw-fn :pw-slot :pw-bus pw-bus pw-slot pw-fn pw-reg pci-address $CF8 swap io32! $CFC pw-data io32! ;
+def pci-id :pi-slot 0 pi-slot 0 0 pci-cfg@ ;
+def pci-rtl8139? :pr-id pr-id 65535 band 4332 - if0 pr-id 65536 / floor 65535 band 33081 - if0 1 exit then then 0 ;
+def pci-rtl8139-slot 0 :ps-slot begin ps-slot 32 - while ps-slot pci-id pci-rtl8139? ifnz ps-slot exit then ps-slot 1 + :ps-slot repeat -1 ;
+def pci-rtl8139-bar :pb-slot 0 pb-slot 0 16 pci-cfg@ :pb-bar pb-bar 1 band if0 0 exit then pb-bar 65532 band ;
+def pci-rtl8139-mac-byte :pm-index :pm-slot pm-slot pci-rtl8139-bar :pm-base pm-base if0 -1 exit then pm-index 0 - if -1 exit then pm-index 6 - if pm-base pm-index + io8@ else -1 then ;
+def pci-rtl8139-report pci-rtl8139-slot :pr-slot pr-slot 0 - if "RTL8139 NOT FOUND" type cr 0 exit then "RTL8139 PCI SLOT " type pr-slot . "I/O BASE " type pr-slot pci-rtl8139-bar . "MAC BYTES " type 0 :pr-index begin pr-index 6 - while pr-slot pr-index pci-rtl8139-mac-byte . pr-index 1 + :pr-index repeat 1 ;

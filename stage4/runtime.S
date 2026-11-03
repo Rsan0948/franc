@@ -535,6 +535,24 @@ fr_outw:
     movw %r10w,%ax
     outw %ax,%dx
     ret
+.global fr_inl
+fr_inl:
+    call fr_pop
+    movw %ax,%dx
+    xorl %eax,%eax
+    inl %dx,%eax
+    movq %rax,%rdi
+    movq $1,%rsi
+    jmp fr_push
+.global fr_outl
+fr_outl:
+    call fr_pop
+    movl %eax,%r10d
+    call fr_pop
+    movw %ax,%dx
+    movl %r10d,%eax
+    outl %eax,%dx
+    ret
 .global fr_sector_buf
 fr_sector_buf:
     leaq sector_data(%rip),%rdi

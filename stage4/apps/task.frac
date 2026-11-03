@@ -1,0 +1,13 @@
+\ Cooperative STEP scheduler in Franc. No context switch, IRQ or user isolation.
+\ A "task" is an independently compiled, finite, returning step function.
+\ Each tick calls exactly one step, then rotates to the next registered code.
+\ Slots are eight 64-bit code pointers at 0x06a00000.
+def task-base $6a00000 ;
+def task-reset 0 :task-count 0 :task-index 0 :task-a-n 0 :task-b-n ;
+def task-add :ta-code task-count 8 - if0 0 exit then ta-code 4194304 - if 0 exit then ta-code 33554432 - if0 0 exit then task-base task-count 8 * + ta-code s2-write64 task-count 1 + :task-count 1 ;
+def task-code :tc-i task-base tc-i 8 * + s2-read64 ;
+def task-step task-count if0 0 exit then task-index task-code :ts-code task-index 1 + task-count % :task-index ts-code s2-run 1 ;
+def task-run :tr-steps begin tr-steps if0 exit then task-step drop tr-steps 1 - :tr-steps again ;
+def task-a task-a-n 1 + :task-a-n ;
+def task-b task-b-n 1 + :task-b-n ;
+def task-demo task-reset 'task-a task-add drop 'task-b task-add drop 5 task-run task-a-n . task-b-n . ;
