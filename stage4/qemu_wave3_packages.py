@@ -138,6 +138,17 @@ with tempfile.TemporaryDirectory(prefix="franc-wave3-pkg-") as td:
     shutil.copyfile(IMAGE, disk)
     stage_upload(disk, base, base_source)
     def install_base(g):
+        # Diagnose each native trust boundary, not only a zero result from
+        # the all-or-nothing transaction word, when a future app bundle
+        # reordering or package parser change introduces a regression.
+        for command in (
+            '"upload.franctxt" fs-source ft-header? .',
+            '"upload.frac" fs-source .',
+            '"upload.franctxt" fs-source pkg-cache-manifest "upload.frac" fs-source pkg-verify .',
+            '"base" 0 pkg-names .',
+            '"base" pkg-select .',
+        ):
+            print("PKG-PREFLIGHT", command, g.value(command), flush=True)
         assert g.value('"upload.franctxt" "upload.frac" "base" pkg-install-verified .') == 1
         assert g.value('"base" pkg-select .') == 1
         assert g.value("ftr-s .") == 1  # selected generation register
