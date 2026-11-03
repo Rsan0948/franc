@@ -6,6 +6,8 @@ if [ "$#" -lt 2 ]; then
     echo "usage: sh source_pack.sh IMAGE SOURCE.frac..." >&2
     exit 2
 fi
+marker=FRANCSRC
+if [ "$1" = "--auto" ]; then marker=FRANCBLD; shift; fi
 image=$1
 shift
 scratch=$(mktemp)
@@ -22,5 +24,5 @@ if [ "$bytes" -gt 131071 ]; then
 fi
 sectors=$(( (bytes + 511) / 512 ))
 dd if=/dev/zero of="$image" bs=512 seek=512 count=$((sectors + 1)) conv=notrunc status=none
-printf FRANCSRC | dd of="$image" bs=512 seek=512 conv=notrunc status=none
+printf %s "$marker" | dd of="$image" bs=512 seek=512 conv=notrunc status=none
 dd if="$scratch" of="$image" bs=512 seek=513 conv=notrunc status=none

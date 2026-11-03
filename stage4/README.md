@@ -216,3 +216,15 @@ CI links Franc-generated code with the handwritten assembly runtime and
 boots it as a separate C-free image. No Python AOT translation is applied
 to the rebuilt kernel's code. The initial seed image still depends on Python;
 this does not yet establish a Python-free cold bootstrap.
+
+## Python-free Franc-to-Franc kernel rebuild command
+
+`sh stage4/build_selfhost.sh SEED.img OUTPUT.img` runs only Franc (inside
+QEMU), POSIX shell, GNU binutils, GNU `dd`, and `sed`. The seed boots
+and recognizes a special `FRANCBLD` disk signature, compiles the current
+Franc kernel sources, and emits a full relocatable kernel, dictionary, and
+compiler metadata. The script links and packages the next BIOS image without
+calling Python or a C compiler. The `SEED.img` used by the current default
+make target is still Python-generated; the next milestone is replacing that
+seed with a checked-in assembly/Franc seed so the *entire cold build* follows
+this Python-free path.
