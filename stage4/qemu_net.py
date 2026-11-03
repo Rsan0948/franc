@@ -120,6 +120,15 @@ with tempfile.TemporaryDirectory(prefix="franc-net-") as tmp:
         line("net-txnext .", b"2\nFrac> ")
         line("net-rxnext .", b"2\nFrac> ")
         print("PASS: two TX ring slots and two released/rearmed RX descriptors", flush=True)
+        line("ip-ping .", b"1\nFrac> ")
+        time.sleep(1.5)
+        line("ip-rx-valid? .", b"1\nFrac> ")
+        line("ip-icmp-reply? .", b"1\nFrac> ")
+        line("net-rx-consume .", b"1\nFrac> ")
+        line("net-sent .", b"3\nFrac> ")
+        line("net-received .", b"3\nFrac> ")
+        print("PASS: native IPv4 checksum and ICMP echo request/reply", flush=True)
+
 
         print("PASS: native e1000 completed DMA TX and received an ARP reply", flush=True)
     finally:
@@ -154,3 +163,18 @@ with tempfile.TemporaryDirectory(prefix="franc-net-") as tmp:
     ]
     assert len(arps) >= 2, "QEMU capture must contain two distinct TX ring ARP transmissions"
     print(f"PASS: QEMU PCAP captured {len(arps)} actual guest e1000 ARP request(s)", flush=True)
+    icmp = [
+        packet for packet in packets
+        if len(packet) >= 50
+        and packet[12:14] == b"\x08\x00"
+        and packet[14] == 69
+        and packet[23] == 1
+        and packet[26:30] == b"\x0a\x00\x02\x0f"
+        and packet[30:34] == b"\x0a\x00\x02\x02"
+        and packet[34:36] == b"\x08\x00"
+        and packet[38:42] == b"\x12\x34\x00\x01"
+        and packet[42:50] == b"FRANCOS!"
+    ]
+    assert icmp, "QEMU capture contains no Franc-origin valid ICMP echo request"
+    print("PASS: host packet capture proves a real IPv4 ICMP echo request", flush=True)
+

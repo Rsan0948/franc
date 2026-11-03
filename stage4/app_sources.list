@@ -21,5 +21,6 @@ lib/ide.frac
 stage4/pci.frac
 stage4/tasks.frac
 stage4/net.frac
+stage4/ip.frac
 stage4/fibers.frac
 lib/franctxt.frac
