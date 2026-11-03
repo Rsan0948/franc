@@ -187,10 +187,10 @@ with tempfile.TemporaryDirectory(prefix="franc-wave2-ide-") as temp:
                          offset, timeout=45)
         offset = len(guest.out)
         os.write(guest.process.stdin.fileno(), b"\x08")
-        guest.expect(b"def main helper  + . ;", offset, timeout=45)
+        guest.expect(b"def main helper | + . ;", offset, timeout=45)
         offset = len(guest.out)
         os.write(guest.process.stdin.fileno(), b"1")
-        guest.expect(b"def main helper 1 + . ;", offset, timeout=45)
+        guest.expect(b"def main helper 1| + . ;", offset, timeout=45)
         guest.screenshot("wave2-cursor-edit")
 
         guest.key(b"\t", b"SAVED |", timeout=80)
