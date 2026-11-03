@@ -73,3 +73,57 @@ fr_e820_type:
     xorq %rdi,%rdi
     movq $1,%rsi
     jmp fr_push
+
+/* Validated 8 MiB physical page arena at [0x07000000,0x07800000).
+ * Requires a full trusted BIOS E820 inventory and at least one type-1
+ * descriptor covering the entire arena; reject ANY reserved/non-type1
+ * descriptor overlapping the arena even if firmware entries overlap.
+ * Returns EAX=1/0; caller-saved registers only. Unknown UEFI map fails
+ * closed: UEFI GetMemoryMap must be integrated before it can allocate.
+ */
+fr_e820_arena_usable:
+    cmpl $0x30323845,0x4ff0
+    jne .Le820_arena_bad
+    movzwq 0x4ff4,%rcx
+    testq %rcx,%rcx
+    jz .Le820_arena_bad
+    cmpq $48,%rcx
+    ja .Le820_arena_bad
+    movq $0x5000,%r8
+    xorl %esi,%esi
+.Le820_arena_loop:
+    movq 0(%r8),%r9
+    movq 8(%r8),%r10
+    testq %r10,%r10
+    jz .Le820_arena_next
+    movq %r9,%r11
+    addq %r10,%r11
+    jc .Le820_arena_bad   /* overflow in firmware-supplied range */
+    cmpl $1,16(%r8)
+    jne .Le820_arena_reserved
+    cmpq $0x07000000,%r9
+    ja .Le820_arena_next
+    cmpq $0x07800000,%r11
+    jb .Le820_arena_next
+    movl $1,%esi
+    jmp .Le820_arena_next
+.Le820_arena_reserved:
+    cmpq $0x07800000,%r9
+    jae .Le820_arena_next
+    cmpq $0x07000000,%r11
+    ja .Le820_arena_bad
+.Le820_arena_next:
+    addq $24,%r8
+    decq %rcx
+    jnz .Le820_arena_loop
+    movl %esi,%eax
+    ret
+.Le820_arena_bad:
+    xorl %eax,%eax
+    ret
+
+fr_e820_arena_word:
+    call fr_e820_arena_usable
+    movl %eax,%edi
+    movq $1,%rsi
+    jmp fr_push

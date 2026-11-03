@@ -1189,6 +1189,13 @@ fr_pages_used: .skip 8
 .section .text,"ax"
 .global fr_page_alloc
 fr_page_alloc:
+    /* No physical page is allocated unless firmware authorizes the
+     * entire fixed arena. In particular, a UEFI boot with no imported
+     * firmware memory map cannot borrow assumed RAM.
+     */
+    call fr_e820_arena_usable
+    testl %eax,%eax
+    jz .Lpage_empty
     leaq fr_page_bitmap(%rip),%r8
     xorq %rcx,%rcx
 .Lpage_scan:
@@ -1244,8 +1251,15 @@ fr_page_free:
 
 .global fr_page_free_count
 fr_page_free_count:
+    call fr_e820_arena_usable
+    testl %eax,%eax
+    jz .Lpage_count_none
     movq $2048,%rdi
     subq fr_pages_used(%rip),%rdi
+    movq $1,%rsi
+    jmp fr_push
+.Lpage_count_none:
+    xorq %rdi,%rdi
     movq $1,%rsi
     jmp fr_push
 .section .note.GNU-stack,"",@progbits

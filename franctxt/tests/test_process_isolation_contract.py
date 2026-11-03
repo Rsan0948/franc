@@ -42,8 +42,12 @@ class ProcessIsolationContract(unittest.TestCase):
             self.assertIn(token, runtime)
         for token in ("cmpl $0x30323845,0x4ff0",
                       "movzwq 0x4ff4,%rcx", "cmpq $48,%rcx",
-                      "cmpq %rcx,%rax"):
+                      "cmpq %rcx,%rax", "fr_e820_arena_usable:",
+            "cmpl $1,16(%r8)", "cmpq $0x07800000,%r11",
+            ".Le820_arena_reserved:"):
             self.assertIn(token, core)
+        runtime = (ROOT / "stage4/runtime.S").read_text()
+        self.assertIn("call fr_e820_arena_usable", runtime)
 
     def test_distinct_user_physical_frames_and_fault_recovery(self):
         ring = (ROOT / "stage4/ring3.S").read_text()

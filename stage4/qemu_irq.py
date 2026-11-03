@@ -114,7 +114,10 @@ with tempfile.TemporaryDirectory(prefix="franc-timer-") as tmp:
             assert 0x80000 <= low_length <= 0xA0000, low_length
             assert number(line("48 e820-type .")) == 0
             assert number(line("-1 e820-base .")) == 0
-            print(f"PASS: BIOS E820 exposed {count} bounded firmware memory descriptors", flush=True)
+            assert number(line("page-arena-safe? .")) == 1, (
+                "Allocator's fixed page arena was not affirmed by the BIOS E820 map"
+            )
+            print(f"PASS: BIOS E820 exposed {count} descriptors and authorized the 8 MiB page arena", flush=True)
             assert number(line("ring3-probe .")) == 1
             assert number(line("process-fault-probe .")) == 1
             assert number(line("process-a-state .")) == 4

@@ -30,3 +30,8 @@ Never relabel these successive isolation tests as concurrent fault-tolerant mult
 ## Image capacity and Franctxt reservation
 
 The native kernel grew past the former 310-sector/158,720-byte boot extent. The BIOS loader and GNU packer now agree on 318 sectors (162,816 bytes): 127 sectors at LBA 1–127, 64 sectors at LBA 200–263, and 127 at LBA 264–390; the physical destination remains contiguous from 0x10000. The FRANCFS1 partition (LBA 128–199) and app source bundle (LBA 1024+) are unchanged. The Franctxt seed reservation is 163,840 bytes (40 KiB multiples), covering the full newly loaded extent. No source list/compiled Franc seed changes are required, but every full bootstrap and image-integrity gate must be rerun.
+
+
+## Firmware-gated physical pages
+
+The existing 2,048-page bitmap allocator still uses the fixed, declared Franctxt 8 MiB arena at `0x07000000..0x07800000`, but it now calls `fr_e820_arena_usable` before allocations or reporting free page capacity. The gate requires a complete E820 inventory, a type-1 descriptor containing the whole arena and **no overlapping non-type-1 descriptor**. Overflowed or malformed ranges are rejected. The read-only Franc word `page-arena-safe?` exposes the predicate. This is a firm safety improvement on BIOS/QEMU, not a discovery-based arbitrary-page allocator; an unprovided UEFI map causes allocation to fail closed until the UEFI adapter passes its GetMemoryMap data.
