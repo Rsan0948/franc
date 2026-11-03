@@ -1,10 +1,12 @@
 # FrancOS engineering roadmap — Stage 4+
 
-**Development branch:** `stage4-roadmap-foundations`  
+**Integration authority:** `main` (Wave 1–3 accepted); Wave 4 development in `francos-v1-wave4-services-ui`  
 **Updated:** 2026-11-03  
 **Rule:** kernel, runtime and compiler use Franc + assembly, never a C/Python runtime. The separate UEFI firmware adapter may use C; CI and build-validation scripts may use Python, shell and binutils.
 
 > This is the actionable milestone plan. The older [development log](STAGE4_PLUS_ROADMAP.md) records the previous implementation increments. A commit is not a completed milestone; only an explicit integration test can establish that.
+
+> **Accepted as of November 3, 2026:** Waves 1, 2 and 3 are merged into `main`. The [Wave 3 acceptance record](FRANCOS_WAVE3_FIRST_IMPLEMENTATION.md) proves actual Franc-compiled CPL3 execution and a six-cold-boot verified offline package lifecycle (17/17 exact-head workflows). [Wave 4 initial work](FRANCOS_WAVE4_STARTED.md) is in [PR #15](https://github.com/Rsan0948/franc/pull/15), with a passing dedicated networking/UI starter gate. The subsystem table below is a *historical baseline* and may mention prerequisites that have since been completed. For the current release finish line use the [dual-track v1 contract](FRANCOS_V1_DUAL_TRACK_ROADMAP.md). **No FrancOS v1 release tag exists yet.**
 
 > **FrancOS v1 now has two first-class tracks.** The binding release scope, paired milestones and end-to-end UX acceptance live in [FRANCOS_V1_DUAL_TRACK_ROADMAP.md](FRANCOS_V1_DUAL_TRACK_ROADMAP.md). This file remains the detailed subsystem backlog. An IDE, package lifecycle, file UX and integrated visual shell are **v1 requirements**, not leftover optional P4 polish.
 
