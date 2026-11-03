@@ -69,7 +69,8 @@ with tempfile.TemporaryDirectory(prefix="franc-roadmap-") as tmp:
         assert match and int(match.group(1)) >= 130, loaded[-1800:]
         key(b"r", b"Frac> ")
         line("bn-init 1 bn-from 2 bn-from bn-add bn-print cr", b"3\nFrac> ")
-        line("bn-init 1000 bn-from 1 bn-from bn-sub bn-print cr", b"999\nFrac> ")\n        line("bn-init 2 bn-from 80 bn-pow bn-print cr", b"1208925819614629174706176\nFrac> ")
+        line("bn-init 1000 bn-from 1 bn-from bn-sub bn-print cr", b"999\nFrac> ")
+        line("bn-init 2 bn-from 80 bn-pow bn-print cr", b"1208925819614629174706176\nFrac> ")
         line("bn-init 1000000000000000000 bn-from 1000000000000000000 bn-from bn-mul bn-print cr",
              b"1000000000000000000000000000000000000\nFrac> ")
         line("$6600006 248 b! $6600007 63 b! $6600000 f64-class .", b"1\nFrac> ")
