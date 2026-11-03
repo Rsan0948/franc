@@ -91,6 +91,12 @@ with tempfile.TemporaryDirectory(prefix="franc-roadmap-") as tmp:
         line('ide-reset "project.frac" ide-load .', b"1\nFrac> ")
         line("ide-compile .", b"2\nFrac> ")
         line("nine forty + .", b"49\nFrac> ")
+        line('ide-reset "abc" ide-append .', b"1\nFrac> ")
+        line("1 1 ide-delete .", b"1\nFrac> ")
+        line("ide-buffer type cr", b"ac\nFrac> ")
+        line('1 "b" ide-insert .', b"1\nFrac> ")
+        line("ide-buffer type cr", b"abc\nFrac> ")
+
         print("PASS: native multiline IDE source, persistence and JIT compile", flush=True)
         line('pci-find-network 0 - if "PCI MISSING" type cr else "PCI NETWORK PRESENT" type cr then',
              b"PCI NETWORK PRESENT\nFrac> ")
