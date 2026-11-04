@@ -131,8 +131,8 @@ with tempfile.TemporaryDirectory(prefix="franc-uefi-") as tmp:
             process.stdin.write(b"r")
             process.stdin.flush()
             time.sleep(1)
-            for query in (b"$7810000 b@ .\\n", b"$7810004 b@ .\\n",
-                          b"$7810010 b@ .\\n", b"$7810014 b@ .\\n"):
+            for query in (b"$8f000 b@ .\\n", b"$8f004 b@ .\\n",
+                          b"$8f010 b@ .\\n", b"$8f014 b@ .\\n"):
                 process.stdin.write(query)
                 process.stdin.flush()
                 time.sleep(1)

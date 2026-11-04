@@ -40,6 +40,14 @@ jobs:
           command -v lld-link
       - name: Assemble existing Franc-produced BIOS kernel seed
         run: make -f stage4/Makefile.native native-seed
+      - name: Assert UEFI handoff cannot overlap native kernel BSS
+        shell: bash
+        run: |
+          set -euo pipefail
+          end_hex=$(nm -n stage4/native_seed.elf | awk '$3=="__bss_end"{print $1}')
+          test -n "$end_hex"
+          test "$((16#$end_hex))" -le $((0x8f000))
+          echo "PASS: kernel BSS ends at 0x$end_hex, before reserved GOP handoff"
       - name: Build C UEFI application and FAT ESP
         run: make -f stage4/uefi/Makefile esp
       - name: Confirm EFI image is PE32+ and not linked into kernel

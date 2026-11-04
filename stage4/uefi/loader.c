@@ -16,8 +16,8 @@ static EFI_GUID simple_fs_guid =
 #define KERNEL_BINARY_MAX 195584ULL /* 382 x 512 BIOS extents; within 128-page UEFI reservation */
 #define TABLE_PAGES 6ULL
 #define MAP_BUFFER_BYTES 32768ULL
-/* Independent EfiLoaderData page beyond kernel BSS and the 8MiB page arena. */
-#define FRANC_GOP_HANDOFF_ADDR 0x07810000ULL
+/* Final page of separately allocated kernel region; build rejects BSS overlap. */
+#define FRANC_GOP_HANDOFF_ADDR 0x0008F000ULL
 #define FRANC_GOP_MAGIC 0x50475246U /* FRGP in little-endian */
 static EFI_GUID gop_guid =
     {0x9042a9deU,0x23dc,0x4a38,{0x96,0xfb,0x7a,0xde,0xd0,0x80,0x51,0x6a}};
@@ -61,13 +61,6 @@ static void zero_bytes(void *ptr, UINTN size) {
  * existing 4GiB identity-map. If unsupported, retain serial-only boot.
  */
 static void install_gop_handoff(EFI_BOOT_SERVICES *bs) {
-    EFI_ALLOCATE_PAGES reserve=(EFI_ALLOCATE_PAGES)bs->functions[2];
-    EFI_PHYSICAL_ADDRESS addr=FRANC_GOP_HANDOFF_ADDR;
-    if (EFI_ERROR(reserve(AllocateAddress,EfiLoaderData,1,&addr)) ||
-        addr!=FRANC_GOP_HANDOFF_ADDR) {
-        serial_write("UEFI GOP HANDOFF PAGE UNAVAILABLE\r\n");
-        return;
-    }
     FRANC_GOP_HANDOFF *out=(FRANC_GOP_HANDOFF *)(UINTN)FRANC_GOP_HANDOFF_ADDR;
     zero_bytes(out,sizeof(*out));
     EFI_LOCATE_PROTOCOL locate=(EFI_LOCATE_PROTOCOL)bs->functions[37];

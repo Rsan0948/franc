@@ -71,3 +71,8 @@ The GOP handoff uses a separately allocated firmware page at 0x07810000,
 just beyond the kernel page arena. It must not live inside the kernel's
 freestanding .bss; the 0x70000 prototype was found to be overwritten during
 C-free kernel startup. The page is recorded in Franctxt's fixed-memory map.
+
+GOP handoff placement was revised again: OVMF refused the fixed 126MiB
+page, so it now resides at 0x8F000, the last page inside the kernel's
+already allocated 512KiB low region. CI checks that the linked BSS ends
+before this address; no direct writes to unallocated firmware pages occur.
