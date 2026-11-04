@@ -363,8 +363,11 @@ fr_irq_fault:
 /* CPU setup shared by BIOS and UEFI boot: GDT and TSS, exception gates, and
  * 4 KiB mappings of the low 2 MiB for the stack guard and read-only code.
  */
-.set FR_KERNEL_STACK_GUARD,0x100000
-.set FR_KERNEL_STACK_TOP,0x141000
+/* QEMU's TCG TLB is direct-mapped on the page number modulo 256. These stack
+ * pages must not share a slot with kernel pages, or every call evicts ds_ptr.
+ */
+.set FR_KERNEL_STACK_GUARD,0x1AF000
+.set FR_KERNEL_STACK_TOP,0x1F0000
 .section .bss
 .balign 4096
 fr_low_pt: .skip 4096

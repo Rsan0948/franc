@@ -13,7 +13,7 @@ static EFI_GUID simple_fs_guid =
     {0x964e5b22U,0x6459,0x11d2,{0x8e,0x39,0x00,0xa0,0xc9,0x69,0x72,0x3b}};
 #define KERNEL_START 0x10000ULL
 #define KERNEL_REGION_PAGES 144ULL /* image and BSS, up to VGA memory at 0xA0000 */
-#define KERNEL_STACK_START 0x100000ULL
+#define KERNEL_STACK_START 0x1AF000ULL
 #define KERNEL_STACK_PAGES 65ULL /* guard page and 256 KiB stack */
 #define KERNEL_BINARY_MAX 195584ULL /* 382 x 512 BIOS extents; within 128-page UEFI reservation */
 #define TABLE_PAGES 6ULL
