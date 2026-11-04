@@ -1,8 +1,15 @@
 # Open-source launch checklist
 
-This repository remains private during preparation. **Do not change repository
-visibility, publish releases or automatically enable public distribution
-without the maintainer's explicit approval.**
+The maintainer explicitly authorized merging and launching the open-source
+repository on November 3, 2026. The launch workflow can publish a new GitHub
+Release with verified binaries and screenshots while the repository is private.
+**Repository visibility is a separate administrative setting and is not
+automatically changed by this workflow.**
+
+After the exact-main release gate passes and the history audit is reviewed,
+the owner can change visibility from private to public in GitHub's repository
+Settings → General → Danger Zone → Change repository visibility. Do not expose
+sensitive history or assume publishing a GitHub Release changes visibility.
 
 ## Required before public launch
 
@@ -66,3 +73,24 @@ public or moves the frozen v1 tag.
       binary and source artifacts after the maintainer approves publication.
 - [ ] Do not move/rewrite the v1 experimental tag or claim its 320×200
       BIOS build already had the post-v1 1024×768 GOP interface.
+
+## Live-release integration (November 2026)
+
+- [x] Merge the post-v1 FrancUI, GOP and open-source documentation changes
+- [x] Commit all six real-QEMU, SHA-256 checked screenshots and README gallery
+- [x] Preserve the immutable `francos-v1.0-experimental` tag
+- [ ] Run the `francos-v1.1.0-experimental` exact-main release workflow to
+      completion and inspect all attached native BIOS/UEFI artifacts
+- [ ] Inspect the full-history credential scan and complete human privacy,
+      author/identity, and third-party license review
+- [ ] Verify the newest released tag points to the exact passing main commit
+- [ ] Change GitHub repository visibility to public via an authorized owner or
+      repository administrator and verify anonymous access
+- [ ] Verify public README images and release downloads are actually accessible
+
+The new launch workflow is
+[`.github/workflows/francos-v1-1-release.yml`](../.github/workflows/francos-v1-1-release.yml).
+Its publication step executes only for `main` and only after independent
+source, history, native kernel, full QEMU journey, UEFI GOP and network tests.
+It publishes an experimental **pre-release**, not a stable security-supported
+general-use operating system.
