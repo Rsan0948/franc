@@ -8,9 +8,13 @@ system, draws graphics, and exchanges real network packets in QEMU. Franc
 compiles native x86-64 code; its core kernel can rebuild itself byte-for-byte
 without using C or Python.
 
-**Current released baseline:** [`francos-v1.0-experimental`](https://github.com/Rsan0948/franc/tree/francos-v1.0-experimental),
-verified on November 3, 2026 at commit `c0e66715b744`.
-[Exact-main QEMU release proof](https://github.com/Rsan0948/franc/actions/runs/41738136870).
+**Latest experimental preview:** [FrancOS v1.1.0 — UEFI graphics](https://github.com/Rsan0948/franc/releases/tag/francos-v1.1.0-experimental).
+This release is produced only after an exact-main QEMU self-hosting,
+graphics, networking, storage and isolation acceptance gate passes.
+
+The previous [`francos-v1.0-experimental`](https://github.com/Rsan0948/franc/tree/francos-v1.0-experimental)
+tag remains immutable. [Its exact-main release proof](https://github.com/Rsan0948/franc/actions/runs/41738136870)
+is retained for independent comparison.
 
 The project is experimental, primarily verified with QEMU, and not a
 general-purpose, production-secure desktop operating system.
@@ -62,7 +66,7 @@ Requirements: GNU binutils (`as`, `ld`, `objcopy`), `make`, `bash`,
 make -f stage4/Makefile.native native-proof
 
 # Run the experimental BIOS image:
-qemu-system-x86_64 -m 128M -accel tcg -display none -monitor none \
+qemu-system-x86_64 -m 128M -accel tcg -vga std -monitor none \
   -no-reboot -serial stdio \
   -drive file=stage4/native_seed.img,format=raw,if=ide
 ```
@@ -119,6 +123,7 @@ Franc is distributed under the [MIT license](LICENSE). The bundled font
 has separate upstream attribution and redistribution terms in
 [FONT-LICENSE.txt](FONT-LICENSE.txt).
 
-The repository's public launch is subject to maintainer approval and the
-[open-source launch checklist](docs/OPEN_SOURCE_LAUNCH.md). No public
-visibility change is implied by documentation or development commits.
+The maintainer has approved an open-source launch. The
+[public-release checklist](docs/OPEN_SOURCE_LAUNCH.md) records validation and
+visibility prerequisites. A GitHub Release is not a substitute for making
+the repository public; GitHub visibility is controlled separately.

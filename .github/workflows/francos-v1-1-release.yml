@@ -1,0 +1,157 @@
+name: FrancOS v1.1.0 experimental — exact-main tested release
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/francos-v1-1-release.yml'
+      - 'tools/history_audit.py'
+      - 'docs/RELEASE_NOTES_V1_1.md'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/francos-v1-1-release.yml'
+      - 'tools/history_audit.py'
+      - 'docs/RELEASE_NOTES_V1_1.md'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: francos-v1-1-experimental-release
+  cancel-in-progress: false
+
+jobs:
+  review-publication-inputs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check mainline release authority, manifest, screenshots and licenses
+        run: |
+          set -euo pipefail
+          python3 -m franctxt.build preflight
+          python3 tools/release_audit.py
+          (cd docs/screenshots && sha256sum -c SHA256SUMS)
+          test -f LICENSE
+          test -f FONT-LICENSE.txt
+          test -f SECURITY.md
+          test -f CONTRIBUTING.md
+          test "$(find docs/screenshots -type f -name '*.png' | wc -l)" -eq 6
+      - name: Inspect all reachable Git history for known secret patterns
+        run: python3 tools/history_audit.py
+      - name: Verify release notes point at immutable next tag
+        run: |
+          grep -F 'francos-v1.1.0-experimental' docs/RELEASE_NOTES_V1_1.md
+          test -s stage4/uefi/test_boot.py
+
+  tested-release:
+    needs: review-publication-inputs
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 95
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Protect immutable previous and upcoming release identities
+        env:
+          TAG: francos-v1.1.0-experimental
+        run: |
+          set -euo pipefail
+          test "$GITHUB_SHA" = "$(git rev-parse HEAD)"
+          git merge-base --is-ancestor c0e66715b744fa4aab8a5ebd81e7a8ab30743566 HEAD
+          git ls-remote --exit-code --tags origin refs/tags/francos-v1.0-experimental
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG"; then
+            echo "REJECT: next release tag already exists; no retagging"
+            exit 1
+          fi
+      - name: Install QEMU and OVMF to verify exact release guest
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends qemu-system-x86 ovmf mtools lld
+      - name: Build Franc/assembly native image and prove gen2/gen3 reproducibility
+        run: |
+          make -f stage4/Makefile.native native-proof
+          python3 -m franctxt.build verify-image --image stage4/native_seed.img --kernel stage4/native_seed.bin
+      - name: Test complete BIOS Home/IDE/files/Ring3/package/network journey
+        env:
+          FRANC_CAPTURE_DIR: stage4/release-v1-1-captures
+        run: python3 stage4/qemu_v1_journey.py stage4/native_seed.img
+      - name: Independently test protected native user execution
+        run: FRANC_TEST_USER_COMPILED=1 python3 stage4/qemu_irq.py stage4/native_seed.img
+      - name: Independently test offline package lifecycle over cold boots
+        run: python3 stage4/qemu_wave3_packages.py stage4/native_seed.img
+      - name: Independently test real Ethernet UDP/DNS packets
+        run: FRANC_TEST_UDP=1 FRANC_TEST_WAVE4=1 python3 stage4/qemu_net.py stage4/native_seed.img
+      - name: Test actual BIOS Home/Files/IDE/Packages screenshots and pixels
+        env:
+          FRANC_TEST_WAVE4: "1"
+        run: python3 stage4/qemu_home.py stage4/native_seed.img
+      - name: Build separate UEFI firmware adapter and boot with real GOP display
+        env:
+          FRANC_UEFI_CAPTURE_DIR: stage4/uefi/release-screenshots
+        run: |
+          make -f stage4/uefi/Makefile esp
+          python3 stage4/uefi/test_boot.py
+          test -s stage4/uefi/release-screenshots/uefi-gop-home.ppm
+      - name: Record source-matched release evidence and assemble assets
+        run: |
+          set -euo pipefail
+          out=stage4/release-v1-1-assets
+          mkdir -p "$out"
+          python3 -m franctxt.build record --image stage4/native_seed.img --kernel stage4/native_seed.bin --passed native --passed apps --output "$out/francos-v1.1.0-experimental-evidence.franctxt"
+          grep -F "build.source-revision = \"$GITHUB_SHA\"" "$out/francos-v1.1.0-experimental-evidence.franctxt"
+          cp stage4/native_seed.img "$out/francos-v1.1.0-experimental-bios.img"
+          cp stage4/uefi/BOOTX64.EFI "$out/francos-v1.1.0-experimental-BOOTX64.EFI"
+          gzip -9 -n -c stage4/uefi/franc-esp.img > "$out/francos-v1.1.0-experimental-uefi-esp.img.gz"
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile, ZIP_DEFLATED
+          png = sorted(Path("docs/screenshots").glob("*.png"))
+          assert len(png) == 6, png
+          dst = Path("stage4/release-v1-1-assets/francos-v1.1.0-experimental-screenshots.zip")
+          with ZipFile(dst, "w", compression=ZIP_DEFLATED, compresslevel=9) as out:
+              for file in png: out.write(file, file.name)
+              out.write("docs/screenshots/SHA256SUMS", "SHA256SUMS")
+              out.write("docs/screenshots/SOURCES.md", "SOURCES.md")
+          print("PASS: bundled six real QEMU screenshots and provenance")
+          PY
+          (cd "$out" && sha256sum francos-v1.1.0-experimental-bios.img francos-v1.1.0-experimental-BOOTX64.EFI francos-v1.1.0-experimental-uefi-esp.img.gz francos-v1.1.0-experimental-screenshots.zip francos-v1.1.0-experimental-evidence.franctxt > francos-v1.1.0-experimental-SHA256SUMS)
+          test "$(find stage4/release-v1-1-captures -name 'v1-*.ppm' | wc -l)" -ge 18
+          (cd "$out" && sha256sum -c francos-v1.1.0-experimental-SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: francos-v1-1-exact-main-release-evidence
+          path: |
+            stage4/release-v1-1-assets/*
+            stage4/release-v1-1-captures/*.ppm
+            stage4/uefi/release-screenshots/*.ppm
+            stage4/native-proof/gen2.serial.log
+            stage4/native-proof/gen3.serial.log
+          if-no-files-found: warn
+      - name: Publish immutable experimental pre-release with BIOS/UEFI images and screenshots
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: francos-v1.1.0-experimental
+          GH_REPO: Rsan0948/franc
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = refs/heads/main
+          test "$GITHUB_SHA" = "$(git rev-parse HEAD)"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG"; then
+            echo "REJECT: release tag exists; refusing to republish or move it"
+            exit 1
+          fi
+          git config user.name 'FrancOS Release CI'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag -a "$TAG" -m "FrancOS v1.1 experimental; QEMU native/UEFI/graphics acceptance proven"
+          git push origin "refs/tags/$TAG"
+          gh release create "$TAG" stage4/release-v1-1-assets/* \
+            --verify-tag \
+            --title "FrancOS v1.1.0 Experimental — Native UEFI Graphics" \
+            --notes-file docs/RELEASE_NOTES_V1_1.md \
+            --prerelease
+          echo "PASS: published experimental release $TAG at $GITHUB_SHA"
