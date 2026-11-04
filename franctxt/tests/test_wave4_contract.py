@@ -79,6 +79,17 @@ class Wave4Integration(unittest.TestCase):
                          "svc-dns-request", "svc-net-info"):
             self.assertIn(required, names)
 
+    def test_francui_chrome_is_shared_and_guest_verified(self):
+        ui = (ROOT / "lib/ui.frac").read_text()
+        ide = (ROOT / "lib/ide.frac").read_text()
+        qemu = (ROOT / "stage4/qemu_home.py").read_text()
+        self.assertIn("def ui-chrome ui-palette", ui)
+        self.assertIn("def ui-editor-rule", ui)
+        self.assertIn("def ui-frame 0 vc-clear ui-chrome", ui)
+        self.assertIn("def ide-screen 0 vc-clear ui-chrome", ide)
+        self.assertIn("ui-rule ui-editor-rule", ide)
+        self.assertIn("assert_accent_rail(pixels", qemu)
+
     def test_ring3_launch_isolated_from_trusted_main(self):
         ide = (ROOT / "lib/ide.frac").read_text()
         pkg = (ROOT / "lib/pkg.frac").read_text()
