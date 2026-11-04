@@ -1,5 +1,5 @@
 /* FrancOS UEFI GOP runtime console -- linked into the C-free kernel.
- * Firmware publishes a validated 32-byte handoff at 0x8f000.
+ * Firmware publishes a validated 32-byte handoff at fr_gop_descriptor(%rip).
  */
 .section .text,"ax"
 .global fr_gop_putchar
@@ -15,9 +15,9 @@ fr_gop_putchar:
     pushq %r13
     pushq %r14
     pushq %r15
-    cmpl $0x50475246,0x8f000
+    cmpl $0x50475246,fr_gop_descriptor(%rip)
     jne .Lgc_done
-    cmpl $1,0x8f004
+    cmpl $1,fr_gop_descriptor+4(%rip)
     jne .Lgc_done
     movzbl %al,%ebx
     cmpb $10,%bl
@@ -34,15 +34,15 @@ fr_gop_putchar:
     jne .Lgc_canvas_ready
     call .Lgc_init
 .Lgc_canvas_ready:
-    movl 0x8f010,%ecx
+    movl fr_gop_descriptor+16(%rip),%ecx
     subl $64,%ecx
     shrl $4,%ecx
     cmpl %ecx,fr_gop_column(%rip)
     jb .Lgc_place
     call .Lgc_advance
 .Lgc_place:
-    movq 0x8f008,%r12
-    movl 0x8f018,%r13d
+    movq fr_gop_descriptor+8(%rip),%r12
+    movl fr_gop_descriptor+24(%rip),%r13d
     movl fr_gop_column(%rip),%r14d
     shll $4,%r14d
     addl $32,%r14d
@@ -98,7 +98,7 @@ fr_gop_putchar:
 .Lgc_advance:
     movl $0,fr_gop_column(%rip)
     incl fr_gop_row(%rip)
-    movl 0x8f014,%ecx
+    movl fr_gop_descriptor+20(%rip),%ecx
     subl $64,%ecx
     movl %ecx,%eax
     xorl %edx,%edx
@@ -112,9 +112,9 @@ fr_gop_putchar:
 .Lgc_init:
     pushq %rax
     pushq %rcx
-    movq 0x8f008,%rdi
-    movl 0x8f018,%eax
-    imull 0x8f014,%eax
+    movq fr_gop_descriptor+8(%rip),%rdi
+    movl fr_gop_descriptor+24(%rip),%eax
+    imull fr_gop_descriptor+20(%rip),%eax
     movl %eax,%ecx
     movl $0x00192331,%eax
     cld
@@ -138,6 +138,7 @@ fr_gop_putchar:
     ret
 .section .bss
 .balign 8
+fr_gop_descriptor: .skip 32
 fr_gop_initialized: .quad 0
 fr_gop_column: .long 0
 fr_gop_row: .long 0

@@ -126,20 +126,6 @@ with tempfile.TemporaryDirectory(prefix="franc-uefi-") as tmp:
         if interior<50:
             print(f"FAIL: GOP screenshot had only {interior} inner nonblack samples, "
                   f"colors={palette}",flush=True)
-            # Query real guest memory via its trusted REPL: this distinguishes
-            # a lost handoff from a broken display-memory mapping.
-            process.stdin.write(b"r")
-            process.stdin.flush()
-            time.sleep(1)
-            for query in (b"$8f000 b@ .\\n", b"$8f004 b@ .\\n",
-                          b"$8f010 b@ .\\n", b"$8f014 b@ .\\n"):
-                process.stdin.write(query)
-                process.stdin.flush()
-                time.sleep(1)
-                if select.select(0.25):
-                    log.extend(os.read(process.stdout.fileno(),16384))
-            print("GOP guest handoff diagnostic serial tail: "
-                  +repr(bytes(log[-3000:])),flush=True)
             raise AssertionError("GOP text interior not rendered by FrancOS")
         assert len(palette)>1, "No native FrancOS glyphs on GOP screen"
         captures=Path(os.environ.get("FRANC_UEFI_CAPTURE_DIR",root/"uefi"/"screenshots"))

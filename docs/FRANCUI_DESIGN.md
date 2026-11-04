@@ -67,12 +67,15 @@ The next step is moving the Home/IDE/Files/Packages layouts to shared
 resolution-independent FrancUI widgets so they can use the additional
 display area instead of preserving the original 40-column layout.
 
-The GOP handoff uses a separately allocated firmware page at 0x07810000,
-just beyond the kernel page arena. It must not live inside the kernel's
-freestanding .bss; the 0x70000 prototype was found to be overwritten during
-C-free kernel startup. The page is recorded in Franctxt's fixed-memory map.
+### Validated descriptor handoff
 
-GOP handoff placement was revised again: OVMF refused the fixed 126MiB
-page, so it now resides at 0x8F000, the last page inside the kernel's
-already allocated 512KiB low region. CI checks that the linked BSS ends
-before this address; no direct writes to unallocated firmware pages occur.
+No fixed physical address is used for GOP metadata. The UEFI firmware adapter
+allocates a temporary descriptor through Boot Services, puts its pointer in
+r15 and a magic marker in r14 immediately before jumping to the native kernel.
+After its BSS is cleared, the Franc/assembly kernel copies the 32-byte
+validated descriptor into its own BSS and uses only that private copy for
+rendering. This avoids both bootloader-memory collisions and assuming that
+arbitrary high physical pages are available in UEFI.
+
+The QEMU test must see real glyph pixels within the framebuffer interior;
+a nonblack firmware artifact in the first rows is deliberately insufficient.

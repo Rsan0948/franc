@@ -67,6 +67,18 @@ _kstart:
     subq %rdi,%rcx
     xor %eax,%eax
     rep stosb
+    /* UEFI passes a firmware-allocated GOP descriptor in r15, with
+     * r14=GOPH. Copy it after BSS clearing into kernel-owned storage.
+     * BIOS boot never sets the marker and leaves the descriptor empty. */
+    cmpq $0x474F5048,%r14
+    jne .Lno_uefi_gop
+    testq %r15,%r15
+    jz .Lno_uefi_gop
+    movq %r15,%rsi
+    leaq fr_gop_descriptor(%rip),%rdi
+    movl $4,%ecx
+    rep movsq
+.Lno_uefi_gop:
     movabs $0x80000,%rsp
     /* init COM1 115200/8N1 */
     movw $0x3fb,%dx
