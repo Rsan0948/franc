@@ -1,6 +1,6 @@
 # Plan: make the self-hosting, exactness and isolation claims literally true
 
-**Status:** started 2026-11-04 from `main` at `47ea545`. Phases 0 and 1 are merged (#22) and passed CI. Phase 2 passes every gate locally, but has not yet run in CI. Phases 3 and 4 have not started.
+**Status:** started 2026-11-04 from `main` at `47ea545`. Phases 0 and 1 are merged (#22) and passed CI. Phase 2 passes every gate locally, but has not yet run in CI. Phase 3 step 1 passed; the rest of Phase 3 and Phase 4 have not started.
 
 **Direction:** close documentation gaps by making the code more capable, and remove dependencies on other languages wherever possible. FrancOS's own runtime is the implementation that matters. Correct behaviour is defined by a language-neutral data table, not by another implementation.
 
@@ -71,7 +71,7 @@ Implementation in `runtime/abi.S`: keep the existing 64-bit path for values it a
 
 Goal: FrancOS builds a complete bootable image with no host assembler or linker.
 
-1. **Speed test first.** Build a minimal assembler for the instruction forms in the seed and time it on the 907 KB seed in QEMU. If it is far too slow, stop and rethink.
+1. **Speed test first.** Build a minimal assembler for the instruction forms in the seed and time it on the 907 KB seed in QEMU. If it is far too slow, stop and rethink. **Result:** `tests/asm_speed/run.sh` assembles the 910 KB seed in Franc in about 4.5 seconds under QEMU TCG, including the disk read, and all three sections match GNU `as` byte for byte. The test used byte-only memory access. It also found that every ATA read waited out a full timeout, which cost 273 ms per sector; loading the seed fell from 485 to 2 seconds once that was fixed.
 2. **Foundations (first seed re-pin).** Runtime variable allocation, higher dictionary limits, explicit disk write regions, wider disk reads, second-drive support, and compiler output to memory instead of serial.
 3. **Toolchain bundle.** Load from its own disk area; the 141 KB of assembly source exceeds the 131,071-byte bundle limit.
 4. **Full assembler.** About 130 mnemonics, 3 macros, `.include`, `.incbin`, `.ifc`, and 16/32-bit code. Every object is compared byte for byte with GNU `as`.
