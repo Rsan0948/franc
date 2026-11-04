@@ -15,6 +15,23 @@ verified on November 3, 2026 at commit `c0e66715b744`.
 The project is experimental, primarily verified with QEMU, and not a
 general-purpose, production-secure desktop operating system.
 
+## Screenshots — captured from running FrancOS
+
+These are **actual QEMU framebuffer captures**, not renders or design mockups.
+The 1024×768 UEFI gallery is **post-v1 development**; the existing
+`francos-v1.0-experimental` tag was frozen before the high-resolution update.
+
+[![FrancOS keyboard-driven 1024×768 Home screen](docs/screenshots/home-uefi-1024x768.png)](docs/screenshots/home-uefi-1024x768.png)
+
+*FrancOS Home on the new 1024×768 UEFI display. Click for full resolution.*
+
+| Programming IDE (legacy BIOS) | Package manager (legacy BIOS) |
+| --- | --- |
+| [![FrancOS IDE in QEMU](docs/screenshots/ide-bios-640x400.png)](docs/screenshots/ide-bios-640x400.png) | [![FrancOS Packages in QEMU](docs/screenshots/packages-bios-640x400.png)](docs/screenshots/packages-bios-640x400.png) |
+
+[**Browse every screenshot**](docs/screenshots/README.md) ·
+[**See the source QEMU runs and image hashes**](docs/screenshots/SOURCES.md)
+
 ## What works
 
 | Area | Capability |
