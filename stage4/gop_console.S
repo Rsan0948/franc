@@ -119,6 +119,28 @@ fr_gop_putchar:
     movl $0x00192331,%eax
     cld
     rep stosl
+    /* Native accent header (top 8px), outside the glyph viewport. */
+    movq fr_gop_descriptor+8(%rip),%rdi
+    movl fr_gop_descriptor+24(%rip),%ecx
+    shll $3,%ecx
+    movl $0x00768F43,%eax
+    rep stosl
+    /* Left accent rail, 8 pixels wide, pitch-aware. */
+    movq fr_gop_descriptor+8(%rip),%rdi
+    movl fr_gop_descriptor+20(%rip),%ecx
+    movl fr_gop_descriptor+24(%rip),%edx
+    shll $2,%edx
+.Lgop_rail_row:
+    movl $0x00768F43,(%rdi)
+    movl $0x00768F43,4(%rdi)
+    movl $0x00768F43,8(%rdi)
+    movl $0x00768F43,12(%rdi)
+    movl $0x00768F43,16(%rdi)
+    movl $0x00768F43,20(%rdi)
+    movl $0x00768F43,24(%rdi)
+    movl $0x00768F43,28(%rdi)
+    addq %rdx,%rdi
+    loop .Lgop_rail_row
     movq $1,fr_gop_initialized(%rip)
     popq %rcx
     popq %rax
@@ -136,10 +158,59 @@ fr_gop_putchar:
     popq %rsi
     popq %rbx
     ret
+/* Match a real Franc vc-clear: 96+ consecutive zero-byte writes to the
+ * legacy VGA aperture. Single glyph drawing cannot reach that threshold.
+ * Reset the UEFI framebuffer so the native Home is not appended below the
+ * boot diagnostic log. BIOS uses no descriptor and remains unchanged.
+ */
+.global fr_gop_on_vga_write
+fr_gop_on_vga_write:
+    cmpl $0x50475246,fr_gop_descriptor(%rip)
+    jne .Lgop_watch_end
+    pushq %rax
+    pushq %rcx
+    pushq %rdx
+    pushq %rdi
+    pushq %r8
+    testb %r10b,%r10b
+    jne .Lgop_watch_break
+    cmpq $0xA0000,%rax
+    jb .Lgop_watch_break
+    cmpq $0xAFA00,%rax
+    jae .Lgop_watch_break
+    movq fr_gop_last_addr(%rip),%r8
+    incq %r8
+    cmpq %r8,%rax
+    jne .Lgop_watch_start
+    incl fr_gop_clear_count(%rip)
+    cmpl $96,fr_gop_clear_count(%rip)
+    jne .Lgop_watch_record
+    movl $0,fr_gop_column(%rip)
+    movl $0,fr_gop_row(%rip)
+    call .Lgc_init
+    jmp .Lgop_watch_record
+.Lgop_watch_start:
+    movl $1,fr_gop_clear_count(%rip)
+.Lgop_watch_record:
+    movq %rax,fr_gop_last_addr(%rip)
+    jmp .Lgop_watch_cleanup
+.Lgop_watch_break:
+    movl $0,fr_gop_clear_count(%rip)
+    movq $0,fr_gop_last_addr(%rip)
+.Lgop_watch_cleanup:
+    popq %r8
+    popq %rdi
+    popq %rdx
+    popq %rcx
+    popq %rax
+.Lgop_watch_end:
+    ret
 .section .bss
 .balign 8
 fr_gop_descriptor: .skip 32
 fr_gop_initialized: .quad 0
+fr_gop_last_addr: .quad 0
+fr_gop_clear_count: .long 0
 fr_gop_column: .long 0
 fr_gop_row: .long 0
 .section .text,"ax"

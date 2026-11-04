@@ -561,6 +561,7 @@ fr_bstore:
     movq %rax,%r10
     call fr_pop
     movb %r10b,(%rax)
+    call fr_gop_on_vga_write
     ret
 .global fr_inb
 fr_inb:
