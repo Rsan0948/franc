@@ -60,7 +60,22 @@ fr_gop_putchar:
 .Lgc_column_pixel:
     cmpl $8,%r9d
     jae .Lgc_nextrow
-    movl $0x00232D3B,%r11d
+    movl $0x00192331,%r11d /* shared canvas */
+    cmpl $96,%r15d
+    jae .Lgop_background_panel
+    movl $0x00222F3B,%r11d /* header */
+    jmp .Lgop_background_chosen
+.Lgop_background_panel:
+    cmpl $704,%r14d
+    jb .Lgop_background_chosen
+    cmpl $984,%r14d
+    jae .Lgop_background_chosen
+    cmpl $112,%r15d
+    jb .Lgop_background_chosen
+    cmpl $516,%r15d
+    jae .Lgop_background_chosen
+    movl $0x00242D3D,%r11d /* right panel */
+.Lgop_background_chosen:
     btl %r9d,%r10d
     jnc .Lgc_color
     movl $0x00EFEFEF,%r11d
@@ -229,7 +244,7 @@ fr_gop_on_vga_write:
     movl %r8d,%eax
     imull %r9d,%eax
     leaq 2816(%rbx,%rax,4),%rdi /* x=704 */
-    movl $70,%ecx              /* 280-pixel sidebar */
+    movl $280,%ecx             /* 280-pixel sidebar */
     movl $0x00242D3D,%eax
     cld
     rep stosl
@@ -246,6 +261,23 @@ fr_gop_on_vga_write:
     incl %r8d
     cmpl $516,%r8d
     jb .Lgc_split_row
+    /* Repaint a calm header surface; the glyph renderer uses exactly
+     * the same background color for its transparent-looking pixel cells. */
+    movq fr_gop_descriptor+8(%rip),%rbx
+    movl fr_gop_descriptor+24(%rip),%r9d
+    movl $16,%r8d
+.Lgop_header_row:
+    movl %r8d,%eax
+    imull %r9d,%eax
+    leaq 64(%rbx,%rax,4),%rdi  /* x=16 */
+    movl fr_gop_descriptor+16(%rip),%ecx
+    subl $32,%ecx
+    movl $0x00222F3B,%eax
+    cld
+    rep stosl
+    incl %r8d
+    cmpl $96,%r8d
+    jb .Lgop_header_row
 .Lgc_frame_labels:
     movl $0,fr_gop_row(%rip)
     movl $0,fr_gop_column(%rip)
