@@ -34,3 +34,4 @@ jobs:
         run: |
           make os
           bash tests/crash/run.sh build/out/francos-bios.img
+          bash tests/crash/run_foreign_disk.sh build/out/francos-bios.img

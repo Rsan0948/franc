@@ -34,3 +34,9 @@ f512 f512 f8 => stack overflow
 depth => 0
 1 1 + => 2
 f512 f8 drop drop drop drop drop drop drop drop => 1
+# The error appears on the VGA screen, so count its pixels in the guest.
+BOOT
+def white 0 :ag 0 :ai begin ag 64000 - while $A0000 ag + byte@ 15 - if0 ai 1 + :ai then ag 1 + :ag repeat ai ; => 
+def r r ; => 
+r => FAULT vector 0e
+white => 4227

@@ -1,6 +1,6 @@
 # Plan: make the self-hosting, exactness and isolation claims literally true
 
-**Status:** started 2026-11-04 from `main` at `47ea545`. Phases 0 and 1 pass every gate locally, but their new CI workflows have not yet run on GitHub. Phases 2-4 have not started.
+**Status:** started 2026-11-04 from `main` at `47ea545`. Phases 0 and 1 are merged (#22) and passed CI. Phase 2 passes every gate locally, but has not yet run in CI. Phases 3 and 4 have not started.
 
 **Direction:** close documentation gaps by making the code more capable, and remove dependencies on other languages wherever possible. FrancOS's own runtime is the implementation that matters. Correct behaviour is defined by a language-neutral data table, not by another implementation.
 
@@ -61,7 +61,7 @@ Implementation in `runtime/abi.S`: keep the existing 64-bit path for values it a
 4. Install the IDT and TSS at boot, with a separate double-fault stack.
 5. Have `fr_s2_run` save a recovery point, so a fault prints an error and returns to the prompt.
 6. Stretch: map kernel code read-only, so writes to it fault.
-7. Remove the boot-time disk writes in `ata-check` and `store-check`, or run them only on a verified FrancOS disk. Today sector 190 is written on every boot with no check that the disk belongs to FrancOS. `kernel/main.frac` is a seed input, so this is its own step with a seed re-pin.
+7. Boot only reads the disk. Write tests run from the `s` diagnostic, and only on a disk with the FrancOS signature. This step also shows runtime errors on the BIOS screen. `kernel/main.frac` is a seed input, so this is its own step with a seed re-pin.
 
 - **Tests:** recursion, underflow and wild writes become regression tests. Valid deep recursion and the Ring 3 and preemption suites must keep working.
 - **Done when:** those inputs cannot take down the OS, under both BIOS and UEFI.

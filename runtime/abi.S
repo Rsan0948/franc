@@ -275,12 +275,22 @@ fr_stack_short:
     ret
 .Lstack_underflow:
     leaq underflowmsg(%rip),%rdi
+    movq %rdi,fr_error_text(%rip)
     jmp fr_write_z
 /* The REPL needs this stack too, so a full stack unwinds like a fault. */
 .Lstack_overflow:
     leaq overflowmsg(%rip),%rdi
+    movq %rdi,fr_error_text(%rip)
     call fr_write_z
     jmp fr_recover
+
+/* Push and clear the text of the last runtime error; 0 if there is none. */
+.global fr_last_error
+fr_last_error:
+    movq fr_error_text(%rip),%rdi
+    movq $0,fr_error_text(%rip)
+    movq $1,%rsi
+    jmp fr_push
 
 .global fr_dup
 fr_dup:

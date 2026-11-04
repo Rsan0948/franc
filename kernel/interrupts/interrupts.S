@@ -371,8 +371,10 @@ fr_low_pt: .skip 4096
 fr_fault_stack: .skip 8192
 fr_recover_rsp: .skip 8
 fr_recover_ds: .skip 8
+fr_error_text: .skip 8
 .section .rodata
 faultmsg: .asciz "\nFAULT vector "
+faultscreenmsg: .asciz "cpu fault, recovered\n"
 faultatmsg: .asciz " at "
 faulthaltmsg: .asciz "\nHALTED: no recovery point\n"
 fr_fault_table:
@@ -505,6 +507,8 @@ fr_cpu_fault:
     cmpq $0,fr_preempt_current(%rip)
     jne fr_task_abort_current
 .Lfault_report:
+    leaq faultscreenmsg(%rip),%rax
+    movq %rax,fr_error_text(%rip)
     leaq faultmsg(%rip),%rdi
     call fr_write_z
     movq (%rsp),%rax

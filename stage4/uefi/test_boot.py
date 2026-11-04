@@ -73,7 +73,7 @@ with tempfile.TemporaryDirectory(prefix="franc-uefi-") as tmp:
             b"UEFI FRANC LOADER", b"UEFI KERNEL LOADED",
             b"UEFI TRANSFER", b"UEFI EXIT OK",
             b"FrancOS AOT | 64-bit | no C runtime",
-            b"ATA WRITE READBACK DONE", b"STORAGE OK",
+            b"ATA READ OK",
             b"AOT BOOT OK", b"FRANC INTERACTIVE READY",
         ]
         missing = [value for value in required if value not in output]
