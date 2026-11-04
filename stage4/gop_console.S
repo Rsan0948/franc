@@ -292,7 +292,7 @@ fr_gop_on_vga_write:
     ret
 .section .rodata
 .Lgc_frame_title: .asciz "F R A N C O S   /   W O R K S P A C E"
-.Lgc_frame_subtitle: .asciz "Native Franc environment  |  1024 x 768"
+.Lgc_frame_subtitle: .asciz "Native Franc environment  |  UEFI GOP"
 .Lgc_frame_aside: .asciz "SYSTEM"
 .Lgc_frame_info: .asciz "FRANC + ASM"
 .Lgc_frame_more: .asciz "Keyboard UI"

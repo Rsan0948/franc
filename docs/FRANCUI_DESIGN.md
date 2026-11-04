@@ -79,3 +79,10 @@ arbitrary high physical pages are available in UEFI.
 
 The QEMU test must see real glyph pixels within the framebuffer interior;
 a nonblack firmware artifact in the first rows is deliberately insufficient.
+
+A further UEFI adapter increment renders a reusable navy/cyan workspace
+header and a right-side information panel directly with the native assembly
+font/framebuffer backend. Home and other Franc screens continue producing
+text from native Franc; the adapter provides visual framing rather than
+introducing a second application language or host-generated UI. Real-QEMU
+screen tests assert a specific pixel inside the new panel.

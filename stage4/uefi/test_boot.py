@@ -128,6 +128,14 @@ with tempfile.TemporaryDirectory(prefix="franc-uefi-") as tmp:
                   f"colors={palette}",flush=True)
             raise AssertionError("GOP text interior not rendered by FrancOS")
         assert len(palette)>1, "No native FrancOS glyphs on GOP screen"
+        if w>=980:
+            panel_pixel=(420*w+760)*3
+            red,green,blue=pixels[panel_pixel:panel_pixel+3]
+            assert 25<=red<=50 and 35<=green<=65 and 45<=blue<=85, (
+                "Native FrancUI workspace panel was not rendered",
+                (red,green,blue))
+            print("PASS: guest-native FrancUI workspace panel RGB="
+                  +repr((red,green,blue)),flush=True)
         captures=Path(os.environ.get("FRANC_UEFI_CAPTURE_DIR",root/"uefi"/"screenshots"))
         captures.mkdir(parents=True,exist_ok=True)
         shutil.copyfile(destination,captures/"uefi-gop-home.ppm")
