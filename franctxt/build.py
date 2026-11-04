@@ -212,7 +212,7 @@ def verify_image(root: Path, image_file: Path, kernel_file: Path) -> dict:
         "build.registry-sha256": sha256(full_path(root, REGISTRY_PATH).read_bytes()),
         "build.seed-assembly-sha256": sha256(full_path(root, SEED_PATH).read_bytes()),
         "build.runtime-sha256": sha256(full_path(root, "stage4/runtime.S").read_bytes()),
-        "build.boot-sha256": sha256(full_path(root, "stage4/native_boot.bin").read_bytes()),
+        "build.boot-sha256": sha256(image[:512]),
         "build.apps-sha256": sha256(packed_apps(root)),
     }
     for key, value in required.items():

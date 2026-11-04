@@ -1,58 +1,135 @@
-# FrancOS source architecture — current ownership and migration
+# FrancOS architecture: active subsystem tree and historical archive
 
-FrancOS started as four sequential bootstrapping experiments. The
-`stage1/`–`stage4/` naming is **history**, not the intended permanent module
-structure. The active release is the Stage 4 Franc/assembly native path.
+This document records the **implemented source migration** begun after the frozen v1.1.0 experimental release. FrancOS's live native code is now organized by operating-system subsystem rather than development stage. The original Stage 1–4 source snapshots remain available under **archive/stages/**.
 
-## Where the active implementation lives now
+## The active tree
 
-| Concern | Authoritative current sources | Notes |
-|---|---|---|
-| BIOS boot | `stage4/boot.S` | UEFI adapter separately in `stage4/uefi/` |
-| Compiler and AOT | `stage2/compiler.frac`, `stage4/aot.frac`, `stage4/bootstrap_seed.S` | Ordered by `stage4/seed_sources.list` |
-| CPU runtime and interrupts | `stage4/runtime.S`, `stage4/interrupts.S`, `stage4/scheduler.S` | Native assembly |
-| Process isolation | `stage4/process_spaces.S`, `stage4/user_scheduler.S`, `lib/user_aot.frac` | Narrow protected user language |
-| Filesystem and ATA | `stage3/ata.frac`, `stage3/storage.frac` | Active sources despite historical directory |
-| VGA and keyboard | `stage4/display.frac`, `stage4/keyboard.frac` | Kernel-linked |
-| Graphical UI | `lib/ui.frac`, `lib/ide.frac`, `stage4/kernel.frac` | JIT UI and pinned Home |
-| Network | `stage4/net.frac`, `stage4/ip.frac`, `stage4/udp.frac`, `lib/services.frac` | QEMU e1000 target |
-| Offline packages | `lib/pkg.frac`, `franctxt/packages.py` | Franc native UI, Python planning/tests |
-| State identity | `lib/franctxt.frac`, `franctxt/` | Portable format and build verification |
-| QEMU acceptance | `stage4/qemu_*.py`, `franctxt/tests/` | Host-only Python, not kernel dependency |
+    boot/
+      bios/boot.S                  BIOS real-mode loading and transition
+      uefi/                        UEFI GOP/OVMF firmware adapter and Makefile
+    compiler/
+      bootstrap_seed.S             Verified, Franc-generated native kernel seed
+      native/compiler.frac         Self-hosted native compiler
+      aot.frac                     Native ahead-of-time emitter
+      bundle.frac                  Bundled compiler input
+    runtime/
+      abi.S                        Rational ABI, dictionary, JIT and low-level primitives
+    kernel/
+      main.frac                    Native Franc kernel entry/application dispatcher
+      kernel.ld                    Linker layout
+      memory/                      E820 inventory and page ownership
+      process/                     Ring 3, address spaces and native program emission
+      scheduler/                   Timer/task scheduling
+      interrupts/                  Native interrupt handling
+    drivers/
+      storage/                     ATA and FRANCFS1 persistence
+      video/                       VGA Franc console, font, UEFI GOP framebuffer
+      input/                       Keyboard
+      network/                     PCI, e1000, IPv4 and UDP
+    system/
+      repl.frac                    Native REPL
+      upgrade.frac                 Persistent source loader
+    apps/native/                   Native app ABI adapters, registry, app entrypoints
+    lib/                           Reusable Franc mathematical/UI/utility modules
+    build/
+      Makefile.native              Primary native BIOS/UEFI build
+      bootstrap.sh                 Exact-generation self-host proof
+      pack_image.sh                Native disk packer
+      source_pack.sh               Native source streaming
+      seed_sources.list            Ordered canonical kernel source inputs
+      app_sources.list             Ordered canonical application source inputs
+      out/                         Generated build artifacts (not tracked)
+    tools/
+      verify_architecture_layout.py  Source-owner/compatibility manifest gate
+    tests/                          Hosted and QEMU regression checks
+    archive/stages/stage1-4/         Unmodified stage snapshots for study
 
-## Target boundaries
+## How to build the real OS now
 
-`boot/`, `kernel/{memory,process,scheduler,interrupts}/`,
-`drivers/{storage,network,display,input}/`, `compiler/`, `runtime/`,
-`system/{home,ide,files,packages,ui}/`, `apps/`, `lib/`, `formats/`,
-`tests/{qemu,unit}/`, `tools/`, `archive/`, `docs/`.
+From the repository root:
 
-Do **not** rename current sources in one mass move. First introduce stable
-facade APIs and reusable test helpers. Then migrate subsystem by subsystem,
-using a source/consumer map and checking the native manifest after each move.
+    make os             # C/Python-free native Franc/assembly BIOS image
+    make os-proof       # QEMU rebuilds generation 2 and 3; compares exact bytes
+    make os-uefi        # Adds the separate UEFI firmware adapter and FAT ESP
 
-A source-path change is not harmless: the seed lock binds ordered paths and
-bytes; the bootstrap seed and exact generation-2/3 equality require a
-verified repin whenever a kernel input moves. The native app inventory and
-kernel-linked dictionary must remain consistent. Keep experimental v1 tag
-immutable and perform modernization only on new branches.
+The BIOS artifact is **build/out/francos-bios.img**; native kernel and boot
+components are under **build/out/**. The UEFI adapter build is
+**boot/uefi/Makefile** and outputs **build/out/francos-uefi-esp.img**.
+The general hosted Frac JIT remains built with **make** and tested via
+**make test**. See [build and test guide](BUILD_AND_TEST.md).
 
-## Python
+The new native Makefile names subsystem-owned sources explicitly and
+self-hosts from **build/seed_sources.list**, not a hardcoded list of stage
+directories.
 
-Python belongs to host testing, legacy comparisons, image verification and
-build provenance—not the FrancOS native BIOS kernel. Retain it. Consolidate
-repeated QEMU capture/keyboard/serial and image-validation code incrementally;
-start with `stage4/qemu_visual.py` for reusable real-frame assertions.
+## Why do some stage paths still appear?
 
-## First test-host migration
+The release v1.1 tag binds an ordered, hashed Franc seed input manifest, and
+historical test jobs and packaging programs name **stage2/**, **stage3/** or
+**stage4/**. Deleting these paths outright would silently break both the
+byte-for-byte self-hosting proof and dozens of integration tests.
 
-The authoritative reusable QEMU pixel/PPM validation functions now live in
-`tools/qemu_visual.py`. `stage4/qemu_visual.py` is retained as a
-compatibility import for older scripts, while `stage4/qemu_home.py` uses the
-shared decoder. Host-side unit tests live at `tests/test_qemu_visual.py`.
+To avoid maintaining two editable kernels:
 
-This is an intentionally small architectural migration. It does not rename
-kernel input files, rewrite Franc's bootstrap seed, or pretend that the
-historical stage directories have already been removed. Further migrations
-should have a similarly explicit source ownership decision and green QEMU
-regressions.
+- **stage2/compiler.frac**, **stage3/ata.frac** and **stage3/storage.frac**
+  are compatibility **symlinks** to their authoritative files in compiler/
+  and drivers/.
+- The active Stage 4 kernel, runtime, boot, video, network and app source
+  files are also **symlink aliases** into their new subsystem directories.
+  There is one editable source body, not two.
+- Historical Stage 1 and non-live Stage 3 files are linked to the copies
+  under **archive/stages/**. Existing test scripts and Makefiles that still
+  depend on old relative paths are retained as compatibility interfaces.
+- Immutable source snapshots of **all four stages** exist under
+  **archive/stages/stage1/** to **stage4/**. They must not be edited when
+  changing the active kernel.
+- The older legacy Makefiles and QEMU test drivers remain available in
+  stage paths while downstream CI transitions to the new build interface.
+
+The authoritatively ordered seed and app sources are in **build/**, and
+**tools/verify_architecture_layout.py** proves the compatibility aliases
+reference exactly those same bytes in the same bundle order. The existing
+legacy stage manifest stays pinned so older binary identity checks and
+immutable tags continue to work.
+
+**This is an implemented subsystem migration, not removal of all legacy
+compatibility paths.** Complete removal of stage* compatibility should
+follow a separately tested revision of all QEMU runners, provenance tooling,
+Franctxt build-authority constants and release workflows. No one should
+delete those aliases prematurely just to make the tree look cleaner.
+
+## Numeric and language core
+
+**runtime/abi.S** provides the 16-byte signed numerator/denominator
+representation, canonicalization and bounded wheel-inspired exceptional
+states. The compiler is located at **compiler/native/compiler.frac**, and
+opt-in number theory and approximation libraries live under **lib/**.
+
+See [the mathematical foundation reference](MATHEMATICAL_FOUNDATION.md)
+for the math's behavior, examples, use cases and explicit limitations.
+
+## Boot and privilege boundaries
+
+BIOS boot enters the Franc/assembly freestanding kernel. UEFI has a small
+separate C firmware adapter handing off to the same C-free kernel with GOP
+information. The trusted REPL and full app bundle remain privileged; only
+a restricted Franc user-program subset runs in Ring 3. This is a
+QEMU-focused experimental OS, not a portable or hardened general-purpose
+desktop. The operating system's pre-v1.1 source and tests remain available
+through its immutable release tags.
+
+## Migration acceptance
+
+A migration must satisfy:
+
+1. A complete snapshot exists for each original staged source.
+2. Every active source is an ordinary file in a canonical subsystem directory.
+3. Every old source alias resolves to exactly that canonical file.
+4. Source manifests preserve identical bytes and ordering so the pinned
+   kernel seed still builds reproducibly.
+5. Existing C-free native/UEFI build and QEMU suites still pass.
+6. The new top-level native build independently produces a bootable disk and
+   verifies native generations 2 and 3.
+
+A passing **source layout check alone** is not an OS proof; use
+**make os-proof** and the actual guest tests.

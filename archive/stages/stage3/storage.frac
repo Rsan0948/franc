@@ -1,0 +1,33 @@
+\ Franc-owned FRANCFS1 flat source store: directory, source serialization, recovery.
+\ 12 slots, 32-byte entries at LBA 129, 4x512 data sectors per slot from 136.
+\ Only ATA read/write and bounded byte buffers remain below this source layer.
+\ No writes unless a valid FRANCFS1 header is present (or explicit fs-format).
+\ All failure paths return zero; strings must be NUL-terminated, max 23 / 2047.
+def fs-len :fl-addr 0 :fl-n begin fl-n 2048 - while fl-addr fl-n + byte@ if0 fl-n exit then fl-n 1 + :fl-n repeat 2048 ;
+def fs-zero 0 :fz-i begin fz-i 512 - while fz-i 0 sector-byte! fz-i 1 + :fz-i repeat ;
+def fs-magic? 0 :fm-i begin fm-i 8 - while fm-i sector-byte@ "FRANCFS1" fm-i + byte@ - ifnz 0 exit then fm-i 1 + :fm-i repeat 1 ;
+def fs-ready? hardware? if0 disk-ready? exit then 128 ata-read-sector if0 0 exit then fs-magic? ;
+def fs-format hardware? if0 disk-format 1 exit then fs-zero 0 :fm-i begin fm-i 8 - while fm-i "FRANCFS1" fm-i + byte@ sector-byte! fm-i 1 + :fm-i repeat 128 ata-write-sector if0 0 exit then fs-zero 129 ata-write-sector ;
+\ Compare a filename against an entry in the currently loaded directory sector.
+def fs-match :fn-slot :fn-name fn-slot 32 * :fn-base 0 :fn-i begin fn-i 24 - while fn-name fn-i + byte@ :fn-c fn-base fn-i + sector-byte@ :fn-d fn-c fn-d - ifnz 0 exit then fn-c if0 1 exit then fn-i 1 + :fn-i repeat 0 ;
+def fs-find :ff-name 0 :ff-i begin ff-i 12 - while ff-name ff-i fs-match ifnz ff-i exit then ff-i 1 + :ff-i repeat -1 ;
+def fs-free 0 :fe-i begin fe-i 12 - while fe-i 32 * sector-byte@ if0 fe-i exit then fe-i 1 + :fe-i repeat -1 ;
+\ (filename source -- flag) writes data sectors first, then directory metadata.
+\ Overwriting an existing file is not atomic on power failure; no journaling.
+def fs-save :fs-data :fs-name hardware? if0 fs-name fs-data host-save 1 exit then fs-name fs-len :fs-nlen fs-data fs-len :fs-dlen fs-nlen if0 0 exit then fs-nlen 24 - if0 0 exit then fs-nlen 24 - if 0 :fs-n-ok else 1 :fs-n-ok then fs-n-ok ifnz 0 exit then fs-dlen 2048 - if0 0 exit then fs-ready? if0 0 exit then 129 ata-read-sector if0 0 exit then fs-name fs-find :fs-slot fs-slot 0 - if fs-free :fs-slot then fs-slot 0 - if 0 exit then 0 :fs-block begin fs-block fs-dlen 511 + 512 / floor - while fs-zero 0 :fs-j begin fs-j 512 - while fs-block 512 * fs-j + :fs-index fs-index fs-dlen - if fs-j fs-data fs-index + byte@ sector-byte! then fs-j 1 + :fs-j repeat 136 fs-slot 4 * + fs-block + ata-write-sector if0 0 exit then fs-block 1 + :fs-block repeat 129 ata-read-sector if0 0 exit then fs-slot 32 * :fs-base 0 :fs-j begin fs-j 32 - while fs-base fs-j + 0 sector-byte! fs-j 1 + :fs-j repeat 0 :fs-j begin fs-j fs-nlen - while fs-base fs-j + fs-name fs-j + byte@ sector-byte! fs-j 1 + :fs-j repeat fs-base 24 + fs-dlen 256 % sector-byte! fs-base 25 + fs-dlen 256 / floor sector-byte! 129 ata-write-sector ;
+\ (name -- pointer|0) Loads exactly the directory-published byte count.
+\ One source buffer is shared by the reader; consumers must compile before next load.
+def fs-source :fsr-name hardware? if0 fsr-name host-source exit then fs-ready? if0 0 exit then 129 ata-read-sector if0 0 exit then fsr-name fs-find :fsr-slot fsr-slot 0 - if 0 exit then fsr-slot 32 * 24 + sector-byte@ :fsr-lo fsr-slot 32 * 25 + sector-byte@ 256 * fsr-lo + :fsr-length fsr-length 2048 - if0 0 exit then fsr-length 2048 - if 0 :fsr-too-long else 0 exit then 0 :fsr-block begin fsr-block fsr-length 511 + 512 / floor - while 136 fsr-slot 4 * + fsr-block + ata-read-sector if0 0 exit then 0 :fsr-i begin fsr-i 512 - while fsr-block 512 * fsr-i + :fsr-index fsr-index fsr-length - if fsr-index fsr-i sector-byte@ source-byte! then fsr-i 1 + :fsr-i repeat fsr-block 1 + :fsr-block repeat fsr-length 0 source-byte! source-buffer ;
+def fs-files hardware? if0 host-files exit then fs-ready? if0 exit then 129 ata-read-sector if0 exit then 0 :ffs-i begin ffs-i 12 - while ffs-i 32 * sector-byte@ ifnz sector-buffer ffs-i 32 * + type 10 emit then ffs-i 1 + :ffs-i repeat ;
+\ Wave 1 native file lifecycle. Directory is only one sector; single
+\ directory-sector writes are not journaled or power-fail atomic. Delete
+\ unpublishes metadata BEFORE scrubbing file sectors so a partial scrub
+\ never leaves a published truncated source. Never expand the 12 slots.
+def fs-delete :fd-name hardware? if0 0 exit then fs-ready? if0 0 exit then 129 ata-read-sector if0 0 exit then fd-name fs-find :fd-slot fd-slot 0 - if 0 exit then fd-slot 32 * :fd-offset 0 :fd-i begin fd-i 32 - while fd-offset fd-i + 0 sector-byte! fd-i 1 + :fd-i repeat 129 ata-write-sector if0 0 exit then 0 :fd-i begin fd-i 4 - while fs-zero 136 fd-slot 4 * + fd-i + ata-write-sector if0 0 exit then fd-i 1 + :fd-i repeat 1 ;
+\ (old-name new-name -- 1|0). Refuse duplicates, empty/long names and
+\ missing originals. Rewrites only the directory slot, not source data.
+def fs-rename :fr-new :fr-old fr-old fs-len :fr-oldlen fr-new fs-len :fr-newlen fr-oldlen if0 0 exit then fr-oldlen 24 - if0 0 exit then fr-oldlen 24 - if 0 :fr-checked else 0 exit then fr-newlen if0 0 exit then fr-newlen 24 - if0 0 exit then fr-newlen 24 - if 0 :fr-checked else 0 exit then fs-ready? if0 0 exit then 129 ata-read-sector if0 0 exit then fr-new fs-find 0 - if0 0 exit then fr-new fs-find 0 - if 0 :fr-checked else 0 exit then fr-old fs-find :fr-slot fr-slot 0 - if 0 exit then fr-slot 32 * :fr-offset 0 :fr-i begin fr-i 24 - while fr-offset fr-i + 0 sector-byte! fr-i 1 + :fr-i repeat 0 :fr-i begin fr-i fr-newlen - while fr-offset fr-i + fr-new fr-i + byte@ sector-byte! fr-i 1 + :fr-i repeat 129 ata-write-sector ;
+\ Rebind public API while retaining host versions for Linux tests/diagnostics.
+def source fs-source ;
+def save fs-save drop ;
+def files fs-files ;

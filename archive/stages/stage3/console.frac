@@ -1,0 +1,3 @@
+\ Franc-owned line editor: compiled after drivers.frac so key resolves to
+\ the Franc PS/2+serial implementation (or host adapter on Linux).
+def calc-read 0 :calc-len 0 :calc-prev calc-buffer 0 b! begin key :calc-key calc-key 27 - if0 1 exit then calc-key 10 - if0 10 emit 0 exit then calc-key 13 - if0 10 emit 0 exit then calc-key 8 - if0 calc-backspace else calc-key 127 - if0 calc-backspace else calc-key 1001 - if0 calc-prev 1 + :calc-prev calc-recall calc-redraw else 31 calc-key - if calc-key 127 - if calc-key calc-ins then then then then then again ;

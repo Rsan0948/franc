@@ -1,64 +1,73 @@
-# Building, testing and viewing FrancOS
+# Building and testing FrancOS
 
-FrancOS currently targets **x86-64 Linux/QEMU** as its primary reproducible
-development environment. The native BIOS kernel is Franc + assembly; C and
-Python are used only by other explicitly selected builds or host tools.
+## Native OS — current standard-layout build
 
-## Install prerequisites
+From the root on Linux with GNU binutils, Make and x86-64 QEMU:
 
-GNU assembler/linker/objcopy, make, bash, awk, dd and QEMU x86-64 are
-required to rebuild and boot the BIOS image. Python 3 is required to run
-host-side verification. For optional UEFI tests, also install Clang, lld-link,
-OVMF and mtools.
+    make os
 
-## Check, build and run
+This assembles **boot/bios/boot.S**, **runtime/abi.S**, the Franc-generated
+seed **compiler/bootstrap_seed.S**, and the kernel module set into
+**build/out/francos-bios.img**. The live native path uses **Franc and
+assembly**, not C or Python to compile the kernel.
 
-```sh
-python3 -m franctxt.build preflight
-make -f stage4/Makefile.native native-proof
-qemu-system-x86_64 -m 128M -accel tcg -display none -monitor none \
-  -no-reboot -serial stdio \
-  -drive file=stage4/native_seed.img,format=raw,if=ide
-```
+To prove native self-hosting, including booted Franc generation 2 and 3:
 
-`native-proof` is the important check: the guest recompiles its own kernel
-twice, and the resulting generations must match the committed seed.
+    make os-proof
 
-```sh
-make test
-python3 stage4/qemu_home.py stage4/native_seed.img
-python3 stage4/qemu_v1_journey.py stage4/native_seed.img
-```
+This invokes **build/bootstrap.sh**, stages **build/seed_sources.list**,
+compiles the kernel within QEMU, and compares emitted bytes and compiler
+assembly against the committed Franc seed.
 
-The Home and release-journey tests inject real keyboard events and save PPM
-screenshots using QEMU's monitor. A passing source or serial marker alone is
-not a substitute for these guest checks. Actual screenshots are uploaded as
-CI artifacts.
+To build the separate UEFI firmware adapter (requires Clang, LLD and mtools):
 
-## UEFI / GOP (post-v1 development)
+    make os-uefi
 
-The experimental UEFI adapter is in `stage4/uefi/` and uses a small allowed
-C firmware bridge. The runtime and compiler remain Franc + assembly.
-Run `make -f stage4/uefi/Makefile esp` after building the native kernel,
-then `python3 stage4/uefi/test_boot.py`. The test captures the framebuffer
-and checks guest pixels. Firmware and real hardware compatibility beyond
-tested OVMF/QEMU configurations is not asserted.
+This generates **build/out/francos-uefi-esp.img**. The **boot/uefi/** adapter
+uses freestanding C for UEFI firmware interaction; C is **not** linked into
+the Franc kernel. See boot/uefi/README.md when available and the native
+UEFI QEMU test for launch arguments.
 
-## Test ownership
+The hosted historical Frac interpreter still uses:
 
-`tools/qemu_visual.py` implements shared PPM decoding and real-pixel
-assertions. `stage4/qemu_visual.py` remains the transition shim. Kernel,
-storage, networking, IDE and package tests still live in `stage4/qemu_*.py`
-and their respective Franctxt/unit-test suites. Migration is incremental.
+    make
+    make test
 
-## Development discipline
+## Architecture and source authority gates
 
-`stage4/seed_sources.list` is the exact ordered kernel source list.
-`stage4/app_sources.list` is the ordered native app bundle.
-Kernel source changes require rebuilding and re-pinning both the committed
-Franc-generated assembly seed and the Franctxt seed lock, followed by
-generation-2/3 proof. Do not casually rename these sources.
+    python3 tools/verify_architecture_layout.py
+    python3 -m franctxt.build preflight
 
-For documented scope and limitations see
-[release candidate](FRANCOS_V1_RELEASE_CANDIDATE.md) and
-[architecture ownership](REPO_ARCHITECTURE.md).
+The first checks the canonical sources, preserved snapshots and legacy
+compatibility symlinks. Franctxt preflight verifies the existing pinned
+source lock and application registry. Build/out is intentionally ignored
+by Git.
+
+## Real QEMU acceptance
+
+The existing V1.1 legacy path remains supported through symlink aliases
+while the QEMU runners are moved to tests/qemu:
+
+    make -f stage4/Makefile.native native-proof
+    python3 stage4/qemu_v1_journey.py stage4/native_seed.img
+    python3 stage4/uefi/test_boot.py
+
+For the new standard-layout disk, the same BIOS QEMU journey can run on:
+
+    python3 stage4/qemu_v1_journey.py build/out/francos-bios.img
+
+The final acceptance requires native bootstrap identity, persistent IDE and
+file operations, the restricted Ring 3 execution tests, offline package
+lifecycle, UDP/DNS networking and actual guest screenshots. A compiler
+success or host unit test alone does not close the release gate.
+
+## Current limits
+
+The BIOS path uses the established legacy VGA display; the UEFI adapter
+supports a tested 1024×768 framebuffer. Applications are not yet a
+general-purpose window manager. Persistent storage is intentionally small;
+there is no general TLS/HTTPS networking, broad hardware compatibility or
+production security hardening.
+
+For source ownership see [repository architecture](REPO_ARCHITECTURE.md).
+For numeric behavior see [Mathematical Foundation](MATHEMATICAL_FOUNDATION.md).

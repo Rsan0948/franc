@@ -1,0 +1,16 @@
+\ C-free framebuffer character console. All layout, font rasterization and
+\ scrolling are Franc code. Native assembly provides byte-addressed memory.
+\ DejaVu Sans Mono derived 8x8 bitmap is linked as data, not C.
+def vc-init 0 :vc-col 0 :vc-row ;
+\ Pixel and framebuffer operations are safe over the Mode 13h bounds.
+def vc-pixel :vc-ink :vc-py :vc-px vc-px 0 - if exit then vc-py 0 - if exit then vc-px 320 - if0 exit then vc-py 200 - if0 exit then vc-px 320 - if vc-py 200 - if $A0000 vc-py 320 * + vc-px + vc-ink b! then then ;
+def vc-clear :vc-bg 0 :vc-ci begin vc-ci 64000 - while $A0000 vc-ci + vc-bg b! vc-ci 1 + :vc-ci repeat ;
+\ Bit 0 in the font's scanline is the leftmost glyph pixel.
+def vc-glyph :vg-y :vg-x :vg-ch 0 :vg-gy begin vg-gy 8 - while font-base vg-ch 8 * + vg-gy + b@ :vg-bits 1 :vg-mask 0 :vg-gx begin vg-gx 8 - while vg-bits vg-mask band ifnz 15 :vg-ink else 0 :vg-ink then vg-x vg-gx + vg-y vg-gy + vg-ink vc-pixel vg-mask 2 * :vg-mask vg-gx 1 + :vg-gx repeat vg-gy 1 + :vg-gy repeat ;
+def vc-scroll 0 :vs-i begin vs-i 61440 - while $A0000 vs-i 2560 + + b@ $A0000 vs-i + swap b! vs-i 1 + :vs-i repeat begin vs-i 64000 - while $A0000 vs-i + 0 b! vs-i 1 + :vs-i repeat ;
+def vc-scroll? vc-row 25 - if0 vc-scroll 24 :vc-row then ;
+\ Raw serial output is deliberately retained for CI and headless recovery.
+def vc-put :vc-ch vc-ch emit vc-ch 10 - if0 0 :vc-col vc-row 1 + :vc-row vc-scroll? exit then vc-ch 13 - if0 0 :vc-col exit then vc-ch 8 - if0 vc-col ifnz vc-col 1 - :vc-col vc-col 8 * vc-row 8 * 32 vc-glyph then exit then vc-ch 32 - if 63 :vc-ch then vc-ch 127 - if0 63 :vc-ch then vc-ch vc-col 8 * vc-row 8 * vc-glyph vc-col 1 + :vc-col vc-col 40 - if0 0 :vc-col vc-row 1 + :vc-row vc-scroll? then ;
+def vc-type :vt-ptr begin vt-ptr b@ :vt-ch vt-ch if0 exit then vt-ch vc-put vt-ptr 1 + :vt-ptr again ;
+def vc-home 0 :vc-col 0 :vc-row ;
+def vc-newline 10 vc-put ;

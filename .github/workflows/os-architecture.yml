@@ -1,0 +1,82 @@
+name: FrancOS native subsystem-layout and self-host proof
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'boot/**'
+      - 'build/**'
+      - 'compiler/**'
+      - 'runtime/**'
+      - 'kernel/**'
+      - 'drivers/**'
+      - 'system/**'
+      - 'apps/native/**'
+      - 'archive/**'
+      - 'stage1/**'
+      - 'stage2/**'
+      - 'stage3/**'
+      - 'stage4/**'
+      - 'franctxt/build.py'
+      - 'tools/verify_architecture_layout.py'
+      - '.github/workflows/os-architecture.yml'
+  pull_request:
+    paths:
+      - 'boot/**'
+      - 'build/**'
+      - 'compiler/**'
+      - 'runtime/**'
+      - 'kernel/**'
+      - 'drivers/**'
+      - 'system/**'
+      - 'apps/native/**'
+      - 'archive/**'
+      - 'stage1/**'
+      - 'stage2/**'
+      - 'stage3/**'
+      - 'stage4/**'
+      - 'franctxt/build.py'
+      - 'tools/verify_architecture_layout.py'
+      - '.github/workflows/os-architecture.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  canonical-bios-bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check canonical source ownership, archives and ordered manifests
+        run: |
+          python3 tools/verify_architecture_layout.py
+          python3 -m franctxt.build preflight
+      - name: Install x86-64 QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends qemu-system-x86
+      - name: Build with canonical make os entrypoint
+        run: make os
+      - name: Verify canonical native disk and Franctxt authority
+        run: |
+          python3 -m franctxt.build verify-image --image build/out/francos-bios.img --kernel build/out/kernel.bin
+      - name: Compare standard-layout build against pinned-stage compatibility byte-for-byte
+        run: |
+          make -f stage4/Makefile.native native-seed
+          cmp build/out/kernel.bin stage4/native_seed.bin
+          cmp build/out/francos-bios.img stage4/native_seed.img
+          echo "PASS: new canonical layout builds identical FrancOS kernel and disk"
+      - name: Independently self-host native kernel generations two and three
+        run: make os-proof
+      - name: Capture real guest Home/IDE/Files/Packages screens from canonical image
+        env:
+          FRANC_CAPTURE_DIR: build/out/ui-captures
+        run: python3 stage4/qemu_home.py build/out/francos-bios.img
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: francos-canonical-build-proof
+          path: |
+            build/out/proof/gen2.serial.log
+            build/out/proof/gen3.serial.log
+            build/out/ui-captures/*.ppm
+          if-no-files-found: warn

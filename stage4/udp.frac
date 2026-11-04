@@ -1,17 +1,1 @@
-\ Native Franc IPv4/UDP datagrams for the built-in QEMU SLIRP DNS guest.
-\ Source 10.0.2.15:53000 -> 10.0.2.3:53. Built-in DNS sends
-\ a response even when a hostname has no answer (rcode may be nonzero).
-\ UDP checksum uses IPv4 pseudoheader and a bounded scratch buffer.
-\ Maximum accepted UDP datagram size here is 512 bytes; 0 checksum
-\ on receive is allowed by IPv4 UDP, not by IPv6.
-def udp-scratch net-frame 256 + ;
-def udp-checksum :udp-length :udp-ip :udp-data udp-length 8 - if 0 exit then 512 udp-length - if 0 exit then udp-scratch 528 net-zero 0 :udp-i begin udp-i 4 - while udp-scratch udp-i + udp-ip 12 + udp-i + b@ b! udp-scratch 4 + udp-i + udp-ip 16 + udp-i + b@ b! udp-i 1 + :udp-i repeat udp-scratch 8 + 0 b! udp-scratch 9 + 17 b! udp-scratch 10 + udp-length ip-u16! 0 :udp-i begin udp-i udp-length - while udp-scratch 12 + udp-i + udp-data udp-i + b@ b! udp-i 1 + :udp-i repeat udp-scratch 12 udp-length + udp-length 1 band + ip-checksum ;
-\ Destination L2 address for 10.0.2.3 has been learned separately by ARP.
-def udp-dns-ether net-dns-ready if0 0 exit then ip-ether if0 0 exit then 0 :udp-i begin udp-i 6 - while net-frame udp-i + net-dns-mac udp-i + b@ b! udp-i 1 + :udp-i repeat 1 ;
-\ 29 byte DNS standard query: ID 0x1234, one A/IN question "example.com".
-\ Exact UDP length 37, IPv4 length 57, Ethernet length 71.
-def udp-dns-query net-active if0 0 exit then net-dns-ready if0 0 exit then net-frame 96 net-zero udp-dns-ether if0 0 exit then 37 17 ip-header if0 0 exit then net-frame 33 + 3 b! net-frame 24 + 0 ip-u16! net-frame 24 + net-frame 14 + 20 ip-checksum ip-u16! net-frame 34 + 53000 ip-u16! net-frame 36 + 53 ip-u16! net-frame 38 + 37 ip-u16! net-frame 40 + 0 ip-u16! net-frame 42 + 4660 ip-u16! net-frame 44 + 256 ip-u16! net-frame 46 + 1 ip-u16! net-frame 54 + 7 b! net-frame 55 + 101 b! net-frame 56 + 120 b! net-frame 57 + 97 b! net-frame 58 + 109 b! net-frame 59 + 112 b! net-frame 60 + 108 b! net-frame 61 + 101 b! net-frame 62 + 3 b! net-frame 63 + 99 b! net-frame 64 + 111 b! net-frame 65 + 109 b! net-frame 66 + 0 b! net-frame 67 + 1 ip-u16! net-frame 69 + 1 ip-u16! net-frame 34 + net-frame 14 + 37 udp-checksum :udp-cvalue udp-cvalue if0 65535 :udp-cvalue then net-frame 40 + udp-cvalue ip-u16! net-frame 71 net-tx ;
-\ Verify UDP reply is IP-valid, directed to our source port, from DNS
-\ 10.0.2.3:53; reject invalid lengths/checksums and non-response DNS.
-\ Native RX descriptor must be explicitly released only after validation.
-def udp-dns-reply? ip-rx-valid? if0 0 exit then net-rx-ptr 23 + b@ 17 - ifnz 0 exit then net-rx-ptr 26 + b@ 10 - ifnz 0 exit then net-rx-ptr 27 + b@ ifnz 0 exit then net-rx-ptr 28 + b@ 2 - ifnz 0 exit then net-rx-ptr 29 + b@ 3 - ifnz 0 exit then ip-len 40 - if 0 exit then net-rx-ptr 34 + ip-u16@ 53 - ifnz 0 exit then net-rx-ptr 36 + ip-u16@ 53000 - ifnz 0 exit then net-rx-ptr 38 + ip-u16@ :udp-len udp-len 20 - if 0 exit then 512 udp-len - if 0 exit then ip-len 20 - udp-len - if 0 exit then net-rx-ptr 42 + ip-u16@ 4660 - ifnz 0 exit then net-rx-ptr 44 + ip-u16@ 32768 band if0 0 exit then net-rx-ptr 40 + ip-u16@ :udp-rx-check udp-rx-check ifnz net-rx-ptr 34 + net-rx-ptr 14 + udp-len udp-checksum ifnz 0 exit then then 1 ;
+../drivers/network/udp.frac

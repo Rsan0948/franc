@@ -1,0 +1,11 @@
+\ PCI configuration mechanism #1, native port access (not a NIC driver).
+\ A bus-0 class scan is enough to prove the QEMU e1000 adapter is present.
+\ io32@/io32! are assembly I/O ABI helpers; no C. Privileged only.
+def pci-read :pc-off :pc-fn :pc-dev :pc-bus pc-off 0 - if 0 exit then pc-off 256 - if0 0 exit then pc-fn 0 - if 0 exit then pc-fn 8 - if0 0 exit then pc-dev 0 - if 0 exit then pc-dev 32 - if0 0 exit then pc-bus 0 - if 0 exit then pc-bus 256 - if0 0 exit then 2147483648 pc-bus 65536 * + pc-dev 2048 * + pc-fn 256 * + pc-off 252 band + $CF8 swap io32! $CFC io32@ ;
+def pci-id :pid-dev :pid-bus pid-bus pid-dev 0 0 pci-read ;
+def pci-vendor :pv-id pv-id 65536 % ;
+def pci-device :pd-id pd-id 65536 / floor ;
+def pci-class :pcl-dev :pcl-bus pcl-bus pcl-dev 0 8 pci-read 16777216 / floor ;
+def pci-find-network 0 :pn-slot begin pn-slot 32 - while 0 pn-slot pci-class 2 - if0 pn-slot exit then pn-slot 1 + :pn-slot repeat -1 ;
+def pci-find-e1000 0 :pe-slot begin pe-slot 32 - while 0 pe-slot pci-id :pe-id pe-id pci-vendor 32902 - if0 pe-id pci-device 4110 - if0 pe-slot exit then then pe-slot 1 + :pe-slot repeat -1 ;
+def pci-scan "PCI bus 0 present devices:" type cr 0 :ps-slot begin ps-slot 32 - while 0 ps-slot pci-id :ps-id ps-id pci-vendor 65535 - ifnz "dev " type ps-slot . "vendor " type ps-id pci-vendor . "device " type ps-id pci-device . "class " type 0 ps-slot pci-class . then ps-slot 1 + :ps-slot repeat ;
