@@ -117,6 +117,9 @@ class Guest:
         assert len({pixels[i:i+3] for i in range(0, len(pixels), stride)}) >= 2, (
             "Framebuffer was blank or uniform", name
         )
+        if name in ("packages", "ide"):
+            from qemu_visual import assert_accent_rail
+            assert_accent_rail(pixels, width, height, name)
         if name == "home":
             # Inspect the actual first glyph, not just a nonblank screen:
             # a wrong Franc stack pop order formerly drew arbitrary glyphs

@@ -1,4 +1,6 @@
-\ FrancOS Wave 4 U4 shared BIOS VGA + serial visual contract.
+\ FrancUI Phase 1: shared BIOS VGA palette and frame adapter.
+\ Preserves native 320x200 and serial output until VBE/GOP adapters are tested.
+\ QEMU checks real colored framebuffer pixels, not a mockup.
 \ Keyboard first. All drawn text also passes through the existing COM1
 \ fallback; a window manager/mouse/GOP path is explicitly out of v1 scope.
 \ Renders a 40-column header, high-contrast dividing rule and common error
@@ -8,7 +10,15 @@ def ui-rule "---------------------------------------" vc-type vc-newline ;
 \ Shared headline grammar matches the pinned BIOS Home/Files AOT titles:
 \ "FrancOS HOME |..." / "FrancOS FILES |..." / "FrancOS IDE |...".
 def ui-title "FrancOS " vc-type vc-type ;
-def ui-frame 0 vc-clear vc-home ui-title vc-newline ui-rule ;
+\ VGA DAC is six-bit RGB. Distinct accent, warning and muted colors.
+\ (palette-index, red, green, blue --) from the native compatibility module.
+def ui-palette 1 6 45 54 palette 2 63 39 10 palette 3 22 25 35 palette ;
+\ Shared right-side rail, header accent and footer anchor. Stay outside
+\ the 40-column glyph area: vc-glyph currently clears its own cell pixels.
+\ These shapes are Franc-rendered directly into VGA, never host overlays.
+def ui-chrome ui-palette 316 0 4 200 1 fillrect 0 0 312 2 1 fillrect 0 197 316 3 1 fillrect 302 4 10 3 2 fillrect ;
+def ui-editor-rule 0 31 312 1 2 fillrect ;
+def ui-frame 0 vc-clear ui-chrome vc-home ui-title vc-newline ui-rule ;
 def ui-file-label :lc-want ui-title lc-want vc-type vc-newline ui-rule ;
 \ (shortcuts --). Only one line may be used in the 40-column VGA viewport.
 def ui-help "Keys | " vc-type vc-type vc-newline ;
