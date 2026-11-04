@@ -66,3 +66,8 @@ captures the actual guest screen and checks its dimensions and pixels.
 The next step is moving the Home/IDE/Files/Packages layouts to shared
 resolution-independent FrancUI widgets so they can use the additional
 display area instead of preserving the original 40-column layout.
+
+The GOP handoff uses a separately allocated firmware page at 0x07810000,
+just beyond the kernel page arena. It must not live inside the kernel's
+freestanding .bss; the 0x70000 prototype was found to be overwritten during
+C-free kernel startup. The page is recorded in Franctxt's fixed-memory map.
