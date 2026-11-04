@@ -120,6 +120,8 @@ fr_putc:
     movb 16(%rsp),%al
     outb %al,%dx
 .txdone:
+    movb 16(%rsp),%al
+    call fr_gop_putchar
     pop %rdx
     pop %rcx
     pop %rax
@@ -1415,3 +1417,6 @@ fr_mmio32_store:
 .include "stage4/user_scheduler.S"
 /* Wave 3: copy only audited Franc-emitted CPL3 byte templates. */
 .include "stage4/user_compiled.S"
+
+/* Separate pure-assembly GOP renderer; BIOS VGA remains unchanged. */
+.include "stage4/gop_console.S"

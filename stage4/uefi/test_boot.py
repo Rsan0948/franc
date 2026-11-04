@@ -7,6 +7,8 @@ remains the first IDE master. No firmware C is linked into the Franc kernel.
 from pathlib import Path
 import os
 import selectors
+import re
+import socket
 import shutil
 import subprocess
 import tempfile
@@ -35,8 +37,10 @@ with tempfile.TemporaryDirectory(prefix="franc-uefi-") as tmp:
     fat = temp / "esp.img"
     shutil.copyfile(native, ata)
     shutil.copyfile(esp, fat)
+    monitor = temp / "monitor.sock"
     cmd = [qemu, "-m", "128M", "-accel", "tcg",
-           "-display", "none", "-monitor", "none", "-no-reboot",
+           "-display", "none",
+           "-monitor", f"unix:{monitor},server=on,wait=off", "-no-reboot",
            "-serial", "stdio", "-net", "none",
            "-drive", f"file={ata},format=raw,if=ide,index=0",
            "-drive", f"file={fat},format=raw,if=virtio"]
@@ -76,6 +80,40 @@ with tempfile.TemporaryDirectory(prefix="franc-uefi-") as tmp:
         if missing:
             raise AssertionError(f"OVMF did not boot native FrancOS; missing {missing}")
         print("PASS: OVMF UEFI C loader transfers to C-free FrancOS kernel", flush=True)
+        if b"UEFI GOP HANDOFF READY" not in output:
+            raise AssertionError("UEFI did not select a validated 800x600+ display")
+        # Actual QEMU HMP screendump; no host-drawn imitation of the OS.
+        time.sleep(0.8)
+        destination = temp / "uefi-gop-home.ppm"
+        with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as hmp:
+            hmp.settimeout(20)
+            deadline=time.monotonic()+20
+            while not monitor.exists() and time.monotonic()<deadline:
+                time.sleep(0.1)
+            hmp.connect(str(monitor))
+            hmp.recv(8192)
+            hmp.sendall(("screendump "+str(destination)+"\n").encode("ascii"))
+            response=b""
+            while b"(qemu)" not in response:
+                response+=hmp.recv(8192)
+            assert b"Error" not in response, response
+        deadline=time.monotonic()+10
+        while not destination.exists() and time.monotonic()<deadline:
+            time.sleep(0.1)
+        raw=destination.read_bytes()
+        match=re.match(rb"P6\s+(\d+)\s+(\d+)\s+255\s",raw)
+        assert match, raw[:60]
+        w,h=map(int,match.groups())
+        assert w>=800 and h>=600, ("GOP framebuffer resolution",w,h)
+        pixels=raw[match.end():]
+        assert len(pixels)==w*h*3,(len(pixels),w,h)
+        sample_step=max(3,(len(pixels)//1400)//3*3)
+        palette={pixels[i:i+3] for i in range(0,len(pixels),sample_step)}
+        assert len(palette)>1, "No native FrancOS glyphs on GOP screen"
+        captures=Path(os.environ.get("FRANC_UEFI_CAPTURE_DIR",root/"uefi"/"screenshots"))
+        captures.mkdir(parents=True,exist_ok=True)
+        shutil.copyfile(destination,captures/"uefi-gop-home.ppm")
+        print(f"PASS: native GOP framebuffer {w}x{h}, pixel colors={len(palette)}",flush=True)
         # Confirm QEMU still uses the original ATA image rather than the ESP.
         process.stdin.write(b"l")
         process.stdin.flush()

@@ -49,3 +49,20 @@ support until the corresponding real-QEMU execution and capture tests pass.
 - Maintain exact application source ordering, reserved RAM regions, pixel
   coordinate bounds, serial diagnostics and persistent release reproducibility.
 - Preserve actual QEMU VGA captures and guest test logs in CI artifacts.
+
+## Higher-resolution UEFI GOP adapter (implementation increment)
+
+The UEFI firmware adapter now discovers and selects a validated 800x600 or
+1024x768 32-bit linear framebuffer. It hands a small framebuffer descriptor
+to the **Franc/assembly** runtime inside the already-reserved kernel memory.
+After ExitBootServices, the C-free runtime writes scaled glyphs using the
+existing DejaVu-derived font directly to the real guest framebuffer.
+
+The BIOS VGA 320x200 path remains unchanged as a fallback. This is a
+higher-resolution text-display backend, not yet a fully scalable native
+application compositor or proof of general hardware support. The UEFI CI
+captures the actual guest screen and checks its dimensions and pixels.
+
+The next step is moving the Home/IDE/Files/Packages layouts to shared
+resolution-independent FrancUI widgets so they can use the additional
+display area instead of preserving the original 40-column layout.
