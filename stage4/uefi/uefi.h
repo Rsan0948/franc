@@ -73,6 +73,30 @@ typedef EFI_STATUS (*EFI_GET_MEMORY_MAP)(UINTN *, void *, UINTN *, UINTN *, U32 
 typedef EFI_STATUS (*EFI_ALLOCATE_POOL)(U32, UINTN, void **);
 typedef EFI_STATUS (*EFI_HANDLE_PROTOCOL)(EFI_HANDLE, EFI_GUID *, void **);
 typedef EFI_STATUS (*EFI_EXIT_BOOT_SERVICES)(EFI_HANDLE, UINTN);
+typedef EFI_STATUS (*EFI_LOCATE_PROTOCOL)(EFI_GUID *, void *, void **);
+typedef EFI_STATUS (*EFI_FREE_POOL)(void *);
+typedef struct { U32 RedMask, GreenMask, BlueMask, ReservedMask; } EFI_PIXEL_MASKS;
+typedef struct {
+    U32 Version, HorizontalResolution, VerticalResolution, PixelFormat;
+    EFI_PIXEL_MASKS PixelInformation;
+    U32 PixelsPerScanLine;
+} EFI_GRAPHICS_OUTPUT_MODE_INFORMATION;
+typedef struct {
+    U32 MaxMode, Mode;
+    EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *Info;
+    UINTN SizeOfInfo;
+    EFI_PHYSICAL_ADDRESS FrameBufferBase;
+    UINTN FrameBufferSize;
+} EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE;
+typedef struct EFI_GRAPHICS_OUTPUT_PROTOCOL EFI_GRAPHICS_OUTPUT_PROTOCOL;
+struct EFI_GRAPHICS_OUTPUT_PROTOCOL {
+    EFI_STATUS (*QueryMode)(EFI_GRAPHICS_OUTPUT_PROTOCOL *, U32, UINTN *,
+                             EFI_GRAPHICS_OUTPUT_MODE_INFORMATION **);
+    EFI_STATUS (*SetMode)(EFI_GRAPHICS_OUTPUT_PROTOCOL *, U32);
+    void *Blt;
+    EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE *Mode;
+};
+
 _Static_assert(sizeof(EFI_TABLE_HEADER)==24, "UEFI header size");
 _Static_assert(__builtin_offsetof(EFI_SYSTEM_TABLE, BootServices)==96, "UEFI BootServices offset");
 _Static_assert(__builtin_offsetof(EFI_LOADED_IMAGE_PROTOCOL, DeviceHandle)==24, "UEFI loaded-image device");

@@ -67,6 +67,18 @@ _kstart:
     subq %rdi,%rcx
     xor %eax,%eax
     rep stosb
+    /* UEFI passes a firmware-allocated GOP descriptor in r15, with
+     * r14=GOPH. Copy it after BSS clearing into kernel-owned storage.
+     * BIOS boot never sets the marker and leaves the descriptor empty. */
+    cmpq $0x474F5048,%r14
+    jne .Lno_uefi_gop
+    testq %r15,%r15
+    jz .Lno_uefi_gop
+    movq %r15,%rsi
+    leaq fr_gop_descriptor(%rip),%rdi
+    movl $4,%ecx
+    rep movsq
+.Lno_uefi_gop:
     movabs $0x80000,%rsp
     /* init COM1 115200/8N1 */
     movw $0x3fb,%dx
@@ -120,6 +132,8 @@ fr_putc:
     movb 16(%rsp),%al
     outb %al,%dx
 .txdone:
+    movb 16(%rsp),%al
+    call fr_gop_putchar
     pop %rdx
     pop %rcx
     pop %rax
@@ -547,6 +561,7 @@ fr_bstore:
     movq %rax,%r10
     call fr_pop
     movb %r10b,(%rax)
+    call fr_gop_on_vga_write
     ret
 .global fr_inb
 fr_inb:
@@ -1415,3 +1430,6 @@ fr_mmio32_store:
 .include "stage4/user_scheduler.S"
 /* Wave 3: copy only audited Franc-emitted CPL3 byte templates. */
 .include "stage4/user_compiled.S"
+
+/* Separate pure-assembly GOP renderer; BIOS VGA remains unchanged. */
+.include "stage4/gop_console.S"

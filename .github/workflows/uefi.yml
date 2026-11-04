@@ -46,5 +46,13 @@ jobs:
         run: |
           file stage4/uefi/BOOTX64.EFI | grep -E 'PE32\+.*EFI'
           file stage4/native_seed.bin
-      - name: Cold boot native FrancOS through OVMF
+      - name: Cold boot FrancOS through OVMF and capture real GOP pixels
+        env:
+          FRANC_UEFI_CAPTURE_DIR: stage4/uefi/screenshots
         run: python3 stage4/uefi/test_boot.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: francos-uefi-gop-guest-screen
+          path: stage4/uefi/screenshots/*.ppm
+          if-no-files-found: warn

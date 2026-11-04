@@ -16,6 +16,16 @@ static EFI_GUID simple_fs_guid =
 #define KERNEL_BINARY_MAX 195584ULL /* 382 x 512 BIOS extents; within 128-page UEFI reservation */
 #define TABLE_PAGES 6ULL
 #define MAP_BUFFER_BYTES 32768ULL
+/* GOP descriptor is transferred through r14/r15 into native kernel BSS. */
+#define FRANC_GOP_MAGIC 0x50475246U /* FRGP in little-endian */
+static EFI_GUID gop_guid =
+    {0x9042a9deU,0x23dc,0x4a38,{0x96,0xfb,0x7a,0xde,0xd0,0x80,0x51,0x6a}};
+typedef struct {
+    U32 magic, version;
+    U64 framebuffer;
+    U32 width, height, stride, format;
+} FRANC_GOP_HANDOFF;
+_Static_assert(sizeof(FRANC_GOP_HANDOFF)==32, "Franc GOP handoff layout");
 
 static void port_out(U16 port, U8 value) {
     __asm__ __volatile__("outb %0, %1" : : "a"(value), "Nd"(port));
@@ -44,8 +54,72 @@ static void zero_bytes(void *ptr, UINTN size) {
     volatile U8 *out=(volatile U8 *)ptr;
     while (size--) *out++=0;
 }
+/* Query the firmware for a real 32-bit linear GOP display. No C renderer:
+ * the Franc/assembly kernel uses this descriptor after ExitBootServices.
+ * Validate the entire visible pitch and framebuffer against the loader's
+ * existing 4GiB identity-map. If unsupported, retain serial-only boot.
+ */
+static U64 install_gop_handoff(EFI_BOOT_SERVICES *bs) {
+    EFI_ALLOCATE_POOL pool=(EFI_ALLOCATE_POOL)bs->functions[5];
+    FRANC_GOP_HANDOFF *out=0;
+    if (EFI_ERROR(pool(EfiLoaderData,sizeof(*out),(void **)&out)) || !out) {
+        serial_write("UEFI GOP DESCRIPTOR ALLOCATION FAILED\r\n");
+        return 0;
+    }
+    zero_bytes(out,sizeof(*out));
+    EFI_LOCATE_PROTOCOL locate=(EFI_LOCATE_PROTOCOL)bs->functions[37];
+    EFI_FREE_POOL release=(EFI_FREE_POOL)bs->functions[6];
+    EFI_GRAPHICS_OUTPUT_PROTOCOL *gop=0;
+    if (EFI_ERROR(locate(&gop_guid,0,(void **)&gop)) || !gop || !gop->Mode ||
+        !gop->QueryMode || !gop->SetMode) {
+        serial_write("UEFI GOP NOT AVAILABLE\r\n");
+        return 0;
+    }
+    U32 selected=0,best=0;
+    for (U32 n=0;n<gop->Mode->MaxMode && n<128;n++) {
+        EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *info=0;
+        UINTN size=0;
+        EFI_STATUS status=gop->QueryMode(gop,n,&size,&info);
+        if (EFI_ERROR(status) || !info) continue;
+        U32 w=info->HorizontalResolution,h=info->VerticalResolution;
+        U32 score=(w==1024 && h==768)?3U:((w==800 && h==600)?2U:0U);
+        if ((info->PixelFormat!=0U && info->PixelFormat!=1U) ||
+            info->PixelsPerScanLine<w) score=0;
+        if (score>best) {best=score;selected=n;}
+        release(info);
+    }
+    if (!best || EFI_ERROR(gop->SetMode(gop,selected))) {
+        serial_write("UEFI GOP NO SUPPORTED MODE\r\n");
+        return 0;
+    }
+    EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE *mode=gop->Mode;
+    EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *info=mode->Info;
+    if (!info || (info->PixelFormat!=0U && info->PixelFormat!=1U) ||
+        info->HorizontalResolution<800U || info->VerticalResolution<600U ||
+        info->PixelsPerScanLine<info->HorizontalResolution ||
+        info->PixelsPerScanLine>4096U) {
+        serial_write("UEFI GOP INVALID MODE\r\n");
+        return 0;
+    }
+    U64 required=(U64)info->PixelsPerScanLine*info->VerticalResolution*4ULL;
+    U64 phys=mode->FrameBufferBase;
+    if (!phys || phys>=0x100000000ULL || required>mode->FrameBufferSize ||
+        required>0x100000000ULL-phys) {
+        serial_write("UEFI GOP FRAMEBUFFER UNMAPPABLE\r\n");
+        return 0;
+    }
+    out->framebuffer=phys;
+    out->width=info->HorizontalResolution;
+    out->height=info->VerticalResolution;
+    out->stride=info->PixelsPerScanLine;
+    out->format=info->PixelFormat;
+    out->version=1U;
+    out->magic=FRANC_GOP_MAGIC; /* Publish verified descriptor last */
+    serial_write("UEFI GOP HANDOFF READY\r\n");
+    return (U64)(UINTN)out;
+}
 __attribute__((noreturn))
-static void jump_to_kernel(U64 root_pt) {
+static void jump_to_kernel(U64 root_pt, U64 gop_descriptor) {
     /* 4 GiB low identity-map covers the loader while swapping CR3.
      * _kstart resets the stack to 0x80000 and initializes its own serial.
      * BIOS-only graphics remain disabled in UEFI mode.
@@ -53,11 +127,13 @@ static void jump_to_kernel(U64 root_pt) {
     __asm__ __volatile__(
         "cli\n\t"
         "movq %0, %%cr3\n\t"
+        "movq %1, %%r15\n\t"
+        "movabsq $0x474F5048, %%r14\n\t"
         "movq $0x80000, %%rsp\n\t"
         "xorq %%rbp, %%rbp\n\t"
         "movabsq $0x10000, %%rax\n\t"
         "jmp *%%rax\n\t"
-        : : "r"(root_pt) : "rax","memory");
+        : : "r"(root_pt),"r"(gop_descriptor) : "rax","r14","r15","memory");
     __builtin_unreachable();
 }
 EFI_STATUS efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *st) {
@@ -101,6 +177,7 @@ EFI_STATUS efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *st) {
     kernel->Close(kernel);
     root->Close(root);
     serial_write("UEFI KERNEL LOADED\r\n");
+    U64 gop_descriptor=install_gop_handoff(bs);
 
     /* Build private 0..4GiB identity-mapped page tables with 2MiB pages.
      * Allocated firmware pages are held across ExitBootServices.
@@ -145,5 +222,5 @@ EFI_STATUS efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *st) {
         return status;
     }
     serial_write("UEFI EXIT OK\r\n");
-    jump_to_kernel(tables);
+    jump_to_kernel(tables,gop_descriptor);
 }

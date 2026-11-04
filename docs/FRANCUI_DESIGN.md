@@ -49,3 +49,45 @@ support until the corresponding real-QEMU execution and capture tests pass.
 - Maintain exact application source ordering, reserved RAM regions, pixel
   coordinate bounds, serial diagnostics and persistent release reproducibility.
 - Preserve actual QEMU VGA captures and guest test logs in CI artifacts.
+
+## Higher-resolution UEFI GOP adapter (implementation increment)
+
+The UEFI firmware adapter now discovers and selects a validated 800x600 or
+1024x768 32-bit linear framebuffer. It hands a small framebuffer descriptor
+to the **Franc/assembly** runtime inside the already-reserved kernel memory.
+After ExitBootServices, the C-free runtime writes scaled glyphs using the
+existing DejaVu-derived font directly to the real guest framebuffer.
+
+The BIOS VGA 320x200 path remains unchanged as a fallback. This is a
+higher-resolution text-display backend, not yet a fully scalable native
+application compositor or proof of general hardware support. The UEFI CI
+captures the actual guest screen and checks its dimensions and pixels.
+
+The next step is moving the Home/IDE/Files/Packages layouts to shared
+resolution-independent FrancUI widgets so they can use the additional
+display area instead of preserving the original 40-column layout.
+
+### Validated descriptor handoff
+
+No fixed physical address is used for GOP metadata. The UEFI firmware adapter
+allocates a temporary descriptor through Boot Services, puts its pointer in
+r15 and a magic marker in r14 immediately before jumping to the native kernel.
+After its BSS is cleared, the Franc/assembly kernel copies the 32-byte
+validated descriptor into its own BSS and uses only that private copy for
+rendering. This avoids both bootloader-memory collisions and assuming that
+arbitrary high physical pages are available in UEFI.
+
+The QEMU test must see real glyph pixels within the framebuffer interior;
+a nonblack firmware artifact in the first rows is deliberately insufficient.
+
+A further UEFI adapter increment renders a reusable navy/cyan workspace
+header and a right-side information panel directly with the native assembly
+font/framebuffer backend. Home and other Franc screens continue producing
+text from native Franc; the adapter provides visual framing rather than
+introducing a second application language or host-generated UI. Real-QEMU
+screen tests assert a specific pixel inside the new panel.
+
+The Home selection arrow also drives a native 16-pixel-wide-height teal focus
+bar behind the active application row. The display adapter reads the actual
+Franc-rendered selection character instead of maintaining a second UI state.
+QEMU asserts the selected row has the correct real framebuffer color.
