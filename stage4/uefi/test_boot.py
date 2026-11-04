@@ -91,15 +91,20 @@ with tempfile.TemporaryDirectory(prefix="franc-uefi-") as tmp:
             while not monitor.exists() and time.monotonic()<deadline:
                 time.sleep(0.1)
             hmp.connect(str(monitor))
-            hmp.recv(8192)
+            greeting=b""
+            while b"(qemu)" not in greeting:
+                greeting+=hmp.recv(8192)
             hmp.sendall(("screendump "+str(destination)+"\n").encode("ascii"))
             response=b""
             while b"(qemu)" not in response:
                 response+=hmp.recv(8192)
-            assert b"Error" not in response, response
+            assert b"error" not in response.lower(), response
+            print("GOP QEMU HMP screenshot response: "+repr(response), flush=True)
         deadline=time.monotonic()+10
         while not destination.exists() and time.monotonic()<deadline:
             time.sleep(0.1)
+        if not destination.exists():
+            raise AssertionError(f"QEMU did not create GOP screendump: {response!r}")
         raw=destination.read_bytes()
         match=re.match(rb"P6\s+(\d+)\s+(\d+)\s+255\s",raw)
         assert match, raw[:60]
