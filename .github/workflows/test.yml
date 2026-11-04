@@ -9,6 +9,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Stage 0 JIT tests
         run: make test
+      - name: Pre-publication current-tree hygiene and license presence
+        run: python3 tools/release_audit.py
       - name: Stage 1 BIOS image build
         run: make -C stage1 && python3 stage1/verify_image.py
       - name: Install QEMU

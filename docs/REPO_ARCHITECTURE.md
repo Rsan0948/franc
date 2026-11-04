@@ -43,3 +43,16 @@ Python belongs to host testing, legacy comparisons, image verification and
 build provenance—not the FrancOS native BIOS kernel. Retain it. Consolidate
 repeated QEMU capture/keyboard/serial and image-validation code incrementally;
 start with `stage4/qemu_visual.py` for reusable real-frame assertions.
+
+## First test-host migration
+
+The authoritative reusable QEMU pixel/PPM validation functions now live in
+`tools/qemu_visual.py`. `stage4/qemu_visual.py` is retained as a
+compatibility import for older scripts, while `stage4/qemu_home.py` uses the
+shared decoder. Host-side unit tests live at `tests/test_qemu_visual.py`.
+
+This is an intentionally small architectural migration. It does not rename
+kernel input files, rewrite Franc's bootstrap seed, or pretend that the
+historical stage directories have already been removed. Further migrations
+should have a similarly explicit source ownership decision and green QEMU
+regressions.

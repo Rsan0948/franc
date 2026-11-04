@@ -103,20 +103,11 @@ class Guest:
         while not target.exists() and time.monotonic() < deadline:
             time.sleep(0.1)
         content = target.read_bytes()
-        import re
-        header = re.match(rb"P6\s+(\d+)\s+(\d+)\s+255\s", content)
-        assert header, (name, content[:100])
-        width, height = map(int, header.groups())
-        # QEMU screendump often doubles BIOS mode 13h to 640x400 while
-        # guest pixel coordinates remain the real 320x200 framebuffer.
+        from qemu_visual import parse_ppm, assert_nonblank
+        width, height, pixels = parse_ppm(content)
+        # QEMU may double the legacy Mode 13h screen to 640x400.
         assert (width, height) in ((320, 200), (640, 400)), (name, width, height)
-        size = width * height * 3
-        assert len(content) - header.end() == size, (name, len(content), size)
-        pixels = content[-size:]
-        stride = max(3, (size // 600) // 3 * 3)
-        assert len({pixels[i:i+3] for i in range(0, len(pixels), stride)}) >= 2, (
-            "Framebuffer was blank or uniform", name
-        )
+        assert_nonblank(pixels, width, height, name)
         if name in ("packages", "ide"):
             from qemu_visual import assert_accent_rail
             assert_accent_rail(pixels, width, height, name)
