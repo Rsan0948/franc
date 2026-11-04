@@ -19,6 +19,7 @@ test: frac
 	python3 tests/test_dd.py
 	python3 tests/test_persistence.py
 	python3 tests/test_qemu_visual.py
+	bash tests/arith/run_hosted.sh ./frac
 clean:
 	rm -f frac frac-original
 

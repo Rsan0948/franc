@@ -1,0 +1,54 @@
+name: FrancOS independent seed reproduction
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'compiler/**'
+      - 'runtime/**'
+      - 'kernel/**'
+      - 'drivers/**'
+      - 'system/**'
+      - 'apps/native/**'
+      - 'build/**'
+      - 'stage4/compiler.py'
+      - 'stage4/Makefile'
+      - 'franctxt/seed.lock.franctxt'
+      - 'tests/verify_independent_seed.sh'
+      - '.github/workflows/independent-seed.yml'
+  pull_request:
+    paths:
+      - 'compiler/**'
+      - 'runtime/**'
+      - 'kernel/**'
+      - 'drivers/**'
+      - 'system/**'
+      - 'apps/native/**'
+      - 'build/**'
+      - 'stage4/compiler.py'
+      - 'stage4/Makefile'
+      - 'franctxt/seed.lock.franctxt'
+      - 'tests/verify_independent_seed.sh'
+      - '.github/workflows/independent-seed.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  reproduce-seed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Reproduce the pinned seed from an independently compiled kernel
+        run: bash tests/verify_independent_seed.sh build/out/independent-seed
+      - name: Reject an altered seed
+        run: |
+          sed '1000s/$/ /' compiler/bootstrap_seed.S > "$RUNNER_TEMP/altered.S"
+          if FRANC_REUSE_PROOF=1 FRANC_EXPECTED_SEED="$RUNNER_TEMP/altered.S" \
+              bash tests/verify_independent_seed.sh build/out/independent-seed; then
+            echo "altered seed was accepted" >&2
+            exit 1
+          fi

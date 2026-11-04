@@ -33,7 +33,7 @@ Mathematically, finite values behave like the field of rational numbers Q **only
 | Implementation | Representation | Key arithmetic properties |
 | --- | --- | --- |
 | Hosted Frac (historical frac.c) | Two signed 64-bit integers, 16 bytes | Uses signed 128-bit intermediates for basic operations; canonicalizes results; out-of-range normalized results become bottom |
-| Native FrancOS (native assembly runtime) | Same signed-64-bit pair ABI | Implements arithmetic, normalization and overflow checks in x86-64 assembly; parity must be verified operation by operation |
+| Native FrancOS (native assembly runtime) | Same signed-64-bit pair ABI | Implements arithmetic and normalization in x86-64 assembly: a 64-bit fast path, plus an exact 128-bit path for overflow and exceptional operands. Checked inside the OS against the conformance table |
 | Optional big-number module | A separate bounded-arena, unsigned base-256 limb object | Does **not** replace the core rational ABI or automatically make every rational arbitrary precision |
 
 ## 3. Infinity, bottom, and the wheel-inspired model
@@ -86,7 +86,9 @@ This can make a REPL or an exploratory numeric program *continue* through otherw
 - no numerical error in approximate or transcendental functions;
 - proof that a numerical method converges for all inputs.
 
-The hosted interpreter uses 128-bit intermediates for core operations and reduces results into 64-bit cells. If the reduced values do not fit, it returns bottom instead of relying on undefined signed-overflow behavior. The kernel has its own 64-bit arithmetic implementation, and its edge behavior must be tested independently.
+The hosted interpreter uses 128-bit intermediates for core operations and reduces results into 64-bit cells. If the reduced values do not fit, it returns bottom instead of relying on undefined signed-overflow behavior. The native runtime reaches the same results with its own assembly implementation. Both must match [`tests/arith/vectors.txt`](../tests/arith/vectors.txt), which is the rule for edge behavior rather than either implementation.
+
+The `%` operator takes two integers and returns a result with the sign of the divisor, so `-7 3 %` is 2. A zero divisor or a non-integer operand gives bottom. The hosted interpreter also treats `%` with a single value on the stack as percent; that behavior depends on stack depth, is not part of the language rule, and does not exist natively.
 
 For approximation, the math library includes fixed-precision rational helpers. Default precision is six decimal digits, but that is a library policy, not the native numeric type:
 
@@ -188,7 +190,7 @@ A mathematical model for *large* applications should eventually establish scoped
 1. **Formal algebra:** specify the value set, equality, canonicalization, every exceptional operation table, conditional semantics and which identities hold on which subsets.
 2. **Overflow semantics:** decide whether overflow, mathematical undefined and invalid input should be distinct tagged values, or preserve the single bottom state with a separate error channel.
 3. **Numerical tower:** design versioned big-integer, big-rational, decimal, interval and IEEE bridge types without quietly changing the 16-byte kernel ABI.
-4. **Differential tests:** run the same source on hosted and native runtimes, compare exact outputs, and explain deliberate differences.
+4. **Differential tests:** extend [`tests/arith/vectors.txt`](../tests/arith/vectors.txt) beyond the core operators, and explain deliberate differences.
 5. **Verification:** property tests over finite safe ranges, exceptional operation tables, and fuzzed normalization/canonicalization.
 6. **Domain-specific error policies:** define rigorous rounding and convergence contracts for scientific, monetary and geometry libraries before claiming production suitability.
 
