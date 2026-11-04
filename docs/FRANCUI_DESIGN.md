@@ -86,3 +86,8 @@ font/framebuffer backend. Home and other Franc screens continue producing
 text from native Franc; the adapter provides visual framing rather than
 introducing a second application language or host-generated UI. Real-QEMU
 screen tests assert a specific pixel inside the new panel.
+
+The Home selection arrow also drives a native 16-pixel-wide-height teal focus
+bar behind the active application row. The display adapter reads the actual
+Franc-rendered selection character instead of maintaining a second UI state.
+QEMU asserts the selected row has the correct real framebuffer color.

@@ -128,6 +128,13 @@ with tempfile.TemporaryDirectory(prefix="franc-uefi-") as tmp:
                   f"colors={palette}",flush=True)
             raise AssertionError("GOP text interior not rendered by FrancOS")
         assert len(palette)>1, "No native FrancOS glyphs on GOP screen"
+        # The native Home item currently selected by Franc should have a
+        # real green-teal 16-pixel focus bar behind its text.
+        selected=(180*w+550)*3
+        focus_rgb=tuple(pixels[selected:selected+3])
+        assert 45<=focus_rgb[0]<=75 and 60<=focus_rgb[1]<=105 and 55<=focus_rgb[2]<=100, (
+            "Guest keyboard-focus highlight not painted",focus_rgb)
+        print("PASS: native FrancOS Home focus bar RGB="+repr(focus_rgb),flush=True)
         if w>=980:
             panel_pixel=(420*w+760)*3
             red,green,blue=pixels[panel_pixel:panel_pixel+3]

@@ -34,6 +34,19 @@ fr_gop_putchar:
     jne .Lgc_canvas_ready
     call .Lgc_init
 .Lgc_canvas_ready:
+    /* Highlight native Home's selected row before its leading arrow. */
+    cmpl $0,fr_gop_column(%rip)
+    jne .Lgop_focus_checked
+    cmpb $'>',%bl
+    jne .Lgop_focus_checked
+    movl fr_gop_row(%rip),%ecx
+    cmpl $7,%ecx
+    jb .Lgop_focus_checked
+    cmpl $15,%ecx
+    ja .Lgop_focus_checked
+    movl %ecx,fr_gop_focus_row(%rip)
+    call .Lgop_focus_paint
+.Lgop_focus_checked:
     movl fr_gop_descriptor+16(%rip),%ecx
     subl $64,%ecx
     shrl $4,%ecx
@@ -76,6 +89,13 @@ fr_gop_putchar:
     jae .Lgop_background_chosen
     movl $0x00242D3D,%r11d /* right panel */
 .Lgop_background_chosen:
+    movl fr_gop_row(%rip),%eax
+    cmpl fr_gop_focus_row(%rip),%eax
+    jne .Lgop_focus_bg_done
+    cmpl $656,%r14d
+    jae .Lgop_focus_bg_done
+    movl $0x00394F4B,%r11d
+.Lgop_focus_bg_done:
     btl %r9d,%r10d
     jnc .Lgc_color
     movl $0x00EFEFEF,%r11d
@@ -134,6 +154,7 @@ fr_gop_putchar:
     movl $0x00192331,%eax
     cld
     rep stosl
+    movl $-1,fr_gop_focus_row(%rip)
     /* Native accent header (top 8px), outside the glyph viewport. */
     movq fr_gop_descriptor+8(%rip),%rdi
     movl fr_gop_descriptor+24(%rip),%ecx
@@ -221,6 +242,43 @@ fr_gop_on_vga_write:
     popq %rax
 .Lgop_watch_end:
     ret
+/* Focus uses a contiguous 16px bar at x32..656. Franc's selection
+ * arrow remains the source of truth; no host-generated UI is involved.
+ */
+.Lgop_focus_paint:
+    pushq %rax
+    pushq %rcx
+    pushq %rdx
+    pushq %rdi
+    pushq %r8
+    pushq %r9
+    movq fr_gop_descriptor+8(%rip),%r8
+    movl fr_gop_descriptor+24(%rip),%r9d
+    movl fr_gop_focus_row(%rip),%edx
+    imull $20,%edx
+    addl $32,%edx
+.Lgop_focus_scan:
+    movl %edx,%eax
+    imull %r9d,%eax
+    leaq 128(%r8,%rax,4),%rdi
+    movl $624,%ecx
+    movl $0x00394F4B,%eax
+    cld
+    rep stosl
+    incl %edx
+    movl fr_gop_focus_row(%rip),%ecx
+    imull $20,%ecx
+    addl $48,%ecx
+    cmpl %ecx,%edx
+    jb .Lgop_focus_scan
+    popq %r9
+    popq %r8
+    popq %rdi
+    popq %rdx
+    popq %rcx
+    popq %rax
+    ret
+
 /* Shared native UEFI 1024x768 workspace layout. Firmware-independent
  * text is still emitted by Franc; this only provides a branded frame,
  * right-side information panel, and consistent margins/typography.
@@ -335,6 +393,7 @@ fr_gop_descriptor: .skip 32
 fr_gop_initialized: .quad 0
 fr_gop_last_addr: .quad 0
 fr_gop_clear_count: .long 0
+fr_gop_focus_row: .long 0
 fr_gop_column: .long 0
 fr_gop_row: .long 0
 .section .text,"ax"
