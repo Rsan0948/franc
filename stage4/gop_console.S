@@ -188,6 +188,7 @@ fr_gop_on_vga_write:
     movl $0,fr_gop_column(%rip)
     movl $0,fr_gop_row(%rip)
     call .Lgc_init
+    call .Lgc_workspace_frame
     jmp .Lgop_watch_record
 .Lgop_watch_start:
     movl $1,fr_gop_clear_count(%rip)
@@ -205,6 +206,97 @@ fr_gop_on_vga_write:
     popq %rax
 .Lgop_watch_end:
     ret
+/* Shared native UEFI 1024x768 workspace layout. Firmware-independent
+ * text is still emitted by Franc; this only provides a branded frame,
+ * right-side information panel, and consistent margins/typography.
+ * Legacy 320x200 BIOS output is unchanged.
+ */
+.Lgc_workspace_frame:
+    pushq %rax
+    pushq %rbx
+    pushq %rcx
+    pushq %rdx
+    pushq %rdi
+    pushq %r8
+    pushq %r9
+    movl fr_gop_descriptor+16(%rip),%eax
+    cmpl $980,%eax
+    jb .Lgc_frame_labels
+    movq fr_gop_descriptor+8(%rip),%rbx
+    movl fr_gop_descriptor+24(%rip),%r9d
+    movl $112,%r8d
+.Lgc_panel_row:
+    movl %r8d,%eax
+    imull %r9d,%eax
+    leaq 2816(%rbx,%rax,4),%rdi /* x=704 */
+    movl $70,%ecx              /* 280-pixel sidebar */
+    movl $0x00242D3D,%eax
+    cld
+    rep stosl
+    incl %r8d
+    cmpl $516,%r8d
+    jb .Lgc_panel_row
+    /* Splitter line, separated from main Franc source text. */
+    movl $112,%r8d
+.Lgc_split_row:
+    movl %r8d,%eax
+    imull %r9d,%eax
+    leaq 2720(%rbx,%rax,4),%rdi /* x=680 */
+    movl $0x00768F43,(%rdi)
+    incl %r8d
+    cmpl $516,%r8d
+    jb .Lgc_split_row
+.Lgc_frame_labels:
+    movl $0,fr_gop_row(%rip)
+    movl $0,fr_gop_column(%rip)
+    leaq .Lgc_frame_title(%rip),%rbx
+    call .Lgc_frame_string
+    movl $1,fr_gop_row(%rip)
+    movl $0,fr_gop_column(%rip)
+    leaq .Lgc_frame_subtitle(%rip),%rbx
+    call .Lgc_frame_string
+    movl fr_gop_descriptor+16(%rip),%eax
+    cmpl $980,%eax
+    jb .Lgc_frame_end
+    movl $6,fr_gop_row(%rip)
+    movl $44,fr_gop_column(%rip)
+    leaq .Lgc_frame_aside(%rip),%rbx
+    call .Lgc_frame_string
+    movl $9,fr_gop_row(%rip)
+    movl $44,fr_gop_column(%rip)
+    leaq .Lgc_frame_info(%rip),%rbx
+    call .Lgc_frame_string
+    movl $11,fr_gop_row(%rip)
+    movl $44,fr_gop_column(%rip)
+    leaq .Lgc_frame_more(%rip),%rbx
+    call .Lgc_frame_string
+.Lgc_frame_end:
+    movl $5,fr_gop_row(%rip)
+    movl $0,fr_gop_column(%rip)
+    popq %r9
+    popq %r8
+    popq %rdi
+    popq %rdx
+    popq %rcx
+    popq %rbx
+    popq %rax
+    ret
+.Lgc_frame_string:
+    movzbl (%rbx),%eax
+    testb %al,%al
+    jz .Lgc_frame_string_end
+    call fr_gop_putchar
+    incq %rbx
+    jmp .Lgc_frame_string
+.Lgc_frame_string_end:
+    ret
+.section .rodata
+.Lgc_frame_title: .asciz "F R A N C O S   /   W O R K S P A C E"
+.Lgc_frame_subtitle: .asciz "Native Franc environment  |  1024 x 768"
+.Lgc_frame_aside: .asciz "SYSTEM"
+.Lgc_frame_info: .asciz "FRANC + ASM"
+.Lgc_frame_more: .asciz "Keyboard UI"
+.section .text,"ax"
 .section .bss
 .balign 8
 fr_gop_descriptor: .skip 32
