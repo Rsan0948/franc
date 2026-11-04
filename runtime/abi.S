@@ -284,7 +284,11 @@ fr_depth:
     movq $1,%rsi
     jmp fr_push
 
-/* Arithmetic. All intermediate operations are 64-bit; overflows become bottom. */
+/* Arithmetic. The 64-bit path serves finite operands whose products fit.
+ * Exceptional operands and overflow go to fr_rat_exact, which decides the
+ * result exactly, so overflow of an intermediate never loses a result that
+ * fits. tests/arith/vectors.txt is the rule for every case.
+ */
 .macro ARITH name,operation
 .global \name
 \name:
@@ -292,58 +296,269 @@ fr_depth:
     movq %rax,%r10
     movq %rdx,%r11
     call fr_pop
-    testq %rdx,%rdx
-    jz .Lbad\@
+    movq %rax,%r8
+    movq %rdx,%r9
+    testq %r9,%r9
+    jz .Lexact\@
     testq %r11,%r11
-    jz .Lbad\@
+    jz .Lexact\@
     .ifc \operation,add
       imulq %r11,%rax
-      jo .Lbad\@
+      jo .Lexact\@
       movq %rax,%rdi
-      movq %rdx,%rax
+      movq %r9,%rax
       imulq %r10,%rax
-      jo .Lbad\@
+      jo .Lexact\@
       addq %rax,%rdi
-      jo .Lbad\@
-      imulq %r11,%rdx
-      jo .Lbad\@
-      movq %rdx,%rsi
+      jo .Lexact\@
+      movq %r9,%rsi
+      imulq %r11,%rsi
+      jo .Lexact\@
     .endif
     .ifc \operation,sub
       imulq %r11,%rax
-      jo .Lbad\@
+      jo .Lexact\@
       movq %rax,%rdi
-      movq %rdx,%rax
+      movq %r9,%rax
       imulq %r10,%rax
-      jo .Lbad\@
+      jo .Lexact\@
       subq %rax,%rdi
-      jo .Lbad\@
-      imulq %r11,%rdx
-      jo .Lbad\@
-      movq %rdx,%rsi
+      jo .Lexact\@
+      movq %r9,%rsi
+      imulq %r11,%rsi
+      jo .Lexact\@
     .endif
     .ifc \operation,mul
       imulq %r10,%rax
-      jo .Lbad\@
+      jo .Lexact\@
       movq %rax,%rdi
-      imulq %r11,%rdx
-      jo .Lbad\@
-      movq %rdx,%rsi
+      movq %r9,%rsi
+      imulq %r11,%rsi
+      jo .Lexact\@
     .endif
     .ifc \operation,div
       imulq %r11,%rax
-      jo .Lbad\@
+      jo .Lexact\@
       movq %rax,%rdi
-      imulq %r10,%rdx
-      jo .Lbad\@
-      movq %rdx,%rsi
+      movq %r9,%rsi
+      imulq %r10,%rsi
+      jo .Lexact\@
+      /* A zero or negative denominator needs the sign and range rules. */
+      testq %rsi,%rsi
+      jle .Lexact\@
     .endif
     jmp fr_push
-.Lbad\@:
-    xorq %rdi,%rdi
-    xorq %rsi,%rsi
-    jmp fr_push
+.Lexact\@:
+    .ifc \operation,add
+      xorl %ecx,%ecx
+    .endif
+    .ifc \operation,sub
+      movl $1,%ecx
+    .endif
+    .ifc \operation,mul
+      movl $2,%ecx
+    .endif
+    .ifc \operation,div
+      movl $3,%ecx
+    .endif
+    jmp fr_rat_exact
 .endm
+
+/* Exact result of (r8/r9) op (r10/r11), op in ecx: 0 add, 1 sub, 2 mul, 3 div.
+ * Forms the pair formulas in 128 bits, reduces, then range-checks. State stays
+ * in registers and on this stack because preemptive tasks share this routine.
+ * N is r13:r12 and D is r15:r14, each hi:lo.
+ */
+fr_rat_exact:
+    pushq %rbx
+    pushq %rbp
+    pushq %r12
+    pushq %r13
+    pushq %r14
+    pushq %r15
+    cmpq $2,%rcx
+    je .Lexact_mul
+    ja .Lexact_div
+    movq %r8,%rax
+    imulq %r11
+    movq %rax,%r12
+    movq %rdx,%r13
+    movq %r10,%rax
+    imulq %r9
+    testq %rcx,%rcx
+    jnz .Lexact_sub
+    addq %rax,%r12
+    adcq %rdx,%r13
+    jmp .Lexact_den
+.Lexact_sub:
+    subq %rax,%r12
+    sbbq %rdx,%r13
+    jmp .Lexact_den
+.Lexact_mul:
+    movq %r8,%rax
+    imulq %r10
+    movq %rax,%r12
+    movq %rdx,%r13
+.Lexact_den:
+    movq %r9,%rax
+    imulq %r11
+    movq %rax,%r14
+    movq %rdx,%r15
+    jmp .Lexact_canon
+.Lexact_div:
+    movq %r8,%rax
+    imulq %r11
+    movq %rax,%r12
+    movq %rdx,%r13
+    movq %r9,%rax
+    imulq %r10
+    movq %rax,%r14
+    movq %rdx,%r15
+.Lexact_canon:
+    movq %r14,%rax
+    orq %r15,%rax
+    jnz .Lexact_finite_den
+    /* Zero denominator: nonzero numerator is infinity, zero is bottom. */
+    movq %r12,%rax
+    orq %r13,%rax
+    jz .Lexact_bottom
+    movl $1,%edi
+    xorl %esi,%esi
+    jmp .Lexact_done
+.Lexact_finite_den:
+    movq %r12,%rax
+    orq %r13,%rax
+    jnz .Lexact_nonzero
+    xorl %edi,%edi
+    movl $1,%esi
+    jmp .Lexact_done
+.Lexact_nonzero:
+    movq %r13,%rbx
+    xorq %r15,%rbx             /* sign bit set: result is negative */
+    testq %r13,%r13
+    jns .Lexact_n_abs
+    negq %r12
+    adcq $0,%r13
+    negq %r13
+.Lexact_n_abs:
+    testq %r15,%r15
+    jns .Lexact_d_abs
+    negq %r14
+    adcq $0,%r15
+    negq %r15
+.Lexact_d_abs:
+    /* Binary GCD of u=r9:r8 and v=r11:r10; rbp counts shared factors of 2. */
+    movq %r12,%r8
+    movq %r13,%r9
+    movq %r14,%r10
+    movq %r15,%r11
+    xorl %ebp,%ebp
+.Lexact_twos:
+    movq %r8,%rax
+    orq %r10,%rax
+    testb $1,%al
+    jnz .Lexact_u_odd
+    shrdq $1,%r9,%r8
+    shrq $1,%r9
+    shrdq $1,%r11,%r10
+    shrq $1,%r11
+    incq %rbp
+    jmp .Lexact_twos
+.Lexact_u_odd:
+    testb $1,%r8b
+    jnz .Lexact_v_odd
+    shrdq $1,%r9,%r8
+    shrq $1,%r9
+    jmp .Lexact_u_odd
+.Lexact_v_odd:
+    testb $1,%r10b
+    jnz .Lexact_compare
+    shrdq $1,%r11,%r10
+    shrq $1,%r11
+    jmp .Lexact_v_odd
+.Lexact_compare:
+    movq %r10,%rax
+    movq %r11,%rdx
+    subq %r8,%rax
+    sbbq %r9,%rdx
+    jnc .Lexact_ordered
+    xchgq %r8,%r10
+    xchgq %r9,%r11
+    jmp .Lexact_compare
+.Lexact_ordered:
+    movq %rax,%r10
+    movq %rdx,%r11
+    orq %rdx,%rax
+    jnz .Lexact_v_odd
+.Lexact_scale:
+    testq %rbp,%rbp
+    jz .Lexact_reduce
+    shldq $1,%r8,%r9
+    shlq $1,%r8
+    decq %rbp
+    jmp .Lexact_scale
+.Lexact_reduce:
+    call fr_u128_quotient
+    xchgq %r12,%r14
+    xchgq %r13,%r15
+    call fr_u128_quotient
+    xchgq %r12,%r14
+    xchgq %r13,%r15
+    /* The reduced pair must fit: den <= 2^63-1, num in [-2^63, 2^63-1]. */
+    testq %r15,%r15
+    jnz .Lexact_bottom
+    testq %r14,%r14
+    js .Lexact_bottom
+    testq %r13,%r13
+    jnz .Lexact_bottom
+    movq %r14,%rsi
+    movq %r12,%rdi
+    testq %rbx,%rbx
+    js .Lexact_negative
+    testq %rdi,%rdi
+    js .Lexact_bottom
+    jmp .Lexact_done
+.Lexact_negative:
+    movabsq $0x8000000000000000,%rax
+    cmpq %rax,%rdi
+    ja .Lexact_bottom
+    negq %rdi
+    jmp .Lexact_done
+.Lexact_bottom:
+    xorl %edi,%edi
+    xorl %esi,%esi
+.Lexact_done:
+    popq %r15
+    popq %r14
+    popq %r13
+    popq %r12
+    popq %rbp
+    popq %rbx
+    jmp fr_push
+
+/* r13:r12 /= r9:r8 by shift and subtract. Clobbers rax, rcx, rdx, rdi, rsi. */
+fr_u128_quotient:
+    xorl %edi,%edi
+    xorl %esi,%esi
+    movl $128,%ecx
+.Lu128_step:
+    shlq $1,%r12
+    rclq $1,%r13
+    rclq $1,%rdi
+    rclq $1,%rsi
+    movq %rdi,%rax
+    movq %rsi,%rdx
+    subq %r8,%rax
+    sbbq %r9,%rdx
+    jc .Lu128_next
+    movq %rax,%rdi
+    movq %rdx,%rsi
+    orq $1,%r12
+.Lu128_next:
+    decl %ecx
+    jnz .Lu128_step
+    ret
+
 ARITH fr_add,add
 ARITH fr_sub,sub
 ARITH fr_mul,mul
@@ -353,8 +568,13 @@ ARITH fr_div,div
 fr_neg:
     call fr_pop
     negq %rax
+    jo .Lunary_bottom
     movq %rax,%rdi
     movq %rdx,%rsi
+    jmp fr_push
+.Lunary_bottom:
+    xorl %edi,%edi
+    xorl %esi,%esi
     jmp fr_push
 .global fr_abs
 fr_abs:
@@ -362,6 +582,7 @@ fr_abs:
     testq %rax,%rax
     jns .positive
     negq %rax
+    jo .Lunary_bottom
 .positive:
     movq %rax,%rdi
     movq %rdx,%rsi
@@ -678,15 +899,32 @@ sector_data: .skip 512
 .section .text,"ax"
 .global fr_mod
 fr_mod:
+    /* Integers only; the result takes the sign of the divisor. */
     call fr_pop
     movq %rax,%r10
+    movq %rdx,%r11
     call fr_pop
+    cmpq $1,%rdx
+    jne .modbad
+    cmpq $1,%r11
+    jne .modbad
     testq %r10,%r10
     jz .modbad
+    xorl %edi,%edi
+    /* idivq faults on INT64_MIN / -1, and any value mod -1 is zero. */
+    cmpq $-1,%r10
+    je .modpush
     movq %r10,%rcx
     cqto
     idivq %rcx
     movq %rdx,%rdi
+    testq %rdi,%rdi
+    jz .modpush
+    movq %rdi,%rax
+    xorq %r10,%rax
+    jns .modpush
+    addq %r10,%rdi
+.modpush:
     movq $1,%rsi
     jmp fr_push
 .modbad:
