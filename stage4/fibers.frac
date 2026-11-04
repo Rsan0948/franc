@@ -1,7 +1,1 @@
-\ Resumable Franc kernel fibers: each owns an independent CPU and rational stack.
-\ Kernel ring 0 only. Shared global registers/dictionary, no preemption.
-\ Two fiber slots, each code word must voluntarily yield to be interleaved.
-def fib-carry-a 100 fiber-yield 1 + :fib-a ;
-def fib-carry-b 200 fiber-yield 2 + :fib-b ;
-def fib-run :fib-n 0 :fib-i begin fib-i fib-n - while fiber-step if0 fib-i exit then fib-i 1 + :fib-i repeat fib-i ;
-def fib-demo 0 :fib-a 0 :fib-b 'fib-carry-a fiber-spawn drop 'fib-carry-b fiber-spawn drop 4 fib-run drop fib-a . fib-b . ;
+../kernel/scheduler/fibers.frac

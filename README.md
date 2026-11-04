@@ -19,6 +19,28 @@ is retained for independent comparison.
 The project is experimental, primarily verified with QEMU, and not a
 general-purpose, production-secure desktop operating system.
 
+## Mathematical foundation
+
+Franc is built around **canonical rational arithmetic**. Instead of
+automatically using a binary floating-point approximation, ordinary finite
+values are represented as normalized numerator/denominator pairs. For example,
+**1/3 1/6 +** evaluates to **1/2** exactly when the result fits the core type.
+
+The language also has a **wheel-inspired exceptional-value model**:
+**1/0** represents one infinity-like state and **0/0** represents
+undefined/bottom. The arithmetic is not identical to IEEE 754, nor does
+Franc claim unlimited precision: its core numerical values use two signed
+64-bit integers. Bounded overflow can become bottom.
+
+The bundled libraries explore continued fractions, Stern–Brocot trees, Ford
+circles, fixed-point approximation, interval arithmetic, big integers and
+IEEE binary64 bit decoding. They are especially useful for learning number
+theory, exact ratios, representation tradeoffs and numerical methods.
+
+**[Read the Franc Mathematics Bible — the deep reference](docs/MATHEMATICAL_FOUNDATION.md)**
+for formal caveats, example calculations, library-by-library use cases,
+and comparisons with C, Python, JavaScript, Rust and symbolic math systems.
+
 ## Screenshots — captured from running FrancOS
 
 These are **actual QEMU framebuffer captures**, not renders or design mockups.
@@ -56,7 +78,30 @@ programs.** The filesystem is limited to 12 slots and 2,047 bytes per file.
 Networking does not provide HTTP/TLS or general sockets. See
 [precise experimental v1 limits](docs/FRANCOS_V1_RELEASE_CANDIDATE.md).
 
-## Build and boot (x86-64 Linux)
+## Live OS architecture
+
+FrancOS's active source tree follows the standard OS module boundaries:
+**boot/** (BIOS/UEFI), **kernel/** (memory, processes, scheduling,
+interrupts), **runtime/**, **compiler/**, **drivers/** (video, storage,
+network and input), **system/** and **apps/native/**. Original Stage 1–4
+snapshots are preserved in **[archive/stages/](archive/README.md)**.
+
+The older **stage2/**, **stage3/** and **stage4/** paths still contain
+compatibility aliases for pinned self-hosting identities and historical CI;
+they are **not** separately maintained kernel sources. The new authoritative
+native build has its Makefile and source manifests in **build/**.
+
+From the repository root on Linux:
+
+    make os             # native BIOS disk → build/out/francos-bios.img
+    make os-proof       # rebuild native generation 2 and 3 in QEMU
+    make os-uefi        # separate UEFI firmware adapter and disk
+
+For exact boundaries, migration status and safety of the historical
+compatibility links, see [architecture](docs/REPO_ARCHITECTURE.md) and
+[build and test guide](docs/BUILD_AND_TEST.md).
+
+## Legacy boot and compatibility (x86-64 Linux)
 
 Requirements: GNU binutils (`as`, `ld`, `objcopy`), `make`, `bash`,
 `awk`, `dd`, and `qemu-system-x86_64`.

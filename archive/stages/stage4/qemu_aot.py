@@ -1,0 +1,344 @@
+#!/usr/bin/env python3
+"""QEMU evidence for Franc AOT, no C runtime, no C object files."""
+from pathlib import Path
+import os, selectors, shutil, subprocess, sys, time, tempfile
+root=Path(__file__).resolve().parent
+qemu=shutil.which('qemu-system-x86_64')
+if not qemu:sys.exit('QEMU missing: boot cannot be claimed verified')
+# Never mutate the built image during persistence tests. Both boots use one
+# disposable writable clone of the exact verified AOT image.
+temporary_disk=tempfile.TemporaryDirectory(prefix='franc-aot-')
+test_image=Path(temporary_disk.name)/'franos-aot.img'
+shutil.copyfile(root/'franos-aot.img',test_image)
+# Stage source using only the repository's Python-free shell/byte tools.
+subprocess.run(['sh',str(root/'source_pack.sh'),str(test_image),
+                str(root/'source_fixture.frac')],check=True)
+cmd=[qemu,'-m','128M','-accel','tcg','-display','none',
+     '-monitor','none','-no-reboot','-serial','stdio',
+     '-drive',f'file={test_image},format=raw,if=ide']
+p=subprocess.Popen(cmd,stdin=subprocess.PIPE,stdout=subprocess.PIPE,
+                   stderr=subprocess.STDOUT,bufsize=0)
+selector=selectors.DefaultSelector();selector.register(p.stdout,selectors.EVENT_READ)
+buffer=b''
+try:
+    deadline=time.monotonic()+150
+    while time.monotonic()<deadline and b'AOT BOOT OK' not in buffer:
+        if p.poll() is not None:break
+        if selector.select(0.3):
+            data=os.read(p.stdout.fileno(),8192)
+            if not data:break
+            buffer+=data
+    print(buffer.decode(errors='replace'))
+    for marker in [b'FrancOS AOT | 64-bit | no C runtime',b'1/2',b'25',b'BRANCH OK',b'3\n',b'70\n',b'42\n',b'ATA WRITE READBACK DONE',b'JIT-SUM 5\n',b'JIT-DEF 36\n',b'def saved 77 ;',b'STORAGE OK',b'AOT BOOT OK']:
+        assert marker in buffer, f'missing {marker!r}; QEMU output={buffer!r}'
+    # Read and send one character at a time. Sending "psg\x1b" together
+    # can overflow the emulated COM1 receive register while Franc redraws.
+    nonlocal_buffer = []
+    # Use a mutable collector for all output read after boot.
+    def read_until(marker, timeout=12, after=0):
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            current = buffer + b''.join(nonlocal_buffer)
+            if marker in current[after:]:
+                return current
+            if p.poll() is not None:
+                break
+            if selector.select(0.2):
+                data = os.read(p.stdout.fileno(), 8192)
+                if not data:
+                    break
+                nonlocal_buffer.append(data)
+        raise AssertionError(f'missing {marker!r}; QEMU output={current!r}')
+
+    transcript = read_until(b'Franc> ', timeout=10)
+    for key, expected in [
+        (b'p', b'1/2\nFranc> '),
+        (b's', b'def saved 77 ;\nFranc> '),
+        (b'g', b'GRAPHICS IN FRANC\nFranc> '),
+        (b'r', b'Franc REPL | Esc returns to menu\nFrac> ')
+    ]:
+        # COM1 has a single-byte receive register. Wait for the Franc
+        # polling loop to re-enter input mode after drawing the prompt.
+        time.sleep(0.5)
+        offset = len(transcript)
+        os.write(p.stdin.fileno(), key)
+        transcript = read_until(expected, timeout=45, after=offset)
+    # The interactive REPL uses Franc's own Stage 2 native-code emitter.
+    # COM1 has only a single-byte receive register, so wait for echoed input.
+    for source, expected in [(b'2 3 +\n', b'5\nFrac> '),
+                             (b'def n 7 ;\n', b'Frac> '),
+                             (b'n 6 *\n', b'42\nFrac> '),
+                             (b'"startup.frac" "def startup-main 99 . ;" fs-save\n', b'1\nFrac> ')]:
+        for ch in source:
+            time.sleep(0.12)
+            offset = len(transcript)
+            os.write(p.stdin.fileno(), bytes([ch]))
+            if ch == 10:
+                transcript = read_until(expected, timeout=45, after=offset)
+            else:
+                transcript = read_until(bytes([ch]), timeout=15, after=offset)
+    for marker in [b'JIT-SUM 5\n', b'JIT-DEF 36\n']:
+        assert marker in transcript, f'missing {marker!r}'
+    for key, expected in [(b'\x1b', b'Franc> '),
+                          (b'a', b'FRANC-AOT-END\nFranc> '),
+                          (b'c', b'FRANC-PROGRAM-END\nFranc> '),
+                          (b'd', b'FRANC-CONTROL-END\nFranc> '),
+                          (b'e', b'FRANC-STRING-END\nFranc> '),
+                          (b'f', b'FRANC-SOURCE-END\nFranc> '),
+                          (b'b', b'SELFHOST OK\nFranc> '),
+                          (b'\x1b', b'EXIT CONSOLE')]:
+        time.sleep(0.5)
+        offset = len(transcript)
+        os.write(p.stdin.fileno(), key)
+        transcript = read_until(expected, timeout=150 if key == b'b' else 45, after=offset)
+    # Franc must emit self-contained relocatable assembly, not JIT addresses.
+    import re
+    from tempfile import TemporaryDirectory
+    assert b'FRANC-AOT-ERROR' not in transcript, transcript
+    aot_match = re.search(rb'FRANC-AOT-BEGIN\n(.*?)FRANC-AOT-END\n', transcript, re.S)
+    assert aot_match is not None, transcript
+    with TemporaryDirectory(prefix='franc-native-aot-') as work:
+        asm_path = Path(work)/'from-franc.S'
+        obj_path = Path(work)/'from-franc.o'
+        asm_source = aot_match.group(1).decode('ascii')
+        assert 'call fr_add' in asm_source and 'call fr_dot' in asm_source, asm_source
+        assert 'movabsq $2, %rdi' in asm_source and 'movabsq $3, %rdi' in asm_source
+        asm_path.write_text(asm_source)
+        subprocess.run(['as', '--64', '-o', str(obj_path), str(asm_path)], check=True)
+        sym = subprocess.check_output(['nm',str(obj_path)],text=True)
+        assert 'T franc_aot_entry' in sym and 'U fr_add' in sym, sym
+    print('PASS: Franc-generated relocatable AOT assembly assembled by GNU as')
+    # Multi-definition Franc AOT: forward reference and symbolic word call.
+    program_match = re.search(rb'FRANC-PROGRAM-BEGIN\n(.*?)FRANC-PROGRAM-END\n', transcript, re.S)
+    assert program_match is not None and b'FRANC-PROGRAM-ERROR' not in transcript, transcript
+    with TemporaryDirectory(prefix='franc-program-aot-') as work:
+        assembly = program_match.group(1).decode('ascii')
+        assert 'fw_737175617265:' in assembly, assembly
+        assert 'fw_6d61696e:' in assembly, assembly
+        assert 'call fw_737175617265' in assembly, assembly
+        file = Path(work)/'program.S'
+        obj = Path(work)/'program.o'
+        file.write_text(assembly)
+        subprocess.run(['as', '--64', '-o', str(obj), str(file)], check=True)
+        names = subprocess.check_output(['nm', str(obj)], text=True)
+        assert 'T franc_aot_entry' in names and 'fw_737175617265' in names, names
+        assert ' U fw_' not in names, names
+
+        # Link a separate BIOS kernel entirely from the Franc-generated AOT
+        # object and the assembly runtime/loader. No compiler.py is used here.
+        stub = Path(work)/'aot_stub.o'
+        elf = Path(work)/'franc-native.elf'
+        kernel_bin = Path(work)/'franc-native.bin'
+        image = Path(work)/'franc-native.img'
+        subprocess.run(['as','--64','-o',str(stub),str(root/'aot_stub.S')],check=True)
+        subprocess.run([
+            'ld','-m','elf_x86_64','-nostdlib','-T',str(root/'kernel.ld'),
+            '-o',str(elf),str(root/'runtime.o'),str(root/'font.o'),
+            str(stub),str(obj)
+        ],check=True)
+        subprocess.run([
+            'objcopy','-O','binary','-j','.text','-j','.rodata','-j','.data',
+            str(elf),str(kernel_bin)
+        ],check=True)
+        assert 0 < kernel_bin.stat().st_size <= 127*512
+        def dd(*args, data=None):
+            subprocess.run(['dd',*args,'status=none'],input=data,check=True)
+        dd('if=/dev/zero',f'of={image}','bs=512','count=512')
+        dd(f'if={root/"boot.bin"}',f'of={image}','conv=notrunc')
+        dd(f'if={kernel_bin}',f'of={image}','bs=512','count=127',
+           'seek=1','conv=notrunc')
+        dd(f'of={image}','bs=512','seek=128','conv=notrunc',data=b'FRANCFS1')
+        assert image.stat().st_size==512*512
+        guest = subprocess.Popen([
+            qemu,'-m','128M','-accel','tcg','-display','none','-monitor','none',
+            '-no-reboot','-serial','stdio',
+            '-drive',f'file={image},format=raw,if=ide'
+        ],stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,
+           stderr=subprocess.STDOUT,bufsize=0)
+        test_selector=selectors.DefaultSelector()
+        test_selector.register(guest.stdout, selectors.EVENT_READ)
+        native_output=b''
+        try:
+            deadline=time.monotonic()+90
+            while time.monotonic()<deadline and b'49\n' not in native_output:
+                if guest.poll() is not None:break
+                if test_selector.select(0.2):
+                    item=os.read(guest.stdout.fileno(),8192)
+                    if not item:break
+                    native_output+=item
+            assert b'49\n' in native_output, (
+                'Franc-generated AOT standalone image did not boot and print 49: '
+                + repr(native_output))
+        finally:
+            guest.kill()
+            guest.wait()
+    print('PASS: Franc AOT program linked with assembly-only runtime and cold-booted in QEMU')
+
+    print('PASS: Franc AOT emits multiple named functions and relocatable internal calls')
+
+    control_match = next((m for m in re.findall(rb'FRANC-PROGRAM-BEGIN\n(.*?)FRANC-PROGRAM-END\n', transcript, re.S) if b'fw_63686f6f7365:' in m), None)
+    assert control_match is not None and b'FRANC-PROGRAM-ERROR' not in transcript, transcript
+    with TemporaryDirectory(prefix='franc-control-aot-') as work:
+        assembly=control_match.decode('ascii')
+        assert 'call fr_condition' in assembly and 'jns .Lfranc_' in assembly, assembly
+        assert 'jmp .Lfranc_' in assembly and 'fw_63686f6f7365:' in assembly
+        source=Path(work)/'conditional.S'
+        native=Path(work)/'conditional.o'
+        source.write_text(assembly)
+        subprocess.run(['as','--64','-o',str(native),str(source)],check=True)
+        names=subprocess.check_output(['nm',str(native)],text=True)
+        assert 'fw_6d61696e' in names and 'U fr_condition' in names, names
+
+        # Prove conditional branches execute correctly on an independent BIOS boot.
+        stub=Path(work)/'stub.o'
+        elf=Path(work)/'control.elf'
+        binary=Path(work)/'control.bin'
+        control_image=Path(work)/'control.img'
+        subprocess.run(['as','--64','-o',str(stub),str(root/'aot_stub.S')],check=True)
+        subprocess.run(['ld','-m','elf_x86_64','-nostdlib','-T',str(root/'kernel.ld'),
+            '-o',str(elf),str(root/'runtime.o'),str(root/'font.o'),
+            str(stub),str(native)],check=True)
+        subprocess.run(['objcopy','-O','binary','-j','.text','-j','.rodata',
+            '-j','.data',str(elf),str(binary)],check=True)
+        assert 0<binary.stat().st_size<=127*512
+        dd('if=/dev/zero',f'of={control_image}','bs=512','count=512')
+        dd(f'if={root/"boot.bin"}',f'of={control_image}','conv=notrunc')
+        dd(f'if={binary}',f'of={control_image}','bs=512','count=127',
+           'seek=1','conv=notrunc')
+        dd(f'of={control_image}','bs=512','seek=128','conv=notrunc',
+           data=b'FRANCFS1')
+        guest=subprocess.Popen([qemu,'-m','128M','-accel','tcg','-display','none',
+            '-monitor','none','-no-reboot','-serial','stdio',
+            '-drive',f'file={control_image},format=raw,if=ide'],
+            stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,bufsize=0)
+        out=b''
+        try:
+            monitor=selectors.DefaultSelector()
+            monitor.register(guest.stdout,selectors.EVENT_READ)
+            deadline=time.monotonic()+90
+            while time.monotonic()<deadline and b'11\n22\n' not in out:
+                if guest.poll() is not None:break
+                if monitor.select(0.2):
+                    chunk=os.read(guest.stdout.fileno(),8192)
+                    if not chunk:break
+                    out+=chunk
+            assert b'11\n22\n' in out, (
+                'Franc AOT conditional BIOS image did not print 11 then 22: '
+                +repr(out))
+        finally:
+            guest.kill()
+            guest.wait()
+
+    print('PASS: Franc AOT conditional program cold-booted and executed both branches correctly')
+
+    # Verify string literal relocation and register read/write semantics
+    # using a new independently booted image, not only source inspection.
+    strings = next((m for m in re.findall(rb'FRANC-PROGRAM-BEGIN\n(.*?)FRANC-PROGRAM-END\n',transcript,re.S) if b'.Laot_string_' in m), None)
+    assert strings and b'FRANC-PROGRAM-ERROR' not in transcript,transcript
+    with TemporaryDirectory(prefix='franc-strings-aot-') as work:
+        source=Path(work)/'string-reg.S'
+        obj=Path(work)/'string-reg.o'
+        stub=Path(work)/'stub.o'
+        elf=Path(work)/'string-reg.elf'
+        native=Path(work)/'string-reg.bin'
+        disk=Path(work)/'string-reg.img'
+        assembly=strings.decode('ascii')
+        assert '.section .rodata' in assembly and 'call fr_reg_set' in assembly
+        assert 'call fr_reg_get' in assembly and 'call fr_type' in assembly
+        source.write_text(assembly)
+        subprocess.run(['as','--64','-o',str(obj),str(source)],check=True)
+        subprocess.run(['as','--64','-o',str(stub),str(root/'aot_stub.S')],check=True)
+        subprocess.run(['ld','-m','elf_x86_64','-nostdlib','-T',str(root/'kernel.ld'),
+            '-o',str(elf),str(root/'runtime.o'),str(root/'font.o'),
+            str(stub),str(obj)],check=True)
+        subprocess.run(['objcopy','-O','binary','-j','.text','-j','.rodata',
+            '-j','.data',str(elf),str(native)],check=True)
+        assert 0<native.stat().st_size<=127*512
+        dd('if=/dev/zero',f'of={disk}','bs=512','count=512')
+        dd(f'if={root/"boot.bin"}',f'of={disk}','conv=notrunc')
+        dd(f'if={native}',f'of={disk}','bs=512','count=127',
+           'seek=1','conv=notrunc')
+        dd(f'of={disk}','bs=512','seek=128','conv=notrunc',
+           data=b'FRANCFS1')
+        guest=subprocess.Popen([qemu,'-m','128M','-accel','tcg','-display','none',
+            '-monitor','none','-no-reboot','-serial','stdio',
+            '-drive',f'file={disk},format=raw,if=ide'],
+            stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,bufsize=0)
+        out=b''
+        try:
+            monitor=selectors.DefaultSelector()
+            monitor.register(guest.stdout,selectors.EVENT_READ)
+            deadline=time.monotonic()+90
+            while time.monotonic()<deadline and b'Franc AOT\n10\n' not in out:
+                if guest.poll() is not None:break
+                if monitor.select(0.2):
+                    chunk=os.read(guest.stdout.fileno(),8192)
+                    if not chunk:break
+                    out+=chunk
+            assert b'Franc AOT\n10\n' in out, (
+                'Franc AOT string/register cold boot mismatch: '+repr(out))
+        finally:
+            guest.kill()
+            guest.wait()
+    print('PASS: Franc AOT strings and named registers cold-boot and execute correctly')
+
+    # Verify that Franc loads the raw LBA source bundle and emits native code.
+    bundle_match=next((m for m in re.findall(rb'FRANC-PROGRAM-BEGIN\n(.*?)FRANC-PROGRAM-END\n',transcript,re.S) if b'fw_737175617265:' in m and b'movabsq $9' in m),None)
+    assert bundle_match is not None and b'FRANC-SOURCE-ERROR' not in transcript,transcript
+    bundle_asm=bundle_match.decode('ascii')
+    assert 'fw_737175617265:' in bundle_asm and 'fw_6d61696e:' in bundle_asm
+    assert 'movabsq $4294967296, %rdi' in bundle_asm, bundle_asm
+    assert '  .byte 34' in bundle_asm, bundle_asm
+    with TemporaryDirectory(prefix='franc-disk-source-') as work:
+        source=Path(work)/'source.S'
+        target=Path(work)/'source.o'
+        source.write_text(bundle_asm)
+        subprocess.run(['as','--64','-o',str(target),str(source)],check=True)
+        sym=subprocess.check_output(['nm',str(target)],text=True)
+        assert 'fw_737175617265' in sym and 'franc_aot_entry' in sym,sym
+    print('PASS: Franc reads disk-staged source beyond the reserved filesystem and emits AOT object')
+
+
+
+
+    for marker in [b'SELFHOST START\n', b'GEN 2: 29\n', b'GEN 3: 29\n', b'42\n', b'SELFHOST OK\n']:
+        assert marker in transcript, f'missing {marker!r}: {transcript!r}'
+    assert b'stage2: unsupported token' not in transcript, transcript
+    for marker in (b'FRANC FRAMEBUFFER READY', b'FRANC INTERACTIVE READY',
+                   b'GRAPHICS IN FRANC', b'EXIT CONSOLE'):
+        assert marker in transcript, f'missing {marker!r}: {transcript!r}'
+    assert transcript.count(b'1/2') >= 2, transcript
+    print('PASS: C-free cold boot, Franc framebuffer console, serial keyboard and storage')
+finally:
+    p.kill();p.wait()
+
+# A second BIOS cold boot must discover and compile the source persisted
+# by the first guest, without regenerating the disk or running a C compiler.
+p2 = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                      stderr=subprocess.STDOUT, bufsize=0)
+sel2 = selectors.DefaultSelector()
+sel2.register(p2.stdout, selectors.EVENT_READ)
+reboot_output = b''
+try:
+    deadline = time.monotonic()+150
+    while time.monotonic() < deadline:
+        if b'99\nAOT BOOT OK' in reboot_output and b'Franc> ' in reboot_output:
+            break
+        if p2.poll() is not None:
+            break
+        if sel2.select(0.3):
+            data = os.read(p2.stdout.fileno(), 8192)
+            if not data:
+                break
+            reboot_output += data
+    assert b'99\nAOT BOOT OK' in reboot_output, (
+        'persisted Franc startup not compiled/executed after cold reboot: '
+        + repr(reboot_output))
+    assert b'Franc> ' in reboot_output, reboot_output
+    print('PASS: second cold boot native-compiles and executes saved Franc startup source')
+finally:
+    p2.kill()
+    p2.wait()
+temporary_disk.cleanup()

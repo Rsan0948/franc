@@ -1,0 +1,28 @@
+\ Stage 3: the framebuffer and console policies live in Franc.
+\ frame@/frame! are bounds-checked byte access to Mode 13h screen RAM;
+\ font-row reads the bundled 8x8 bitmap font (data-only C table).
+\ No C pixel, line, rectangle, glyph or scroll routine is used by these words.
+def fp-pixel :fp-c :fp-y :fp-x fp-x 0 - if exit then fp-y 0 - if exit then fp-x 320 - if0 exit then fp-x 320 - if fp-y 200 - if fp-y 320 * fp-x + fp-c frame! then then ;
+def fp-pixel@ :fpr-y :fpr-x fpr-x 0 - if 0 exit then fpr-y 0 - if 0 exit then fpr-x 320 - if fpr-y 200 - if fpr-y 320 * fpr-x + frame@ exit then then 0 ;
+def fp-clear :fcl-c 0 :fcl-i begin fcl-i 64000 - while fcl-i fcl-c frame! fcl-i 1 + :fcl-i repeat ;
+def fp-rect :fr-c :fr-h :fr-w :fr-y :fr-x fr-w 0 - if0 exit then fr-w 0 - if exit then fr-h 0 - if0 exit then fr-h 0 - if exit then fr-w 321 - if 0 :fr-too-large else exit then fr-h 201 - if0 exit then fr-h 201 - if 0 :fr-too-large else exit then 0 :fr-j begin fr-j fr-h - while 0 :fr-i begin fr-i fr-w - while fr-x fr-i + fr-y fr-j + fr-c fp-pixel fr-i 1 + :fr-i repeat fr-j 1 + :fr-j repeat ;
+def fp-line :fl-c :fl-y1 :fl-x1 :fl-y0 :fl-x0 fl-x1 fl-x0 - :fl-dx fl-y1 fl-y0 - :fl-dy fl-dx abs :fl-xm fl-dy abs :fl-ym fl-xm fl-ym - if fl-ym else fl-xm then :fl-n fl-n 1025 - if0 exit then fl-n 1025 - if 0 :fl-i begin fl-i fl-n - while fl-x0 fl-dx fl-i * fl-n 0 - if0 0 else fl-n then / floor + fl-y0 fl-dy fl-i * fl-n 0 - if0 0 else fl-n then / floor + fl-c fp-pixel fl-i 1 + :fl-i repeat fl-x1 fl-y1 fl-c fp-pixel then ;
+\ Draw one 8x8 glyph, bit positions from the font's public-domain table.
+def fg-glyph :fg-c :fg-y :fg-x 0 :fg-j begin fg-j 8 - while fg-c fg-j font-row :fg-bits 0 :fg-i begin fg-i 8 - while fg-bits 2 fg-i ^ floor band ifnz 15 :fg-ink else 0 :fg-ink then fg-x fg-i + fg-y fg-j + fg-ink fp-pixel fg-i 1 + :fg-i repeat fg-j 1 + :fg-j repeat ;
+def fg-scroll 0 :fsc-i begin fsc-i 61440 - while fsc-i 2560 + frame@ fsc-i swap frame! fsc-i 1 + :fsc-i repeat begin fsc-i 64000 - while fsc-i 0 frame! fsc-i 1 + :fsc-i repeat ;
+0 :fc-col 0 :fc-row
+\ Franc owns serial output from COM1 on bare metal, with bounded TX polling.
+def fc-serial :fc-byte hardware? if0 fc-byte host-emit exit then fc-byte 10 - if0 $3F8 13 io8! then 0 :fcs-n begin fcs-n 200000 - while $3FD io8@ 32 band ifnz $3F8 fc-byte io8! exit then fcs-n 1 + :fcs-n repeat ;
+def fc-scroll fc-row 25 - if0 fg-scroll 24 :fc-row then ;
+def fc-emit :fc-char fc-char fc-serial fc-char 10 - if0 0 :fc-col fc-row 1 + :fc-row fc-scroll exit then fc-char 13 - if0 0 :fc-col exit then fc-char 8 - if0 fc-col ifnz fc-col 1 - :fc-col fc-col 8 * fc-row 8 * 32 fg-glyph then exit then fc-char 32 - if 63 :fc-char then fc-char 127 - if0 63 :fc-char then fc-col 8 * fc-row 8 * fc-char fg-glyph fc-col 1 + :fc-col fc-col 40 - if0 0 :fc-col fc-row 1 + :fc-row fc-scroll then ;
+def fc-type :fct-addr begin fct-addr byte@ :fct-ch fct-ch if0 exit then fct-ch fc-emit fct-addr 1 + :fct-addr again ;
+def fc-home 0 :fc-col 0 :fc-row ;
+\ Rebind public drawing and text API; C remains as a fallback for diagnostics.
+def pixel fp-pixel ;
+def pixel@ fp-pixel@ ;
+def clearfb fp-clear ;
+def fillrect fp-rect ;
+def line fp-line ;
+def emit fc-emit ;
+def type fc-type ;
+def home fc-home ;

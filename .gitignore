@@ -21,3 +21,8 @@ __pycache__/
 /stage4/native-build/
 /stage4/native-proof/
 /stage4/kernel.generated.S
+
+# Canonical OS build products (source under boot/kernel/drivers/etc. remains tracked)
+/build/out/
+/boot/uefi/*.obj
+/boot/uefi/*.EFI

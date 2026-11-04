@@ -1,0 +1,12 @@
+# Ordered AOT kernel source inputs. Changing any requires re-pinning bootstrap_seed.S and seed.lock.franctxt.
+drivers/storage/ata.frac
+drivers/storage/storage.frac
+drivers/video/console.frac
+drivers/input/keyboard.frac
+compiler/native/compiler.frac
+system/repl.frac
+system/upgrade.frac
+compiler/aot.frac
+compiler/bundle.frac
+apps/native/registry.frac
+kernel/main.frac

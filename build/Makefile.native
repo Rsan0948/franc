@@ -1,0 +1,44 @@
+# Authoritative, architecture-oriented FrancOS native build.
+# The stage* path views exist for compatibility with older CI and release tags.
+# No Python/C compiler is required to assemble or bootstrap the native kernel.
+AS ?= as
+LD ?= ld
+OBJCOPY ?= objcopy
+OUT := build/out
+APP_SOURCES := $(shell sed '/^#/d; /^[[:space:]]*$/d' build/app_sources.list)
+SEED_SOURCES := $(shell sed '/^#/d; /^[[:space:]]*$/d' build/seed_sources.list)
+
+.PHONY: all bios uefi abi os-proof check-layout clean
+all: bios
+$(OUT):
+	mkdir -p $(OUT)
+$(OUT)/boot.o: boot/bios/boot.S | $(OUT)
+	$(AS) --64 -o $@ $<
+$(OUT)/boot.bin: $(OUT)/boot.o
+	$(LD) -m elf_x86_64 --oformat binary -Ttext 0x7c00 -o $@ $<
+$(OUT)/seed.o: compiler/bootstrap_seed.S | $(OUT)
+	$(AS) --64 -o $@ $<
+$(OUT)/runtime.o: runtime/abi.S drivers/video/gop_console.S franctxt/sha256_native.S kernel/interrupts/interrupts.S kernel/scheduler/scheduler.S kernel/memory/e820.S kernel/process/ring3.S kernel/memory/page_owners.S kernel/process/process_spaces.S kernel/scheduler/user_scheduler.S kernel/process/user_compiled.S | $(OUT)
+	$(AS) --64 -o $@ $<
+$(OUT)/font.o: drivers/video/font.S | $(OUT)
+	$(AS) --64 -o $@ $<
+$(OUT)/kernel.elf: $(OUT)/seed.o $(OUT)/runtime.o $(OUT)/font.o kernel/kernel.ld
+	$(LD) -m elf_x86_64 -nostdlib -T kernel/kernel.ld -o $@ $(OUT)/runtime.o $(OUT)/font.o $(OUT)/seed.o
+$(OUT)/kernel.bin: $(OUT)/kernel.elf
+	$(OBJCOPY) -O binary -j .text -j .rodata -j .data $< $@
+$(OUT)/francos-bios.img: $(OUT)/boot.bin $(OUT)/kernel.bin build/pack_image.sh build/source_pack.sh build/app_sources.list build/seed_sources.list franctxt/install_native.sh franctxt/build.franctxt franctxt/memory.franctxt franctxt/seed.lock.franctxt $(APP_SOURCES) $(SEED_SOURCES)
+	sh build/pack_image.sh $(OUT)/boot.bin $(OUT)/kernel.bin $@
+bios: $(OUT)/francos-bios.img
+abi: $(OUT)/runtime.o $(OUT)/font.o $(OUT)/boot.bin
+check-layout:
+	python3 tools/verify_architecture_layout.py
+os-proof: check-layout bios
+	bash build/bootstrap.sh $(OUT)/francos-bios.img $(OUT)/proof
+	cmp $(OUT)/kernel.bin $(OUT)/proof/gen2.bin
+	cmp $(OUT)/proof/gen2.bin $(OUT)/proof/gen3.bin
+	cmp compiler/bootstrap_seed.S $(OUT)/proof/gen2.S
+	@echo "PASS: standard-layout FrancOS native generation 2/3 self-host proof"
+uefi: bios
+	$(MAKE) -f boot/uefi/Makefile esp
+clean:
+	rm -rf $(OUT)

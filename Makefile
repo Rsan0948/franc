@@ -1,6 +1,6 @@
 CC ?= gcc
 CFLAGS ?= -std=gnu11 -O2 -Wall -Wextra
-.PHONY: all test clean
+.PHONY: all test clean os os-proof os-uefi
 all: frac
 stage2/compiler_source.h: stage2/compiler.frac stage3/shell.frac stage3/drivers.frac stage3/ata.frac stage3/storage.frac stage3/display.frac stage3/console.frac stage2/gen_compiler_header.py
 	python3 stage2/gen_compiler_header.py
@@ -21,3 +21,11 @@ test: frac
 	python3 tests/test_qemu_visual.py
 clean:
 	rm -f frac frac-original
+
+# Standard-layout FrancOS (native Franc + assembly, independent of historical stages)
+os:
+	$(MAKE) -f build/Makefile.native bios
+os-proof:
+	$(MAKE) -f build/Makefile.native os-proof
+os-uefi:
+	$(MAKE) -f build/Makefile.native uefi

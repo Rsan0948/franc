@@ -36,3 +36,18 @@ reproducible bootstrap seed and Franctxt lock repin.
   `docs/FRANCOS_V1_RELEASE_CANDIDATE.md`.
 
 The project may remain private until its maintainer elects to publish it.
+
+## Standard-layout native development
+
+The active OS source directories are `boot/`, `compiler/`, `runtime/`,
+`kernel/`, `drivers/`, `system/`, `apps/native/` and `lib/`.
+Use `make os` for the active native BIOS image and `make os-proof` for the
+Franc-built generation-2/3 QEMU identity proof. The historical stage trees
+are archived under `archive/stages/`; do not change those snapshots.
+Compatibility stage paths are symlinks to canonical source files. When
+changing a native source, edit the canonical file, not an archive copy.
+Run `python3 tools/verify_architecture_layout.py` and the full native
+proof before submitting a structural change.
+
+The numeric model is explained in
+[the Franc Mathematics Bible](docs/MATHEMATICAL_FOUNDATION.md).

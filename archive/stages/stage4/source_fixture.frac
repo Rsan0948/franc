@@ -1,0 +1,3 @@
+\ This is a disk-staged Franc source file, not embedded kernel text.
+def square dup * ;
+def main 9 square . "quoted: \"ok\"" type cr 4294967296 . ;
