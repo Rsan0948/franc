@@ -12,7 +12,9 @@ static EFI_GUID loaded_image_guid =
 static EFI_GUID simple_fs_guid =
     {0x964e5b22U,0x6459,0x11d2,{0x8e,0x39,0x00,0xa0,0xc9,0x69,0x72,0x3b}};
 #define KERNEL_START 0x10000ULL
-#define KERNEL_REGION_PAGES 128ULL
+#define KERNEL_REGION_PAGES 144ULL /* image and BSS, up to VGA memory at 0xA0000 */
+#define KERNEL_STACK_START 0x100000ULL
+#define KERNEL_STACK_PAGES 65ULL /* guard page and 256 KiB stack */
 #define KERNEL_BINARY_MAX 195584ULL /* 382 x 512 BIOS extents; within 128-page UEFI reservation */
 #define TABLE_PAGES 6ULL
 #define MAP_BUFFER_BYTES 32768ULL
@@ -167,6 +169,10 @@ EFI_STATUS efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *st) {
         || load!=KERNEL_START)
         return fail(st,"UEFI LOW REGION UNAVAILABLE\r\n",L"Franc: low memory unavailable\r\n");
     zero_bytes((void *)(UINTN)load,KERNEL_REGION_PAGES*4096ULL);
+    EFI_PHYSICAL_ADDRESS stack=KERNEL_STACK_START;
+    if (EFI_ERROR(pages(AllocateAddress,EfiLoaderData,KERNEL_STACK_PAGES,&stack))
+        || stack!=KERNEL_STACK_START)
+        return fail(st,"UEFI STACK REGION UNAVAILABLE\r\n",L"Franc: stack memory unavailable\r\n");
     UINTN bytes=KERNEL_BINARY_MAX;
     if (EFI_ERROR(kernel->Read(kernel,&bytes,(void *)(UINTN)load)) || bytes==0)
         return fail(st,"UEFI READ KERNEL FAILED\r\n",L"Franc: kernel read failed\r\n");

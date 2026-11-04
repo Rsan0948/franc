@@ -1,0 +1,36 @@
+# Crash-safety cases: INPUT => TEXT THE GUEST MUST PRINT. "BOOT" starts a fresh guest.
+# After each case the REPL must still evaluate. These inputs used to kill the OS.
+BOOT
+drop drop drop drop => stack underflow
+1 1 + => 2
+dup => stack underflow
+swap => stack underflow
+over => stack underflow
+1 swap => stack underflow
+drop => 
+2 3 + => 5
+BOOT
+def r r ; => 
+r => FAULT vector 0e
+1 1 + => 2
+r => FAULT vector 0e
+2 2 + => 4
+BOOT
+def down dup if0 exit then 1 - down ; => 
+5000 down => 0
+1 1 + => 2
+BOOT
+$100000 0 b! => FAULT vector 0e
+1 1 + => 2
+BOOT
+$10000 0 b! => FAULT vector 0e
+$10000 byte@ => 233
+1 1 + => 2
+BOOT
+def f8 1 1 1 1 1 1 1 1 ; => 
+def f64 f8 f8 f8 f8 f8 f8 f8 f8 ; => 
+def f512 f64 f64 f64 f64 f64 f64 f64 f64 ; => 
+f512 f512 f8 => stack overflow
+depth => 0
+1 1 + => 2
+f512 f8 drop drop drop drop drop drop drop drop => 1

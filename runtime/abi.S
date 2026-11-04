@@ -61,6 +61,7 @@ _kstart:
     lret
     .code64
 .Lkstart64:
+    cli
     cld
     movabs $__bss_start,%rdi
     movabs $__bss_end,%rcx
@@ -79,7 +80,8 @@ _kstart:
     movl $4,%ecx
     rep movsq
 .Lno_uefi_gop:
-    movabs $0x80000,%rsp
+    movabs $FR_KERNEL_STACK_TOP,%rsp
+    call fr_cpu_init
     /* init COM1 115200/8N1 */
     movw $0x3fb,%dx
     movb $0x80,%al
@@ -210,6 +212,9 @@ fr_push:
     cmpq %r8,%rax
     ja fr_task_abort_current
 .Ltask_push_ok:
+    leaq ds_stack+16384(%rip),%rcx
+    cmpq %rcx,%rax
+    je .Lstack_overflow
     movq %rdi,(%rax)
     movq %rsi,8(%rax)
     addq $16,%rax
@@ -247,18 +252,57 @@ fr_pop:
     xorl %edx,%edx
     ret
 
+/* Carry set when fewer than rcx bytes of items are on the active stack.
+ * Clobbers rax, r8 and r9. Tasks are bounded by their private stacks.
+ */
+fr_stack_short:
+    movq ds_ptr(%rip),%rax
+    subq %rcx,%rax
+    leaq ds_stack(%rip),%r8
+    cmpq $2,fr_preempt_mode(%rip)
+    jne .Lstack_short_check
+    movq fr_preempt_current(%rip),%r9
+    testq %r9,%r9
+    jz .Lstack_short_check
+    cmpq $2,%r9
+    ja fr_task_abort_current
+    decq %r9
+    shlq $14,%r9
+    leaq fr_preempt_data_stacks(%rip),%r8
+    addq %r9,%r8
+.Lstack_short_check:
+    cmpq %r8,%rax
+    ret
+.Lstack_underflow:
+    leaq underflowmsg(%rip),%rdi
+    jmp fr_write_z
+/* The REPL needs this stack too, so a full stack unwinds like a fault. */
+.Lstack_overflow:
+    leaq overflowmsg(%rip),%rdi
+    call fr_write_z
+    jmp fr_recover
+
 .global fr_dup
 fr_dup:
+    movl $16,%ecx
+    call fr_stack_short
+    jb .Lstack_underflow
     movq ds_ptr(%rip),%rax
     movq -16(%rax),%rdi
     movq -8(%rax),%rsi
     jmp fr_push
 .global fr_drop
 fr_drop:
+    movl $16,%ecx
+    call fr_stack_short
+    jb .Lstack_underflow
     subq $16,ds_ptr(%rip)
     ret
 .global fr_swap
 fr_swap:
+    movl $32,%ecx
+    call fr_stack_short
+    jb .Lstack_underflow
     movq ds_ptr(%rip),%rax
     movq -16(%rax),%rcx
     movq -32(%rax),%rdx
@@ -271,6 +315,9 @@ fr_swap:
     ret
 .global fr_over
 fr_over:
+    movl $32,%ecx
+    call fr_stack_short
+    jb .Lstack_underflow
     movq ds_ptr(%rip),%rax
     movq -32(%rax),%rdi
     movq -24(%rax),%rsi
@@ -826,6 +873,8 @@ fr_key:
 .section .rodata
 infmsg: .asciz "inf"
 nanmsg: .asciz "NaN"
+underflowmsg: .asciz "stack underflow\n"
+overflowmsg: .asciz "stack overflow\n"
 .section .bss
 .balign 16
 .global ds_stack
@@ -1031,9 +1080,23 @@ fr_s2_run:
     jb .Lrun_end
     cmpq s2_code_next(%rip),%rax
     jae .Lrun_end
+    /* Tasks are aborted on a fault and must not touch the shared frame. */
+    cmpq $0,fr_preempt_current(%rip)
+    jne .Lrun_task
+    /* A kernel-mode fault in this code resumes at .Lrun_resume. */
+    pushq fr_recover_rsp(%rip)
+    pushq fr_recover_ds(%rip)
+    movq ds_ptr(%rip),%rcx
+    movq %rcx,fr_recover_ds(%rip)
+    movq %rsp,fr_recover_rsp(%rip)
     call *%rax
+.Lrun_resume:
+    popq fr_recover_ds(%rip)
+    popq fr_recover_rsp(%rip)
 .Lrun_end:
     ret
+.Lrun_task:
+    jmp *%rax
 
 .global fr_s2_define
 fr_s2_define:

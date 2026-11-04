@@ -1,8 +1,9 @@
 /* FrancOS x86-64 interrupt foundation (BIOS QEMU proof, not a scheduler).
  * 256 ring-0 interrupt gates; unexpected vectors halt with serial 'X'.
+ * CPU exceptions are installed at boot by fr_cpu_init on a separate stack.
  * IRQ0 is a 100 Hz PIT timer with PIC remapped to vectors 32..47.
  * All registers touched by IRQ0 are saved; RFLAGS is restored by iretq.
- * No Ring 3, preemption, nested IRQs or fault recovery is claimed.
+ * No Ring 3, preemption or nested IRQs are claimed here.
  * Enable only explicitly through the native Franc 'irq-start' primitive.
  */
 .code64
@@ -46,9 +47,10 @@ fr_irq_start:
     cli
     /* Bind gates to the active CS selector, not an assumed firmware GDT. */
     movw %cs,%dx
-    leaq fr_irq_idt(%rip),%r8
+    /* Vectors below 32 keep the exception gates from fr_cpu_init. */
+    leaq fr_irq_idt+512(%rip),%r8
     leaq fr_irq_fault(%rip),%r9
-    xorq %rcx,%rcx
+    movl $32,%ecx
 .Lirq_gate_loop:
     movw %r9w,0(%r8)
     movw %dx,2(%r8)
@@ -357,3 +359,207 @@ fr_irq_fault:
 .Lirq_halt:
     hlt
     jmp .Lirq_halt
+
+/* CPU setup shared by BIOS and UEFI boot: GDT and TSS, exception gates, and
+ * 4 KiB mappings of the low 2 MiB for the stack guard and read-only code.
+ */
+.set FR_KERNEL_STACK_GUARD,0x100000
+.set FR_KERNEL_STACK_TOP,0x141000
+.section .bss
+.balign 4096
+fr_low_pt: .skip 4096
+fr_fault_stack: .skip 8192
+fr_recover_rsp: .skip 8
+fr_recover_ds: .skip 8
+.section .rodata
+faultmsg: .asciz "\nFAULT vector "
+faultatmsg: .asciz " at "
+faulthaltmsg: .asciz "\nHALTED: no recovery point\n"
+fr_fault_table:
+.irp v,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31
+    .quad fr_fault_\v
+.endr
+.section .text,"ax"
+.global fr_cpu_init
+fr_cpu_init:
+    leaq fr_fault_stack+8192(%rip),%rax
+    movq %rax,fr_ring3_tss+36(%rip) /* IST1 */
+    movw $104,fr_ring3_tss+102(%rip)
+    leaq fr_ring3_tss(%rip),%rax
+    movq %rax,%rcx
+    movw $103,fr_ring3_gdt+48(%rip)
+    movw %cx,fr_ring3_gdt+50(%rip)
+    shrq $16,%rcx
+    movb %cl,fr_ring3_gdt+52(%rip)
+    movb $0x89,fr_ring3_gdt+53(%rip)
+    movb $0,fr_ring3_gdt+54(%rip)
+    shrq $8,%rcx
+    movb %cl,fr_ring3_gdt+55(%rip)
+    shrq $8,%rcx
+    movl %ecx,fr_ring3_gdt+56(%rip)
+    leaq fr_ring3_gdt(%rip),%rax
+    movq %rax,fr_ring3_gdtr+2(%rip)
+    lgdt fr_ring3_gdtr(%rip)
+    pushq $0x18
+    leaq .Lcpu_new_cs(%rip),%rax
+    pushq %rax
+    lretq
+.Lcpu_new_cs:
+    movw $0x10,%ax
+    movw %ax,%ds
+    movw %ax,%es
+    movw %ax,%ss
+    movw %ax,%fs
+    movw %ax,%gs
+    movw $0x30,%ax
+    ltr %ax
+    /* Spurious vectors halt; exceptions use IST1 so a bad stack can report. */
+    leaq fr_irq_idt(%rip),%rdi
+    leaq fr_irq_fault(%rip),%rsi
+    movl $0x8e00,%edx
+    movl $256,%r8d
+.Lcpu_spurious:
+    call fr_ring3_setgate
+    addq $16,%rdi
+    decl %r8d
+    jnz .Lcpu_spurious
+    leaq fr_irq_idt(%rip),%rdi
+    leaq fr_fault_table(%rip),%r9
+    movl $0x8e01,%edx
+    movl $32,%r8d
+.Lcpu_exceptions:
+    movq (%r9),%rsi
+    call fr_ring3_setgate
+    addq $16,%rdi
+    addq $8,%r9
+    decl %r8d
+    jnz .Lcpu_exceptions
+    leaq fr_irq_idt(%rip),%rax
+    movq %rax,fr_irq_idtr+2(%rip)
+    lidt fr_irq_idtr(%rip)
+    /* Find the page directory, whichever loader built it. */
+    movabsq $0x000ffffffffff000,%rdx
+    movq %cr3,%rax
+    andq %rdx,%rax
+    movq (%rax),%rax
+    andq %rdx,%rax
+    movq (%rax),%rax
+    testb $0x80,%al
+    jnz .Lcpu_paging_done
+    andq %rdx,%rax
+    movq %rax,%r10
+    testb $0x80,(%r10)
+    jz .Lcpu_paging_done
+    /* Replace the first 2 MiB page with the same mapping in 4 KiB pages. */
+    leaq fr_low_pt(%rip),%rdi
+    xorl %eax,%eax
+    movq $__text_end,%r9
+    andq $-4096,%r9
+.Lcpu_low_page:
+    movq %rax,%rcx
+    orq $3,%rcx
+    cmpq $0x10000,%rax
+    jb .Lcpu_low_store
+    cmpq %r9,%rax
+    jae .Lcpu_low_store
+    andq $-3,%rcx              /* kernel code is read-only */
+.Lcpu_low_store:
+    cmpq $FR_KERNEL_STACK_GUARD,%rax
+    jne .Lcpu_low_write
+    xorl %ecx,%ecx             /* stack guard is not present */
+.Lcpu_low_write:
+    movq %rcx,(%rdi)
+    addq $8,%rdi
+    addq $4096,%rax
+    cmpq $0x200000,%rax
+    jne .Lcpu_low_page
+    leaq fr_low_pt(%rip),%rax
+    orq $3,%rax
+    movq %rax,(%r10)
+    movq %cr3,%rax
+    movq %rax,%cr3
+    movq %cr0,%rax
+    orq $0x10000,%rax          /* CR0.WP: read-only applies to ring 0 too */
+    movq %rax,%cr0
+.Lcpu_paging_done:
+    ret
+
+.irp v,0,1,2,3,4,5,6,7,9,15,16,18,19,20,22,23,24,25,26,27,28,31
+fr_fault_\v:
+    pushq $0
+    pushq $\v
+    jmp fr_cpu_fault
+.endr
+.irp v,8,10,11,12,13,14,17,21,29,30
+fr_fault_\v:
+    pushq $\v
+    jmp fr_cpu_fault
+.endr
+
+/* Stack: vector, error, rip, cs, rflags, rsp, ss. */
+fr_cpu_fault:
+    testb $3,24(%rsp)
+    jnz fr_irq_fault
+    cmpq $2,fr_preempt_mode(%rip)
+    jne .Lfault_report
+    cmpq $0,fr_preempt_current(%rip)
+    jne fr_task_abort_current
+.Lfault_report:
+    leaq faultmsg(%rip),%rdi
+    call fr_write_z
+    movq (%rsp),%rax
+    movl $2,%ecx
+    call fr_put_hex
+    leaq faultatmsg(%rip),%rdi
+    call fr_write_z
+    movq 16(%rsp),%rax
+    movl $16,%ecx
+    call fr_put_hex
+    movb $10,%al
+    call .Lfault_putc
+/* Resume after the innermost fr_s2_run, or halt if there is none. */
+fr_recover:
+    movq fr_recover_rsp(%rip),%rax
+    testq %rax,%rax
+    jz .Lfault_halt
+    movq %rax,%rsp
+    movq fr_recover_ds(%rip),%rax
+    movq %rax,ds_ptr(%rip)
+    cmpq $1,fr_irq_running(%rip)
+    jne .Lrun_resume
+    sti
+    jmp .Lrun_resume
+.Lfault_halt:
+    leaq faulthaltmsg(%rip),%rdi
+    call fr_write_z
+.Lfault_stop:
+    cli
+    hlt
+    jmp .Lfault_stop
+
+/* Print the low ecx hex digits of rax. */
+fr_put_hex:
+    pushq %rbx
+    pushq %r12
+    movq %rax,%rbx
+    movl %ecx,%r12d
+.Lhex_next:
+    leal -1(%r12),%ecx
+    shll $2,%ecx
+    movq %rbx,%rax
+    shrq %cl,%rax
+    andl $15,%eax
+    addb $'0',%al
+    cmpb $'9',%al
+    jbe .Lhex_emit
+    addb $39,%al
+.Lhex_emit:
+    call .Lfault_putc
+    decl %r12d
+    jnz .Lhex_next
+    popq %r12
+    popq %rbx
+    ret
+.Lfault_putc:
+    jmp fr_putc
+

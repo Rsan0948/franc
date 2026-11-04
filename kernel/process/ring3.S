@@ -117,6 +117,8 @@ fr_ring3_int80:
     jmp .Lproc_after_success
 
 fr_ring3_page_fault:
+    testb $3,16(%rsp)         /* kernel-mode faults are not user faults */
+    jz fr_fault_14
     cmpq $1,fr_user_enabled(%rip)
     je fr_user_page_fault
     cmpq $1,fr_space_active(%rip)
@@ -237,29 +239,9 @@ fr_ring3_probe:
     movq %cr3,%rax
     movq %rax,%cr3         /* flush translation caches after U/S changes */
 
-    /* Build protected TSS on a distinct kernel stack and install
-     * selectors without changing current kernel CS (0x18) or DS.
-     */
+    /* fr_cpu_init loaded the GDT and TSS at boot; set the ring-0 stack. */
     leaq fr_ring3_kernel_stack+16384(%rip),%rax
     movq %rax,fr_ring3_tss+4(%rip) /* 64-bit TSS RSP0 offset 4 */
-    movw $104,fr_ring3_tss+102(%rip)
-    leaq fr_ring3_tss(%rip),%rax
-    movq %rax,%rcx
-    movw $103,fr_ring3_gdt+48(%rip)
-    movw %cx,fr_ring3_gdt+50(%rip)
-    shrq $16,%rcx
-    movb %cl,fr_ring3_gdt+52(%rip)
-    movb $0x89,fr_ring3_gdt+53(%rip)
-    movb $0,fr_ring3_gdt+54(%rip)
-    shrq $8,%rcx
-    movb %cl,fr_ring3_gdt+55(%rip)
-    shrq $8,%rcx
-    movl %ecx,fr_ring3_gdt+56(%rip)
-    leaq fr_ring3_gdt(%rip),%rax
-    movq %rax,fr_ring3_gdtr+2(%rip)
-    lgdt fr_ring3_gdtr(%rip)
-    movw $0x30,%ax
-    ltr %ax
     /* Two protected gates: #PF with error code, software INT80 DPL3. */
     leaq fr_irq_idt+224(%rip),%rdi
     leaq fr_ring3_page_fault(%rip),%rsi
