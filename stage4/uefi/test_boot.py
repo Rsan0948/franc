@@ -114,6 +114,33 @@ with tempfile.TemporaryDirectory(prefix="franc-uefi-") as tmp:
         assert len(pixels)==w*h*3,(len(pixels),w,h)
         sample_step=max(3,(len(pixels)//1400)//3*3)
         palette={pixels[i:i+3] for i in range(0,len(pixels),sample_step)}
+        # A few firmware-colored pixels at y<10 are NOT proof of a
+        # kernel-owned framebuffer. Require colored native glyphs inside
+        # the real text viewport, which starts at y=32.
+        interior=0
+        for y in range(32,min(h,280),4):
+            for x in range(32,min(w,800),4):
+                idx=(y*w+x)*3
+                if any(pixels[idx:idx+3]):
+                    interior+=1
+        if interior<50:
+            print(f"FAIL: GOP screenshot had only {interior} inner nonblack samples, "
+                  f"colors={palette}",flush=True)
+            # Query real guest memory via its trusted REPL: this distinguishes
+            # a lost handoff from a broken display-memory mapping.
+            process.stdin.write(b"r")
+            process.stdin.flush()
+            time.sleep(1)
+            for query in (b"$70000 b@ .\\n", b"$70004 b@ .\\n",
+                          b"$70010 b@ .\\n", b"$70014 b@ .\\n"):
+                process.stdin.write(query)
+                process.stdin.flush()
+                time.sleep(1)
+                if select.select(0.25):
+                    log.extend(os.read(process.stdout.fileno(),16384))
+            print("GOP guest handoff diagnostic serial tail: "
+                  +repr(bytes(log[-3000:])),flush=True)
+            raise AssertionError("GOP text interior not rendered by FrancOS")
         assert len(palette)>1, "No native FrancOS glyphs on GOP screen"
         captures=Path(os.environ.get("FRANC_UEFI_CAPTURE_DIR",root/"uefi"/"screenshots"))
         captures.mkdir(parents=True,exist_ok=True)
