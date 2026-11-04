@@ -156,6 +156,61 @@ with tempfile.TemporaryDirectory(prefix="franc-uefi-") as tmp:
             raise AssertionError(f"UEFI guest did not load Franc apps: {bytes(log[-1600:])!r}")
         print("PASS: UEFI kernel loads Franc source applications from original ATA disk",
               flush=True)
+
+        def send_ui_key(key, marker, seconds=100):
+            start=len(log)
+            process.stdin.write(key)
+            process.stdin.flush()
+            deadline=time.monotonic()+seconds
+            while time.monotonic()<deadline and marker not in log[start:]:
+                if process.poll() is not None:
+                    break
+                if select.select(0.2):
+                    part=os.read(process.stdout.fileno(),16384)
+                    if not part:break
+                    log.extend(part)
+            if marker not in log[start:]:
+                raise AssertionError(("UEFI keyboard route missing",marker,
+                                      bytes(log[-1500:])))
+            print("PASS: UEFI native keyboard route "+repr(marker),flush=True)
+
+        def take_uefi_app_frame(label):
+            time.sleep(0.7)  # serial output precedes the actual guest glyphs
+            output=temp/(f"uefi-gop-{label}.ppm")
+            with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as hmp:
+                hmp.settimeout(25)
+                hmp.connect(str(monitor))
+                greeting=b""
+                while b"(qemu)" not in greeting:greeting+=hmp.recv(8192)
+                hmp.sendall(("screendump "+str(output)+"\n").encode("ascii"))
+                response=b""
+                while b"(qemu)" not in response:response+=hmp.recv(8192)
+                assert b"error" not in response.lower(),response
+            deadline=time.monotonic()+12
+            while not output.exists() and time.monotonic()<deadline:
+                time.sleep(0.1)
+            assert output.exists(), ("Missing real QEMU screenshot",label)
+            raw=output.read_bytes()
+            match=re.match(rb"P6\s+(\d+)\s+(\d+)\s+255\s",raw)
+            assert match,(label,raw[:64])
+            cw,ch=map(int,match.groups())
+            assert cw==w and ch==h,(label,cw,ch,w,h)
+            rgb=raw[match.end():]
+            assert len(rgb)==cw*ch*3,(label,len(rgb))
+            if cw>=980:
+                pos=(420*cw+760)*3
+                red,green,blue=rgb[pos:pos+3]
+                assert 25<=red<=50 and 35<=green<=65 and 45<=blue<=85,(
+                    "Native GOP panel missing in "+label,(red,green,blue))
+            shutil.copyfile(output,captures/output.name)
+            print(f"PASS: real UEFI FrancOS {label} frame {cw}x{ch}",flush=True)
+
+        send_ui_key(b"m",b"pkg> ",seconds=160)
+        take_uefi_app_frame("packages")
+        send_ui_key(b"\x1b",b"Franc> ")
+        send_ui_key(b"9",b"ide> ",seconds=160)
+        send_ui_key(b"e",b"FrancOS IDE")
+        take_uefi_app_frame("ide")
     finally:
         process.kill()
         process.wait()
