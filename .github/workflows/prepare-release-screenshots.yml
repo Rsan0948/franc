@@ -1,0 +1,69 @@
+name: Populate FrancOS release gallery from actual QEMU screenshots
+
+on:
+  push:
+    branches: [francos-release-screenshot-gallery]
+    paths:
+      - ".github/workflows/prepare-release-screenshots.yml"
+      - "tools/import_guest_screenshots.py"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  import-real-guest-pixels:
+    if: github.repository == 'Rsan0948/franc'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      # Frozen exact workflow runs. Input file SHA-256 is checked again by the
+      # converter before any binary is introduced to the source repository.
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          repository: Rsan0948/franc
+          run-id: 41754798736
+          name: francos-uefi-gop-guest-screen
+          path: ${{ runner.temp }}/franc-screens/gop-latest
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          repository: Rsan0948/franc
+          run-id: 41752456833
+          name: francos-uefi-gop-guest-screen
+          path: ${{ runner.temp }}/franc-screens/gop-original
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          repository: Rsan0948/franc
+          run-id: 41747370509
+          name: francos-wave4-initial-vga-screens
+          path: ${{ runner.temp }}/franc-screens/bios-ui
+      - name: Convert verified QEMU pixels to lossless PNG
+        run: python3 tools/import_guest_screenshots.py "$RUNNER_TEMP/franc-screens" docs/screenshots
+      - name: Confirm expected committed source assets
+        run: |
+          test -s docs/screenshots/home-uefi-1024x768.png
+          test -s docs/screenshots/home-uefi-initial-1024x768.png
+          test -s docs/screenshots/ide-bios-640x400.png
+          test -s docs/screenshots/packages-bios-640x400.png
+          test "$(find docs/screenshots -name '*.png' | wc -l)" -eq 6
+          (cd docs/screenshots && sha256sum -c SHA256SUMS)
+      - name: Commit screenshots only to this review branch
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          test "$BRANCH" = "francos-release-screenshot-gallery"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/screenshots/*.png docs/screenshots/SHA256SUMS
+          if ! git diff --cached --quiet; then
+            git commit -m "Add six lossless QEMU screenshot assets for launch gallery"
+            git push origin "HEAD:$BRANCH"
+          fi

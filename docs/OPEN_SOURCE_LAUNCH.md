@@ -51,3 +51,18 @@ documented in `docs/REPO_ARCHITECTURE.md`.
 Human review and explicit owner approval are still required before changing
 repository visibility. No automation in this branch makes the repository
 public or moves the frozen v1 tag.
+
+## Screenshot and release-media bundle
+
+- [ ] Confirm six lossless images in [`docs/screenshots/`](screenshots/README.md)
+      were imported from the pinned real-QEMU runs and passed SHA-256 checks.
+- [ ] Review updated Home, initial GOP, and BIOS IDE/Files/Packages images
+      for accurate captions, visual quality and sensitive information.
+- [ ] Make the new README gallery visible to first-time visitors.
+- [ ] Use [release-media draft](RELEASE_MEDIA.md) **only after** the next
+      graphics release tag has passed its full QEMU gate. Pin image links to
+      that tag rather than a moving `main`.
+- [ ] Attach final PNGs to the future GitHub Release alongside the tested
+      binary and source artifacts after the maintainer approves publication.
+- [ ] Do not move/rewrite the v1 experimental tag or claim its 320×200
+      BIOS build already had the post-v1 1024×768 GOP interface.
