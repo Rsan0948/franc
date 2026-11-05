@@ -12,6 +12,7 @@ on:
       - 'tests/asm_speed/**'
       - 'tests/toolchain/**'
       - 'tests/link/**'
+      - 'tests/image/**'
       - 'lib/toolchain.frac'
       - 'build/toolchain*'
       - 'franctxt/**'
@@ -26,6 +27,7 @@ on:
       - 'tests/asm_speed/**'
       - 'tests/toolchain/**'
       - 'tests/link/**'
+      - 'tests/image/**'
       - 'lib/toolchain.frac'
       - 'build/toolchain*'
       - 'franctxt/**'
@@ -51,7 +53,7 @@ jobs:
           done
   foundations:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - name: Install QEMU
@@ -66,3 +68,5 @@ jobs:
         run: bash tests/asm_speed/run.sh build/out/francos-bios.img
       - name: The Franc linker matches GNU ld and objcopy
         run: bash tests/link/run.sh build/out/francos-bios.img build/out/boot.bin build/out/kernel.bin
+      - name: The OS rebuilds itself on a second disk and the result boots
+        run: bash tests/image/run.sh build/out/francos-bios.img

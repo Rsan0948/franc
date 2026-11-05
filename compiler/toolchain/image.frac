@@ -1,0 +1,48 @@
+\ Builds a complete bootable FrancOS image on the second disk from the sources in the
+\ toolchain archive: compiles the kernel to assembly, assembles and links it, and lays
+\ it out as build/pack_image.sh does. The running disk is only read.
+
+\ JIT source must assign a variable before it reads one.
+def im-declare 0 :im-left 0 :im-done 0 :im-total ;
+
+def im-seed $4800000 ;
+def im-seed-end $4A00000 ;
+def im-disk $4A00000 ;
+def im-digests $4D00000 ;
+def im-sector 512 * im-disk + ;
+
+def im-fail "BUILD FAILED: " type type cr 0 ;
+def im-find :im-fn :im-fs :im-fe :im-fb begin im-fb im-fe - while im-fb im-fs im-fn as-same-text ifnz im-fb exit then im-fb 1 + :im-fb repeat 0 ;
+def im-keep :im-ks :im-kp im-digests im-ks 64 * + im-kp 64 ld-copy ;
+def im-kept 64 * im-digests + ;
+
+\ The second disk must be blank or already hold FrancOS. Anything else is someone's data.
+def im-blank? 0 :im-i begin im-i 512 - while im-i sector-byte@ ifnz 0 exit then im-i 1 + :im-i repeat 1 ;
+def im-target-check 0 ata-read-sector if0 "BUILD REFUSED: NO SECOND DISK" type cr 0 exit then im-blank? ifnz 1 exit then 128 ata-read-sector if0 "BUILD REFUSED: NO SECOND DISK" type cr 0 exit then fs-magic? ifnz 1 exit then "BUILD REFUSED: SECOND DISK IN USE" type cr 0 ;
+def im-target-ok 1 ata-drive! im-target-check :im-t 0 ata-drive! im-t ;
+
+\ The compiler writes to the console, so its output is captured to memory.
+def im-compile "kernel-source.stream" tc-find :im-r im-r if0 "NO KERNEL SOURCE" im-fail exit then im-seed im-seed-end capture-start im-r tc-addr aot-kernel-from-source :im-ok capture-stop :im-end im-end if0 "COMPILER OUTPUT TOO LARGE" im-fail exit then im-ok if0 "COMPILER REFUSED SOURCE" im-fail exit then im-seed im-end "FRANC-PROGRAM-BEGIN" 19 im-find :im-b im-b if0 "NO COMPILER OUTPUT" im-fail exit then im-b im-end "FRANC-PROGRAM-END" 17 im-find :im-e im-e if0 "COMPILER OUTPUT CUT SHORT" im-fail exit then im-b 20 + :im-seed-text im-e 0 ! im-seed-text im-e im-seed-text - sha256-long 0 im-keep 1 ;
+
+def im-zero :im-zn 0 :im-i begin im-i im-zn - while im-disk im-i + 0 ! im-i 1 + :im-i repeat ;
+\ Kernel extents, in the order boot/bios/boot.S loads them.
+def im-extent :im-xn :im-xl im-left neg if im-xn 512 * :im-xb im-left im-xb - if im-left :im-xb then im-xl im-sector ld-image im-done + im-xb ld-copy im-done im-xb + :im-done im-left im-xb - :im-left then ;
+def im-kernel :im-left 0 :im-done 1 127 im-extent 200 64 im-extent 264 127 im-extent 391 64 im-extent ;
+def im-link ld-boot :im-n im-n 512 - ifnz "BOOT SECTOR" im-fail exit then im-disk ld-image 512 ld-copy ld-image 512 sha256-long 1 im-keep im-seed-text ld-kernel-text :im-n im-n if0 "KERNEL LINK" im-fail exit then 195584 im-n - if "KERNEL TOO LARGE" im-fail exit then ld-image im-n sha256-long 2 im-keep im-n im-kernel 1 ;
+
+\ FRANCFS1 with the two files build/pack_image.sh installs, taken from the running disk.
+def im-name-copy :im-nd :im-ns begin im-ns byte@ :im-c im-c neg while im-nd im-c ! im-nd 1 + :im-nd im-ns 1 + :im-ns repeat ;
+def im-file :im-fslot :im-fname im-fname fs-source :im-fp im-fp if0 0 exit then im-fp fs-len :im-fl 136 im-fslot 4 * + im-sector im-fp im-fl ld-copy 129 im-sector im-fslot 32 * + :im-fd im-fname im-fd im-name-copy im-fd 24 + im-fl 256 % ! im-fd 25 + im-fl 256 / floor ! im-fl ;
+def im-files 128 im-sector :im-m "FRANCFS1" im-m im-name-copy "kernel.franctxt" 0 im-file :im-man-size im-man-size if0 "NO MANIFEST" im-fail exit then "system.franctxt" 1 im-file :im-cfg-size im-cfg-size if0 "NO CONFIG" im-fail exit then 1 ;
+def im-apps bundle-app-source :im-as im-as if0 "NO APP BUNDLE" im-fail exit then "FRANCSRC" 1024 im-sector im-name-copy 0 :im-al begin im-as im-al + byte@ neg while im-al 1 + :im-al repeat im-al 1 + :im-al 1025 im-sector im-as im-al ld-copy im-as im-al sha256-long 3 im-keep 1 ;
+
+\ Each digest in the manifest has a fixed width, so it is replaced in place.
+def im-patch :im-ph :im-kl :im-kt 136 im-sector :im-ms im-ms im-ms im-man-size + im-kt im-kl im-find :im-at im-at if0 1 :ld-failed exit then im-at im-kl + 11 + im-ph 64 ld-copy ;
+def im-file-hash tc-find :im-r im-r if0 1 :ld-failed im-digests exit then im-r 63 + ;
+def im-manifest 0 :ld-failed "build.seed-assembly-sha256" 26 0 im-kept im-patch "build.boot-sha256" 17 1 im-kept im-patch "build.kernel-sha256" 19 2 im-kept im-patch "build.apps-sha256" 17 3 im-kept im-patch "build.runtime-sha256" 20 "runtime/abi.S" im-file-hash im-patch "build.memory-map-sha256" 23 "franctxt/memory.franctxt" im-file-hash im-patch "build.registry-sha256" 21 "stage4/apps/registry.frac" im-file-hash im-patch "build.config-sha256" 19 140 im-sector im-cfg-size ft-sha256 im-patch ld-failed ifnz "MANIFEST" im-fail exit then 1 ;
+
+def im-write-all 0 :im-w begin im-w im-total - while im-w im-sector :im-wp 0 :im-i begin im-i 512 - while im-i im-wp im-i + byte@ sector-byte! im-i 1 + :im-i repeat im-w ata-write-sector if0 "DISK WRITE" im-fail exit then im-w 1 + :im-w repeat 1 ;
+def im-verify 0 :im-w begin im-w im-total - while im-w ata-read-sector if0 "DISK READ BACK" im-fail exit then im-w im-sector :im-wp 0 :im-i begin im-i 512 - while im-i sector-byte@ im-wp im-i + byte@ - ifnz "DISK READ BACK" im-fail exit then im-i 1 + :im-i repeat im-w 1 + :im-w repeat 1 ;
+def im-to-disk 1 ata-drive! 0 im-total ata-write-region im-write-all :im-ok im-ok ifnz im-verify :im-ok then 0 0 ata-write-region 0 ata-drive! im-ok ;
+
+def im-build "BUILD START" type cr im-target-ok if0 exit then tc-bytes 512 / floor 2048 + :im-total im-total 512 * im-zero "BUILD COMPILE" type cr im-compile if0 exit then "BUILD LINK" type cr im-link if0 exit then im-files if0 exit then im-apps if0 exit then 2048 im-sector tc-base tc-bytes ld-copy im-manifest if0 exit then "BUILD WRITE" type cr im-to-disk if0 exit then "IMAGE SHA " type im-disk im-total 512 * sha256-long type cr "IMAGE READY" type cr ;

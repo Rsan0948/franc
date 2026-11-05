@@ -17,3 +17,6 @@ stage2/compiler.frac
 compiler/toolchain/assembler.frac
 compiler/toolchain/x86.table
 compiler/toolchain/linker.frac
+compiler/toolchain/image.frac
+franctxt/memory.franctxt
+stage4/apps/registry.frac
