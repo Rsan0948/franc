@@ -1,0 +1,57 @@
+\ Links objects from assembler.frac into a flat binary, the way kernel/kernel.ld and
+\ objcopy do: text.entry, text, rodata and data in input order, each aligned as its
+\ object asked, then bss. Anything it cannot place exactly is refused.
+
+\ JIT source must assign a variable before it reads one.
+def ld-declare 0 :ld-ng 0 :ld-no 0 :ld-a ;
+
+def ld-sections $4000000 ;
+def ld-rels $4200000 ;
+def ld-globals $4600000 ;
+def ld-hash $4640000 ;
+def ld-names $4650000 ;
+def ld-objs $4670000 ;
+def ld-image $4700000 ;
+
+def ld-copy :ld-cn :ld-cs :ld-cd begin ld-cn neg while ld-cd ld-cs byte@ ! ld-cd 1 + :ld-cd ld-cs 1 + :ld-cs ld-cn 1 - :ld-cn repeat ;
+def ld-up :ld-ua :ld-uv ld-uv ld-ua + 1 - ld-ua / floor ld-ua * ;
+
+\ Section record, 16 bytes per section number in a 96-byte object record: data 4,
+\ size 3, alignment 3, address 4.
+def ld-sec :ld-ss :ld-sn ld-sn 96 * ld-objs + ld-ss 16 * + ;
+def ld-addr ld-sec 10 + as-g4 ;
+
+\ Global record, 16 bytes: name 4, length 1, defined 1, object 1, section 1, offset 4.
+def ld-global 16 * ld-globals + ;
+def ld-new :ld-nl :ld-np ld-ng 8191 - if0 "symbols" as-limit 1 :ld-failed 0 exit then ld-ng 1 + :ld-ng ld-ng ld-global :ld-gr ld-gr ld-no as-p4 ld-gr 4 + ld-nl ! ld-gr 5 + 0 ! ld-no ld-np ld-nl ld-copy ld-no ld-nl + :ld-no ld-ng ;
+def ld-find :ld-nl :ld-np 0 :ld-h 0 :ld-i begin ld-i ld-nl - while ld-h 31 * ld-np ld-i + byte@ + 1048575 band :ld-h ld-i 1 + :ld-i repeat ld-h 16383 band :ld-b begin ld-hash ld-b 3 * + :ld-ba ld-ba as-g3 :ld-g ld-g if0 ld-np ld-nl ld-new :ld-g ld-ba ld-g as-p3 ld-g exit then ld-g ld-global :ld-gr ld-gr 4 + byte@ ld-nl - if0 ld-gr as-g4 ld-np ld-nl as-same-text ifnz ld-g exit then then ld-b 1 + 16383 band :ld-b again ;
+def ld-show ld-global :ld-gr 0 :ld-i begin ld-i ld-gr 4 + byte@ - while ld-gr as-g4 ld-i + byte@ emit ld-i 1 + :ld-i repeat cr ;
+def ld-define :ld-do :ld-ds :ld-dobj :ld-dg ld-dg ld-global :ld-gr ld-gr 5 + byte@ ifnz "LD-DUPLICATE " type ld-dg ld-show 1 :ld-failed exit then ld-gr 5 + 1 ! ld-gr 6 + ld-dobj ! ld-gr 7 + ld-ds ! ld-gr 8 + ld-do as-p4 ;
+
+def ld-reset 0 :ld-failed 0 :ld-nobj 0 :ld-ng 0 :ld-nr ld-sections :ld-so ld-names :ld-no 0 :ld-i begin ld-i 49152 - while ld-hash ld-i + 0 ! ld-i 1 + :ld-i repeat ;
+\ Keeps one section of the object just assembled.
+def ld-keep :ld-kn :ld-kp :ld-ks ld-nobj ld-ks ld-sec :ld-kr ld-kr ld-so as-p4 ld-kr 4 + ld-kn as-p3 ld-kr 7 + as-sec-align ld-ks 3 * + as-g3 as-p3 ld-kp ifnz ld-so ld-kp ld-kn ld-copy ld-so ld-kn + :ld-so then ;
+def ld-exports 1 :ld-i2 begin ld-i2 as-nsym 1 + - while ld-i2 as-rec :ld-r ld-r 4 + byte@ :ld-rs ld-rs 7 - if0 "LD-COMMON" type cr 1 :ld-failed then ld-r 11 + byte@ 3 - if0 ld-r as-g3 as-src + ld-r 3 + byte@ ld-find ld-nobj ld-rs ld-i2 as-final ld-define then ld-i2 1 + :ld-i2 repeat ;
+\ Relocation record, 20 bytes: section 1, offset 3, size 1, pc 1, tail 1, global 1,
+\ target section 1, target 3, addend 4, object 1.
+def ld-rel 20 * ld-rels + ;
+def ld-external? :ld-er ld-er 11 + byte@ 1 band ifnz 1 exit then ld-er 4 + byte@ if0 1 exit then 0 ;
+def ld-reloc :ld-f ld-f 13 + as-g3 ifnz "LD-CROSS-SECTION" type cr 1 :ld-failed exit then ld-nr 209714 - if0 "relocations" as-limit 1 :ld-failed exit then ld-nr ld-rel :ld-t ld-t ld-f 3 + byte@ ! ld-t 1 + ld-f 21 + as-g3 as-p3 ld-t 4 + ld-f 7 + byte@ ! ld-t 5 + ld-f 8 + byte@ ! ld-t 6 + ld-f 9 + byte@ ! ld-t 16 + ld-nobj ! ld-t 12 + ld-f 16 + as-g4 as-p4 ld-f 10 + as-g3 :ld-y ld-y as-rec :ld-r ld-r ld-external? ifnz ld-t 7 + 1 ! ld-t 9 + ld-r as-g3 as-src + ld-r 3 + byte@ ld-find as-p3 else ld-t 7 + 0 ! ld-t 8 + ld-r 4 + byte@ ! ld-t 9 + ld-y as-final as-p3 then ld-nr 1 + :ld-nr ;
+def ld-relocs 0 :ld-i2 begin ld-i2 as-nf - while ld-i2 as-fix-rec :ld-fx ld-fx 20 + byte@ if0 ld-fx ld-reloc then ld-i2 1 + :ld-i2 repeat ;
+def ld-add :ld-file ld-file as-assemble if0 1 :ld-failed exit then 1 as-out-text as-text-end as-out-text - ld-keep 5 as-out-entry as-entry-end as-out-entry - ld-keep 2 as-ro as-saved 8 + as-g4 as-ro - ld-keep 3 as-data as-saved 12 + as-g4 as-data - ld-keep 4 0 as-saved 16 + as-g4 as-bss-base - ld-keep ld-exports ld-relocs ld-nobj 1 + :ld-nobj ;
+
+def ld-max-align :ld-ms 1 :ld-m 0 :ld-o begin ld-o ld-nobj - while ld-o ld-ms ld-sec 7 + as-g3 :ld-v ld-m ld-v - if ld-v :ld-m then ld-o 1 + :ld-o repeat ld-m ;
+def ld-place :ld-ps 0 :ld-o begin ld-o ld-nobj - while ld-o ld-ps ld-sec :ld-kr ld-a ld-kr 7 + as-g3 ld-up :ld-a ld-kr 10 + ld-a as-p4 ld-a ld-kr 4 + as-g3 + :ld-a ld-o 1 + :ld-o repeat ;
+def ld-layout :ld-a ld-a :ld-base 1 ld-max-align :ld-m 5 ld-max-align :ld-v ld-m ld-v - if ld-v :ld-m then ld-a ld-m ld-up :ld-a 5 ld-place 1 ld-place ld-a :ld-text-end ld-a 2 ld-max-align ld-up :ld-a 2 ld-place ld-a 3 ld-max-align ld-up :ld-a 3 ld-place ld-a :ld-flat-end ld-a 16 ld-up :ld-a ld-a :ld-bss-start ld-a 4 ld-max-align ld-up :ld-a 4 ld-place ld-a :ld-bss-end ;
+def ld-symbol :ld-sv :ld-sl :ld-sp ld-sp ld-sl ld-find 0 6 ld-sv ld-define ;
+
+def ld-target :ld-t ld-t 7 + byte@ ifnz ld-t 9 + as-g3 :ld-g ld-g ld-global :ld-gr ld-gr 5 + byte@ if0 "LD-UNDEFINED " type ld-g ld-show 1 :ld-failed 0 exit then ld-gr 7 + byte@ 6 - if0 ld-gr 8 + as-g4 exit then ld-gr 6 + byte@ ld-gr 7 + byte@ ld-addr ld-gr 8 + as-g4 + exit then ld-t 16 + byte@ ld-t 8 + byte@ ld-addr ld-t 9 + as-g3 + ;
+def ld-range? :ld-rv :ld-rp :ld-rz ld-rz 8 - if0 1 exit then ld-rz 1 - if0 ld-rv as-fit8 exit then ld-rz 2 - if0 ld-rv 32768 + if 0 exit then ld-rp ifnz 32767 ld-rv - if 0 exit then 1 exit then 65535 ld-rv - if 0 exit then 1 exit then ld-rv as-fit32 ifnz 1 exit then ld-rp if0 ld-rv 0 - if 0 exit then 4294967295 ld-rv - if 0 exit then 1 exit then 0 ;
+def ld-apply :ld-i3 ld-i3 ld-rel :ld-q ld-q 16 + byte@ ld-q byte@ ld-addr ld-q 1 + as-g3 + :ld-pos ld-q 4 + byte@ :ld-z ld-q ld-target ld-q 12 + as-g4 + :ld-val ld-q 5 + byte@ :ld-pc ld-pc ifnz ld-val ld-pos ld-z + ld-q 6 + byte@ + - :ld-val then ld-z ld-pc ld-val ld-range? if0 "LD-RANGE" type cr 1 :ld-failed exit then ld-image ld-pos ld-base - + ld-val ld-z as-put-n ;
+def ld-copy-section :ld-cs2 0 :ld-o begin ld-o ld-nobj - while ld-o ld-cs2 ld-sec :ld-kr ld-image ld-kr 10 + as-g4 ld-base - + ld-kr as-g4 ld-kr 4 + as-g3 ld-copy ld-o 1 + :ld-o repeat ;
+\ Returns the image size, or 0 when the link was refused.
+def ld-finish :ld-b0 ld-failed ifnz 0 exit then ld-b0 ld-layout ld-flat-end ld-base - :ld-size ld-size 1048576 - neg if "LD-TOO-LARGE" type cr 0 exit then "__bss_start" 11 ld-bss-start ld-symbol "__bss_end" 9 ld-bss-end ld-symbol "__text_end" 10 ld-text-end ld-symbol 0 :ld-i begin ld-i ld-size - while ld-image ld-i + 0 ! ld-i 1 + :ld-i repeat 5 ld-copy-section 1 ld-copy-section 2 ld-copy-section 3 ld-copy-section 0 :ld-i begin ld-i ld-nr - while ld-i ld-apply ld-i 1 + :ld-i repeat ld-failed ifnz 0 exit then ld-size ;
+def ld-report :ld-rn "LD-SIZE " type ld-rn . ld-rn ifnz "LD-SHA " type ld-image ld-rn sha256-long type cr then ;
+def ld-dump :ld-dn "LD-IMAGE" type cr ld-image ld-image ld-dn + as-dump "LD-IMAGE-END" type cr ;
+def ld-boot ld-reset "boot/bios/boot.S" ld-add $7C00 ld-finish ;
+def ld-kernel :ld-seed ld-reset "runtime/abi.S" ld-add "drivers/video/font.S" ld-add ld-seed ld-add $10000 ld-finish ;
