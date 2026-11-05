@@ -2,11 +2,11 @@ name: Franc BIOS E820 and sequential CPL3 process fault containment
 on:
   pull_request:
     paths:
-      - 'stage4/boot.S'
-      - 'stage4/e820.S'
-      - 'stage4/scheduler.S'
-      - 'stage4/ring3.S'
-      - 'stage4/runtime.S'
+      - 'boot/bios/boot.S'
+      - 'kernel/memory/e820.S'
+      - 'kernel/scheduler/scheduler.S'
+      - 'kernel/process/ring3.S'
+      - 'runtime/abi.S'
       - 'stage4/qemu_irq.py'
       - 'stage4/Makefile.native'
       - 'stage4/Makefile'
@@ -15,11 +15,11 @@ on:
   push:
     branches: [stage4-roadmap-foundations]
     paths:
-      - 'stage4/boot.S'
-      - 'stage4/e820.S'
-      - 'stage4/scheduler.S'
-      - 'stage4/ring3.S'
-      - 'stage4/runtime.S'
+      - 'boot/bios/boot.S'
+      - 'kernel/memory/e820.S'
+      - 'kernel/scheduler/scheduler.S'
+      - 'kernel/process/ring3.S'
+      - 'runtime/abi.S'
       - 'stage4/qemu_irq.py'
       - 'stage4/Makefile.native'
       - 'stage4/Makefile'

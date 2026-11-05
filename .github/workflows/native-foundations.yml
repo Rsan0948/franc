@@ -10,6 +10,7 @@ on:
       - 'drivers/storage/**'
       - 'tests/foundations/**'
       - 'tests/asm_speed/**'
+      - 'franctxt/**'
       - '.github/workflows/native-foundations.yml'
   pull_request:
     paths:
@@ -19,12 +20,27 @@ on:
       - 'drivers/storage/**'
       - 'tests/foundations/**'
       - 'tests/asm_speed/**'
+      - 'franctxt/**'
       - '.github/workflows/native-foundations.yml'
 
 permissions:
   contents: read
 
 jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install test dependency
+        run: python3 -m pip install --quiet cryptography
+      - name: Every contract test in one place
+        run: |
+          # test_native_disk.py is a script that needs a built image, so franctxt.yml runs it.
+          for test in franctxt/tests/test_*.py; do
+            [ "$test" = franctxt/tests/test_native_disk.py ] && continue
+            python3 -m unittest discover -s franctxt/tests -p "$(basename "$test")"
+          done
   foundations:
     runs-on: ubuntu-latest
     timeout-minutes: 20
