@@ -1,0 +1,1 @@
+movq %zzz,%rax
