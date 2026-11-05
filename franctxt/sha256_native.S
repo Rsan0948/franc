@@ -4,6 +4,8 @@
  * -> rax points to static 64-byte lowercase hex plus trailing NUL.
  * Computes SHA256("franctxt/1" + NUL + canonical document bytes).
  * Null return for null pointer or byte_count > 2047.
+ * ft_sha256_long(rdi=bytes, rsi=byte_count) is SHA256(raw bytes) of any length:
+ * whole blocks are read in place and only the tail is copied to the workspace.
  * NON-REENTRANT: static workspaces; intended for trusted single-core
  * kernel operations only, not untrusted or preemptible execution.
  */
@@ -42,6 +44,9 @@
 .Lft_sha_state: .skip 32
 .balign 16
 .Lft_sha_output: .skip 65
+.balign 8
+.Lft_sha_cursor: .skip 8
+.Lft_sha_direct: .skip 8
 
 .section .text,"ax"
 .global ft_sha256_raw
@@ -49,15 +54,24 @@
 ft_sha256_raw:
     xorq %r8,%r8
     jmp .Lft_sha_entry
+.global ft_sha256_long
+.type ft_sha256_long,@function
+ft_sha256_long:
+    xorq %r8,%r8
+    movq %rsi,%r9
+    shrq $6,%r9
+    jmp .Lft_sha_checked
 .global ft_sha256_canonical
 .type ft_sha256_canonical,@function
 ft_sha256_canonical:
     movq $11,%r8
 .Lft_sha_entry:
-    testq %rdi,%rdi
-    jz .Lft_sha_fail
     cmpq $2047,%rsi
     ja .Lft_sha_fail
+    xorq %r9,%r9
+.Lft_sha_checked:
+    testq %rdi,%rdi
+    jz .Lft_sha_fail
     pushq %rbx
     pushq %rbp
     pushq %r12
@@ -67,6 +81,8 @@ ft_sha256_canonical:
     movq %rdi,%r14
     movq %rsi,%r13
     movq %r8,%r15      /* caller-selected domain prefix (0 or 11) */
+    movq %r9,.Lft_sha_direct(%rip)  /* whole blocks read in place */
+    movq %rdi,.Lft_sha_cursor(%rip)
     /* Reset 2176 bytes of message workspace. */
     leaq .Lft_sha_message(%rip),%rdi
     movl $272,%ecx
@@ -84,13 +100,17 @@ ft_sha256_canonical:
     movl $11,%ecx
     rep movsb
 .Lft_sha_skip_domain:
-    /* Copy exact payload/document bytes. */
-    movq %r14,%rsi
+    /* Copy exact payload/document bytes, after any in-place blocks. */
+    movq .Lft_sha_direct(%rip),%rax
+    shlq $6,%rax
+    leaq (%r14,%rax),%rsi
     movq %r13,%rcx
+    subq %rax,%rcx
+    movq %rcx,%r14
     rep movsb
     movb $0x80,(%rdi)
-    /* Number of 64-byte blocks = ceil((11 + document_bytes + 9)/64). */
-    leaq 72(%r13),%r14
+    /* Number of workspace blocks = ceil((11 + tail_bytes + 9)/64). */
+    addq $72,%r14
     addq %r15,%r14
     shrq $6,%r14
     /* Last 64-bit message-length field is big endian, in bits. */
@@ -102,6 +122,7 @@ ft_sha256_canonical:
     shlq $6,%r10
     subq $8,%r10
     movq %rax,(%r11,%r10)
+    addq .Lft_sha_direct(%rip),%r14
     /* Reset eight digest state words. */
     leaq .Lft_sha_initial(%rip),%rsi
     leaq .Lft_sha_state(%rip),%rdi
@@ -111,10 +132,13 @@ ft_sha256_canonical:
 .Lft_block:
     cmpq %r14,%r13
     jae .Lft_finished
-    leaq .Lft_sha_message(%rip),%r11
-    movq %r13,%rax
-    shlq $6,%rax
-    addq %rax,%r11
+    cmpq .Lft_sha_direct(%rip),%r13
+    jne .Lft_block_cursor
+    leaq .Lft_sha_message(%rip),%rax
+    movq %rax,.Lft_sha_cursor(%rip)
+.Lft_block_cursor:
+    movq .Lft_sha_cursor(%rip),%r11
+    addq $64,.Lft_sha_cursor(%rip)
     leaq .Lft_sha_schedule(%rip),%r12
     xorq %rcx,%rcx
 .Lft_load16:

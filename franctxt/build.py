@@ -25,9 +25,11 @@ REGISTRY_PATH = "stage4/apps/registry.frac"
 COMPILER_PATH = "stage2/compiler.frac"
 AOT_PATH = "stage4/aot.frac"
 APP_MARKER = 1024 * 512
+DICTIONARY_ENTRIES = 4096
 APP_START = 1025 * 512
 KEY_RE = re.compile(r"(?<![A-Za-z0-9_-]):([a-z][a-z0-9-]*)")
 STR_RE = re.compile(r'"(?:\\.|[^"\\])*"')
+DEF_RE = re.compile(r"^def ", re.M)
 
 
 class BuildAuthorityError(FranctxtError):
@@ -144,19 +146,24 @@ def declared_registers(code: str) -> set[str]:
 
 
 def check_app_registers(root: Path) -> set[str]:
+    """The JIT creates variables as it meets them, so what can run out is dictionary space."""
     declared = declared_registers(full_path(root, REGISTRY_PATH).read_text())
-    # Core kernel register names are already present in the native seed.
+    words = 0
     for name in listed_sources(root, SEED_SOURCE_LIST):
-        declared |= declared_registers(full_path(root, name).read_text())
+        code = full_path(root, name).read_text()
+        declared |= declared_registers(code)
+        words += len(DEF_RE.findall(code))
     required = set()
     for name in listed_sources(root, APP_SOURCE_LIST):
-        required |= declared_registers(full_path(root, name).read_text())
-    missing = required - declared
-    if missing:
+        code = full_path(root, name).read_text()
+        required |= declared_registers(code)
+        words += len(DEF_RE.findall(code))
+    # A variable takes two entries: one to read it and one to set it.
+    entries = words + 2 * len(declared | required)
+    if entries > DICTIONARY_ENTRIES:
         raise BuildAuthorityError(
-            "NATIVE APP REGISTRY MISMATCH: app bundle declares registers "
-            "unknown to the compiled kernel seed: " + ", ".join(sorted(missing))
-            + ". Update stage4/apps/registry.frac, regenerate and pin seed."
+            f"NATIVE DICTIONARY OVERFLOW: kernel and app bundle need {entries} "
+            f"entries of {DICTIONARY_ENTRIES}. Raise S2_DICT_ENTRIES and pin seed."
         )
     return required
 

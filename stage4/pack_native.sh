@@ -32,6 +32,9 @@ done < stage4/app_sources.list
 test "$#" -gt 0
 FRANC_SOURCE_LBA=1024 sh stage4/source_pack.sh "$image" "$@"
 
+# The toolchain archive lets the guest rebuild this image without host tools.
+sh build/toolchain_pack.sh "$image"
+
 # Persist Franctxt kernel build identity and editable initial config.
 revision=$(git rev-parse --verify HEAD 2>/dev/null || printf untracked)
 sh franctxt/install_native.sh "$image" "$kernel" "$revision" "$boot"

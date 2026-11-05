@@ -57,15 +57,18 @@ class BuildAuthority(unittest.TestCase):
         with self.assertRaisesRegex(BuildAuthorityError, "STALE BOOTSTRAP SEED"):
             check_seed(self.root)
 
-    def test_missing_register_detected_before_guest(self):
+    def test_new_app_variable_needs_no_seed_change(self):
         pin_seed(self.root)
         self.put("stage4/apps/example.frac", "def f known :new-register ;\n")
-        with self.assertRaisesRegex(BuildAuthorityError, "REGISTRY MISMATCH"):
+        self.assertIn("new-register", check_app_registers(self.root))
+        check_seed(self.root)
+
+    def test_dictionary_overflow_detected_before_guest(self):
+        pin_seed(self.root)
+        names = " ".join(f"0 :v{index}" for index in range(2100))
+        self.put("stage4/apps/example.frac", f"def f {names} ;\n")
+        with self.assertRaisesRegex(BuildAuthorityError, "DICTIONARY OVERFLOW"):
             check_app_registers(self.root)
-        self.put("stage4/apps/registry.frac",
-                 "def app-register-seed 0 :known 0 :new-register ;\n")
-        self.assertEqual(check_app_registers(self.root),
-                         {"new-register"})
 
     def test_list_is_single_source_of_truth(self):
         self.assertEqual(packed_apps(self.root),

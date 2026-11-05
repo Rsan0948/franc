@@ -26,7 +26,7 @@ $(OUT)/kernel.elf: $(OUT)/seed.o $(OUT)/runtime.o $(OUT)/font.o kernel/kernel.ld
 	$(LD) -m elf_x86_64 -nostdlib -T kernel/kernel.ld -o $@ $(OUT)/runtime.o $(OUT)/font.o $(OUT)/seed.o
 $(OUT)/kernel.bin: $(OUT)/kernel.elf
 	$(OBJCOPY) -O binary -j .text -j .rodata -j .data $< $@
-$(OUT)/francos-bios.img: $(OUT)/boot.bin $(OUT)/kernel.bin build/pack_image.sh build/source_pack.sh build/app_sources.list build/seed_sources.list franctxt/install_native.sh franctxt/build.franctxt franctxt/memory.franctxt franctxt/seed.lock.franctxt $(APP_SOURCES) $(SEED_SOURCES)
+$(OUT)/francos-bios.img: $(OUT)/boot.bin $(OUT)/kernel.bin build/pack_image.sh build/source_pack.sh build/app_sources.list build/seed_sources.list build/toolchain_pack.sh build/toolchain_sources.list franctxt/install_native.sh franctxt/build.franctxt franctxt/memory.franctxt franctxt/seed.lock.franctxt $(APP_SOURCES) $(SEED_SOURCES)
 	sh build/pack_image.sh $(OUT)/boot.bin $(OUT)/kernel.bin $@
 bios: $(OUT)/francos-bios.img
 abi: $(OUT)/runtime.o $(OUT)/font.o $(OUT)/boot.bin

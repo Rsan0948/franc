@@ -1,11 +1,12 @@
 \ Minimal x86-64 assembler for the instruction forms in compiler/bootstrap_seed.S.
-\ Phase 3 speed test: it reads the seed from disk and builds .text, .rodata and
-\ .data. Branches are sized the way GNU as sizes them, so the bytes can be
-\ compared exactly. References it cannot resolve are left as zero, as in an
-\ object file. Fixed work areas are safe here only because this runs in a
-\ throwaway test kernel.
+\ It reads the seed from the toolchain archive and builds .text, .rodata and .data.
+\ Branches are sized the way GNU as sizes them, so the bytes can be compared
+\ exactly. References it cannot resolve are left as zero, as in an object file.
 
-def as-src 41943040 ;
+\ JIT source must assign a variable before it reads one.
+def as-declare 0 :as-o 0 :as-p 0 :as-end-offset 0 :as-nsym 0 :as-sec 0 :as-nj 0 :as-nf 0 :as-nq 0 :as-pold 0 :as-pnew 0 :as-cs 0 :as-co ;
+
+def as-src $2800000 ;
 def as-short 44040192 ;
 def as-text 45088768 ;
 def as-ro 46137344 ;
@@ -58,7 +59,7 @@ def as-j as-ts 1 + byte@ :as-c as-c 109 - if0 0 as-jump exit then as-c 122 - if0
 def as-instr as-ts byte@ :as-c as-c 99 - if0 as-call exit then as-c 106 - if0 as-j exit then as-c 114 - if0 $C3 as-b as-eol exit then as-c 116 - if0 $48 as-b $85 as-b $C0 as-b as-eol exit then as-c 108 - if0 as-lea exit then as-c 109 - if0 as-tl 7 - if0 as-movabs else as-movq then exit then as-bad ;
 def as-line as-skip as-tok as-tl if0 as-eol exit then as-p byte@ 58 - if0 as-label exit then as-ts byte@ 46 - if0 as-dir exit then as-instr ;
 
-def as-load 2048 :as-lba as-src :as-o begin as-lba ata-read-sector if0 "AS-READ-FAILED" type cr 0 exit then 0 :as-i begin as-i 512 - while as-i sector-byte@ :as-c as-c if0 as-o as-src - :as-end-offset as-o 0 ! 1 exit then as-o as-c ! as-o 1 + :as-o as-i 1 + :as-i repeat as-lba 1 + :as-lba again ;
+def as-load "compiler/bootstrap_seed.S" tc-find :as-rec0 as-rec0 if0 "AS-NO-SOURCE" type cr 0 exit then as-rec0 tc-addr :as-from as-rec0 tc-size :as-end-offset 0 :as-i begin as-i as-end-offset 1 + - while as-src as-i + as-from as-i + byte@ ! as-i 1 + :as-i repeat 1 ;
 def as-tables 0 :as-i begin as-i 256 - while as-class as-i + 1 ! as-i 1 + :as-i repeat as-class 0 ! as-class 10 + 0 ! as-class 32 + 0 ! as-class 40 + 0 ! as-class 44 + 0 ! as-class 58 + 0 ! 0 :as-i begin as-i 49152 - while as-hash as-i + 0 ! as-i 1 + :as-i repeat ;
 def as-pass 0 :as-nsym 0 :as-nj 0 :as-nf 0 :as-nq 0 :as-failed as-short :as-o as-short :as-o1 as-ro :as-o2 as-data :as-o3 1 :as-sec as-src :as-p begin as-p byte@ neg while as-line repeat as-sec as-switch ;
 

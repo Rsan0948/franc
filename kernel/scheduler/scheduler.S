@@ -53,6 +53,7 @@
 .Lcompiled_a_kind_name: .asciz "user-compiled-a-kind"
 .Lcompiled_b_kind_name: .asciz "user-compiled-b-kind"
 .Lpkg_raw_sha_name: .asciz "pkg-sha256"
+.Lsha_long_name: .asciz "sha256-long"
 .section .data
 .balign 8
 /* Linked dictionary nodes: next, name, code. First next is set at boot. */
@@ -104,7 +105,8 @@ fr_task_dict_compiled_probe: .quad fr_task_dict_compiled_stage, .Lcompiled_probe
 fr_task_dict_compiled_relaunch: .quad fr_task_dict_compiled_probe, .Lcompiled_relaunch_name, fr_user_compiled_relaunch
 fr_task_dict_compiled_a_kind: .quad fr_task_dict_compiled_relaunch, .Lcompiled_a_kind_name, fr_user_compiled_a_kind
 fr_task_dict_compiled_b_kind: .quad fr_task_dict_compiled_a_kind, .Lcompiled_b_kind_name, fr_user_compiled_b_kind
-fr_task_dict_top: .quad fr_task_dict_compiled_b_kind, .Lpkg_raw_sha_name, fr_pkg_sha256
+fr_task_dict_pkg_sha: .quad fr_task_dict_compiled_b_kind, .Lpkg_raw_sha_name, fr_pkg_sha256
+fr_task_dict_top: .quad fr_task_dict_pkg_sha, .Lsha_long_name, fr_sha256_long
 .section .bss
 .balign 8
 /* 0:host, 1:worker A, 2:worker B.
