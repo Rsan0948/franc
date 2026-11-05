@@ -14,6 +14,8 @@ on:
       - 'tests/link/**'
       - 'tests/image/**'
       - 'tests/selfhost/**'
+      - 'tests/keyboard/**'
+      - 'drivers/input/**'
       - 'lib/toolchain.frac'
       - 'build/toolchain*'
       - 'franctxt/**'
@@ -30,6 +32,8 @@ on:
       - 'tests/link/**'
       - 'tests/image/**'
       - 'tests/selfhost/**'
+      - 'tests/keyboard/**'
+      - 'drivers/input/**'
       - 'lib/toolchain.frac'
       - 'build/toolchain*'
       - 'franctxt/**'
@@ -64,6 +68,8 @@ jobs:
         run: |
           make os
           bash tests/foundations/run.sh build/out/francos-bios.img
+      - name: A PS/2 keyboard drives the OS
+        run: bash tests/keyboard/run.sh build/out/francos-bios.img
       - name: The toolchain archive loads and refuses damaged disks
         run: bash tests/toolchain/run.sh build/out/francos-bios.img
       - name: The Franc assembler matches GNU as on every kernel input
