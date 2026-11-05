@@ -45,3 +45,18 @@ echo "PASS: Esc leaves an app"
 press u
 wait_for 'FrancOS HOME' 2 20
 echo "PASS: Home answers after Esc"
+
+# A picture must stay up until a key is pressed; Home used to paint over it at once.
+dump() { rm -f "$1"; printf 'screendump %s\n' "$1" >&4; limit=$((SECONDS + 10)); until [ -s "$1" ]; do [ "$SECONDS" -lt "$limit" ] || { echo "FAIL: no screen dump"; exit 1; }; sleep 0.1; done; sleep 0.3; }
+sleep 1
+dump "$scratch/home.ppm"
+press 4
+sleep 4
+dump "$scratch/picture.ppm"
+if cmp -s "$scratch/home.ppm" "$scratch/picture.ppm"; then echo "FAIL: the picture did not stay on screen"; exit 1; fi
+echo "PASS: a picture stays until a key is pressed"
+press u
+sleep 2
+dump "$scratch/after.ppm"
+if cmp -s "$scratch/picture.ppm" "$scratch/after.ppm"; then echo "FAIL: a key did not leave the picture"; exit 1; fi
+echo "PASS: a key returns from the picture"
