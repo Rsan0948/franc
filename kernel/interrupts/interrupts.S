@@ -366,6 +366,11 @@ fr_irq_fault:
 /* QEMU's TCG TLB is direct-mapped on the page number modulo 256. These stack
  * pages must not share a slot with kernel pages, or every call evicts ds_ptr.
  */
+.set S2_DICT_ENTRIES,4096
+.set S2_DICT_NODES,0x02000000
+.set S2_DICT_NAMES,S2_DICT_NODES+S2_DICT_ENTRIES*24
+.set S2_VAR_SLOTS,S2_DICT_NAMES+S2_DICT_ENTRIES*64
+.set S2_VAR_END,S2_VAR_SLOTS+S2_DICT_ENTRIES*64
 .set FR_KERNEL_STACK_GUARD,0x1AF000
 .set FR_KERNEL_STACK_TOP,0x1F0000
 .section .bss
@@ -503,6 +508,7 @@ fr_fault_\v:
 
 /* Stack: vector, error, rip, cs, rflags, rsp, ss. */
 fr_cpu_fault:
+    movq $0,fr_capture_next(%rip)
     testb $3,24(%rsp)
     jnz fr_irq_fault
     cmpq $2,fr_preempt_mode(%rip)
@@ -526,6 +532,7 @@ fr_cpu_fault:
     call .Lfault_putc
 /* Resume after the innermost fr_s2_run, or halt if there is none. */
 fr_recover:
+    movq $0,fr_capture_next(%rip)
     movq fr_recover_rsp(%rip),%rax
     testq %rax,%rax
     jz .Lfault_halt

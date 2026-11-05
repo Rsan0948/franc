@@ -785,6 +785,8 @@ HELPER void h_s2_intern(void) {
     h_push((int64_t)(uintptr_t)dst,1);
 }
 
+HELPER void h_s2_code_end(void) { h_pop_sign(); }
+HELPER void h_s2_no_address(void) { h_push(0,1); }
 HELPER void h_s2_code(void) {
     if (g_s2_code_offset+65536>g_exec_size) { fprintf(stderr,"stage2 code arena exhausted\n"); h_push(0,1); return; }
     size_t start=g_s2_code_offset;
@@ -860,6 +862,10 @@ static void bootstrap(void) {
     add_word("s2-shell-source",h_s2_shell_source);
     add_word("s2-intern",h_s2_intern);
     add_word("s2-code",h_s2_code);
+    add_word("s2-code-end",h_s2_code_end);
+    add_word("s2-var-slot",h_s2_no_address);
+    add_word("s2-reg-get-addr",h_s2_no_address);
+    add_word("s2-reg-set-addr",h_s2_no_address);
     add_word("s2-run",h_s2_run);
     add_word("s2-define",h_s2_define);
 

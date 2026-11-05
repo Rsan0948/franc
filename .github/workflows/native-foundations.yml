@@ -1,0 +1,40 @@
+name: FrancOS native foundations
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'runtime/**'
+      - 'kernel/**'
+      - 'compiler/**'
+      - 'drivers/storage/**'
+      - 'tests/foundations/**'
+      - 'tests/asm_speed/**'
+      - '.github/workflows/native-foundations.yml'
+  pull_request:
+    paths:
+      - 'runtime/**'
+      - 'kernel/**'
+      - 'compiler/**'
+      - 'drivers/storage/**'
+      - 'tests/foundations/**'
+      - 'tests/asm_speed/**'
+      - '.github/workflows/native-foundations.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  foundations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Runtime limits, capture and disk rules hold in the guest
+        run: |
+          make os
+          bash tests/foundations/run.sh build/out/francos-bios.img
+      - name: The Franc assembler matches GNU as on the seed
+        run: bash tests/asm_speed/run.sh
