@@ -2,6 +2,7 @@ ENTRY(_kstart)
 SECTIONS {
  . = 0x10000;
  .text : { KEEP(*(.text.entry)) *(.text .text.*) }
+ __text_end = .;
  .rodata : { *(.rodata .rodata.*) }
  .data : { *(.data .data.*) }
  . = ALIGN(16);

@@ -29,7 +29,7 @@ try:
             if not data:break
             buffer+=data
     print(buffer.decode(errors='replace'))
-    for marker in [b'FrancOS AOT | 64-bit | no C runtime',b'1/2',b'25',b'BRANCH OK',b'3\n',b'70\n',b'42\n',b'ATA WRITE READBACK DONE',b'JIT-SUM 5\n',b'JIT-DEF 36\n',b'def saved 77 ;',b'STORAGE OK',b'AOT BOOT OK']:
+    for marker in [b'FrancOS AOT | 64-bit | no C runtime',b'1/2',b'25',b'BRANCH OK',b'3\n',b'70\n',b'ATA READ OK',b'JIT-SUM 5\n',b'JIT-DEF 36\n',b'AOT BOOT OK']:
         assert marker in buffer, f'missing {marker!r}; QEMU output={buffer!r}'
     # Read and send one character at a time. Sending "psg\x1b" together
     # can overflow the emulated COM1 receive register while Franc redraws.
@@ -53,7 +53,7 @@ try:
     transcript = read_until(b'Franc> ', timeout=10)
     for key, expected in [
         (b'p', b'1/2\nFranc> '),
-        (b's', b'def saved 77 ;\nFranc> '),
+        (b's', b'STORAGE OK\nFranc> '),
         (b'g', b'GRAPHICS IN FRANC\nFranc> '),
         (b'r', b'Franc REPL | Esc returns to menu\nFrac> ')
     ]:

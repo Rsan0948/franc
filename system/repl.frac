@@ -3,5 +3,5 @@
 def rl-erase rl-len ifnz rl-len 1 - :rl-len repl-buffer rl-len + 0 b! 8 vc-put 32 vc-put 8 vc-put then ;
 def rl-append rl-len 255 - if repl-buffer rl-len + rl-ch b! rl-ch vc-put rl-len 1 + :rl-len repl-buffer rl-len + 0 b! then ;
 def rl-read 0 :rl-len repl-buffer 0 b! begin dk-key :rl-ch rl-ch 27 - if0 1 exit then rl-ch 10 - if0 10 vc-put 0 exit then rl-ch 13 - if0 10 vc-put 0 exit then rl-ch 8 - if0 rl-erase else rl-ch 127 - if0 rl-erase else rl-ch 32 - if else rl-ch 127 - if rl-append then then then then again ;
-def rl-eval depth :rl-before repl-buffer s2-eval depth rl-before - ifnz . then ;
+def rl-eval depth :rl-before repl-buffer s2-eval last-error :rl-error rl-error ifnz rl-error vc-show exit then depth rl-before - ifnz . then ;
 def rl-main "Franc REPL | Esc returns to menu" vc-type vc-newline begin "Frac> " vc-type rl-read ifnz exit then repl-buffer byte@ ifnz rl-eval then again ;

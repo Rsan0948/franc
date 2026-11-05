@@ -1,0 +1,37 @@
+name: FrancOS crash safety
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'runtime/**'
+      - 'kernel/**'
+      - 'boot/**'
+      - 'system/**'
+      - 'tests/crash/**'
+      - '.github/workflows/crash-safety.yml'
+  pull_request:
+    paths:
+      - 'runtime/**'
+      - 'kernel/**'
+      - 'boot/**'
+      - 'system/**'
+      - 'tests/crash/**'
+      - '.github/workflows/crash-safety.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  crash-cases:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: FrancOS survives every crash case
+        run: |
+          make os
+          bash tests/crash/run.sh build/out/francos-bios.img
+          bash tests/crash/run_foreign_disk.sh build/out/francos-bios.img
