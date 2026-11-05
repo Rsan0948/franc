@@ -3,10 +3,10 @@ on:
   push:
     branches: [stage4-roadmap-foundations]
     paths:
-      - 'stage4/interrupts.S'
-      - 'stage4/runtime.S'
-      - 'stage4/aot.frac'
-      - 'stage4/bootstrap_seed.S'
+      - 'kernel/interrupts/interrupts.S'
+      - 'runtime/abi.S'
+      - 'compiler/aot.frac'
+      - 'compiler/bootstrap_seed.S'
       - 'stage4/qemu_irq.py'
       - 'stage4/Makefile.native'
       - 'stage4/Makefile'
@@ -15,9 +15,9 @@ on:
       - '.github/workflows/interrupts.yml'
   pull_request:
     paths:
-      - 'stage4/interrupts.S'
-      - 'stage4/runtime.S'
-      - 'stage4/aot.frac'
+      - 'kernel/interrupts/interrupts.S'
+      - 'runtime/abi.S'
+      - 'compiler/aot.frac'
       - 'stage4/qemu_irq.py'
       - '.github/workflows/interrupts.yml'
 permissions:

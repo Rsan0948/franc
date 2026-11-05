@@ -74,7 +74,7 @@ def main():
       ('native strings', nested_string_test, 'hello'),
       ('recompile compiler from Franc source twice',
        's2-self-source s2-source .\ns2-self-source s2-source .\n"40 2 +" s2-compile s2-run .',
-       '29\n29\n42'),
+       '31\n31\n42'),
       ('newly native-compiled compiler defines and calls code',
        's2-self-source s2-source drop\n"def increment 1 + ;" s2-compile drop\n"41 increment" s2-compile s2-run .',
        '42'),

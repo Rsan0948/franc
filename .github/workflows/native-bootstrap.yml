@@ -9,9 +9,9 @@ on:
       - 'franctxt/memory.franctxt'
       - 'franctxt/install_native.sh'
       - 'lib/**'
-      - 'stage2/compiler.frac'
-      - 'stage3/ata.frac'
-      - 'stage3/storage.frac'
+      - 'compiler/native/compiler.frac'
+      - 'drivers/storage/ata.frac'
+      - 'drivers/storage/storage.frac'
       - '.github/workflows/native-bootstrap.yml'
   pull_request:
     paths:
@@ -21,9 +21,9 @@ on:
       - 'franctxt/memory.franctxt'
       - 'franctxt/install_native.sh'
       - 'lib/**'
-      - 'stage2/compiler.frac'
-      - 'stage3/ata.frac'
-      - 'stage3/storage.frac'
+      - 'compiler/native/compiler.frac'
+      - 'drivers/storage/ata.frac'
+      - 'drivers/storage/storage.frac'
       - '.github/workflows/native-bootstrap.yml'
 permissions:
   contents: read

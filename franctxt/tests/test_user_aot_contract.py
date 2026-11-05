@@ -27,9 +27,9 @@ class UserSourceEmitterContract(unittest.TestCase):
 
     def test_native_dictionary_capacity_covers_wave3_bundle(self):
         native = (ROOT / "stage4/runtime.S").read_text()
-        self.assertIn("cmpq $512,%r9", native)
-        self.assertIn("s2_dict_nodes: .skip 12288", native)
-        self.assertIn("s2_dict_names: .skip 32768", native)
+        layout = (ROOT / "stage4/interrupts.S").read_text()
+        self.assertIn("cmpq $S2_DICT_ENTRIES,%r9", native)
+        self.assertIn(".set S2_DICT_ENTRIES,4096", layout)
         source_paths = [
             line for line in (ROOT / "stage4/app_sources.list").read_text().splitlines()
             if line and not line.startswith("#")
@@ -39,7 +39,7 @@ class UserSourceEmitterContract(unittest.TestCase):
                  if line.startswith("def ")])
             for source in source_paths
         )
-        self.assertLess(source_definitions, 512,
+        self.assertLess(source_definitions, 4096,
                         "Native JIT names table cannot hold the app bundle")
 
     def test_whitelisted_source_and_encoded_machine_code_contract(self):

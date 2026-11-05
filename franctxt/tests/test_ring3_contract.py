@@ -30,7 +30,8 @@ class Ring3Contract(unittest.TestCase):
                 self.assertIn(".text", match[0])
 
     def test_bios_only_user_mapping_and_tss(self):
-        src = (ROOT / "stage4/ring3.S").read_text()
+        # fr_cpu_init in interrupts.S installs the TSS that ring3.S then uses.
+        src = (ROOT / "stage4/ring3.S").read_text() + (ROOT / "stage4/interrupts.S").read_text()
         for token in (
             "cmpq $0x9000,%rax",          # no unverified UEFI CR3 layout
             "cmpq $0,8(%rbx)",          # no PDPT1 overwrite

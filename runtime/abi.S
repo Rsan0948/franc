@@ -118,6 +118,8 @@ _kstart:
 /* Print AL to serial. Bounded poll, so a broken UART cannot hang boot. */
 .global fr_putc
 fr_putc:
+    cmpq $0,fr_capture_next(%rip)
+    jne .Lcapture_byte
     push %rax
     push %rcx
     push %rdx
@@ -759,6 +761,44 @@ fr_dot:
 fr_cr:
     movb $10,%al
     jmp fr_putc
+/* While capturing, output goes to memory instead of the serial port. */
+.Lcapture_byte:
+    push %rcx
+    movq fr_capture_next(%rip),%rcx
+    cmpq fr_capture_end(%rip),%rcx
+    jae .Lcapture_full
+    movb %al,(%rcx)
+    incq fr_capture_next(%rip)
+    pop %rcx
+    ret
+.Lcapture_full:
+    movq $1,fr_capture_over(%rip)
+    pop %rcx
+    ret
+
+/* (address limit --) */
+.global fr_capture_start
+fr_capture_start:
+    call fr_pop
+    movq %rax,%r10
+    call fr_pop
+    movq %r10,fr_capture_end(%rip)
+    movq $0,fr_capture_over(%rip)
+    movq %rax,fr_capture_next(%rip)
+    ret
+
+/* (-- end-address), or 0 if the output did not fit. */
+.global fr_capture_stop
+fr_capture_stop:
+    movq fr_capture_next(%rip),%rdi
+    movq $0,fr_capture_next(%rip)
+    cmpq $0,fr_capture_over(%rip)
+    je .Lcapture_result
+    xorq %rdi,%rdi
+.Lcapture_result:
+    movq $1,%rsi
+    jmp fr_push
+
 .global fr_emit
 fr_emit:
     call fr_pop
@@ -1059,6 +1099,8 @@ PUSH_ADDRESS fr_s2_token_buffer,s2_token_buffer
 PUSH_ADDRESS fr_s2_control_buffer,s2_control_buffer
 PUSH_ADDRESS fr_s2_line_buffer,s2_line_buffer
 PUSH_ADDRESS fr_s2_lit_addr,fr_push
+PUSH_ADDRESS fr_s2_reg_get_addr,fr_reg_get
+PUSH_ADDRESS fr_s2_reg_set_addr,fr_reg_set
 PUSH_ADDRESS fr_s2_sign_addr,fr_condition
 PUSH_ADDRESS fr_s2_string_addr,fr_push
 PUSH_ADDRESS fr_s2_self_source,franc_stage2_source
@@ -1079,6 +1121,34 @@ fr_s2_code:
     movq $1,%rsi
     jmp fr_push
 .Lcode_exhausted:
+    xorq %rdi,%rdi
+    movq $1,%rsi
+    jmp fr_push
+
+/* Return the unused end of the block from fr_s2_code. */
+.global fr_s2_code_end
+fr_s2_code_end:
+    call fr_pop
+    addq $15,%rax
+    andq $-16,%rax
+    cmpq $0x400000,%rax
+    jb .Lcode_end_done
+    cmpq s2_code_next(%rip),%rax
+    ja .Lcode_end_done
+    movq %rax,s2_code_next(%rip)
+.Lcode_end_done:
+    ret
+
+/* A runtime variable: 16-byte cell, then its get and set stubs. */
+.global fr_s2_var_slot
+fr_s2_var_slot:
+    movq s2_var_next(%rip),%rdi
+    cmpq $S2_VAR_END,%rdi
+    jae .Lvar_exhausted
+    addq $64,s2_var_next(%rip)
+    movq $1,%rsi
+    jmp fr_push
+.Lvar_exhausted:
     xorq %rdi,%rdi
     movq $1,%rsi
     jmp fr_push
@@ -1119,13 +1189,18 @@ fr_s2_define:
     cmpq $0x400000,%r12
     jb .Ldef_done
     cmpq s2_code_next(%rip),%r12
+    jb .Ldef_target_ok
+    cmpq $S2_VAR_SLOTS,%r12
+    jb .Ldef_done
+    cmpq s2_var_next(%rip),%r12
     jae .Ldef_done
+.Ldef_target_ok:
     testq %r13,%r13
     jz .Ldef_done
     movq s2_dict_used(%rip),%r9
-    cmpq $512,%r9
+    cmpq $S2_DICT_ENTRIES,%r9
     jae .Ldef_done
-    leaq s2_dict_names(%rip),%r10
+    movq $S2_DICT_NAMES,%r10
     movq %r9,%r11
     shlq $6,%r11
     addq %r11,%r10
@@ -1138,7 +1213,7 @@ fr_s2_define:
     incq %rcx
     testb %al,%al
     jnz .Ldef_copy
-    leaq s2_dict_nodes(%rip),%r11
+    movq $S2_DICT_NODES,%r11
     leaq (%r9,%r9,2),%r9
     shlq $3,%r9
     addq %r9,%r11
@@ -1187,6 +1262,10 @@ fr_s2_intern:
 .section .data
 .balign 8
 s2_code_next: .quad 0x400000
+s2_var_next: .quad S2_VAR_SLOTS
+fr_capture_next: .quad 0
+fr_capture_end: .quad 0
+fr_capture_over: .quad 0
 .section .bss
 .balign 16
 fr_dict_head_ptr: .skip 8
@@ -1195,8 +1274,6 @@ s2_intern_used: .skip 8
 s2_token_buffer: .skip 1024
 s2_control_buffer: .skip 1024
 s2_line_buffer: .skip 16384
-s2_dict_nodes: .skip 12288 /* 512 entries x 24-byte node */
-s2_dict_names: .skip 32768 /* 512 entries x 64-byte string */
 s2_intern_data: .skip 32768
 repl_input: .skip 256
 .section .note.GNU-stack,"",@progbits

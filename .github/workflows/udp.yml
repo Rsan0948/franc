@@ -3,15 +3,15 @@ on:
   push:
     branches: [stage4-roadmap-foundations]
     paths:
-      - 'stage4/net.frac'
-      - 'stage4/udp.frac'
-      - 'stage4/ip.frac'
-      - 'stage4/runtime.S'
-      - 'stage4/aot.frac'
-      - 'stage4/boot.S'
-      - 'stage4/pci.frac'
+      - 'drivers/network/net.frac'
+      - 'drivers/network/udp.frac'
+      - 'drivers/network/ip.frac'
+      - 'runtime/abi.S'
+      - 'compiler/aot.frac'
+      - 'boot/bios/boot.S'
+      - 'drivers/network/pci.frac'
       - 'stage4/qemu_net.py'
-      - 'stage4/bootstrap_seed.S'
+      - 'compiler/bootstrap_seed.S'
       - 'stage4/app_sources.list'
       - 'stage4/pack_native.sh'
       - 'franctxt/seed.lock.franctxt'
@@ -20,15 +20,15 @@ on:
       - '.github/workflows/network.yml'
   pull_request:
     paths:
-      - 'stage4/net.frac'
-      - 'stage4/udp.frac'
-      - 'stage4/ip.frac'
-      - 'stage4/runtime.S'
-      - 'stage4/aot.frac'
-      - 'stage4/boot.S'
-      - 'stage4/pci.frac'
+      - 'drivers/network/net.frac'
+      - 'drivers/network/udp.frac'
+      - 'drivers/network/ip.frac'
+      - 'runtime/abi.S'
+      - 'compiler/aot.frac'
+      - 'boot/bios/boot.S'
+      - 'drivers/network/pci.frac'
       - 'stage4/qemu_net.py'
-      - 'stage4/bootstrap_seed.S'
+      - 'compiler/bootstrap_seed.S'
       - '.github/workflows/network.yml'
 permissions:
   contents: read

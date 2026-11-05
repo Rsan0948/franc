@@ -4,8 +4,8 @@ on:
     branches: [stage4-roadmap-foundations]
     paths:
       - 'stage4/uefi/**'
-      - 'stage4/bootstrap_seed.S'
-      - 'stage4/runtime.S'
+      - 'compiler/bootstrap_seed.S'
+      - 'runtime/abi.S'
       - 'franctxt/seed.lock.franctxt'
       - 'franctxt/build.py'
       - 'franctxt/memory.franctxt'
@@ -15,8 +15,8 @@ on:
   pull_request:
     paths:
       - 'stage4/uefi/**'
-      - 'stage4/bootstrap_seed.S'
-      - 'stage4/runtime.S'
+      - 'compiler/bootstrap_seed.S'
+      - 'runtime/abi.S'
       - 'franctxt/seed.lock.franctxt'
       - 'franctxt/build.py'
       - 'franctxt/memory.franctxt'

@@ -26,6 +26,10 @@ BOOT
 $10000 0 b! => FAULT vector 0e
 $10000 byte@ => 233
 1 1 + => 2
+
+# A fault during output capture must give the console back.
+$3000000 $3000100 capture-start $10000 0 b! => FAULT vector 0e
+1 1 + => 2
 BOOT
 def f8 1 1 1 1 1 1 1 1 ; => 
 def f64 f8 f8 f8 f8 f8 f8 f8 f8 ; => 

@@ -303,7 +303,7 @@ try:
 
 
 
-    for marker in [b'SELFHOST START\n', b'GEN 2: 29\n', b'GEN 3: 29\n', b'42\n', b'SELFHOST OK\n']:
+    for marker in [b'SELFHOST START\n', b'GEN 2: 31\n', b'GEN 3: 31\n', b'42\n', b'SELFHOST OK\n']:
         assert marker in transcript, f'missing {marker!r}: {transcript!r}'
     assert b'stage2: unsupported token' not in transcript, transcript
     for marker in (b'FRANC FRAMEBUFFER READY', b'FRANC INTERACTIVE READY',

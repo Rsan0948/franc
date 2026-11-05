@@ -6,8 +6,8 @@ on:
       - 'franctxt/**'
       - 'lib/franctxt.frac'
       - 'stage4/pack_native.sh'
-      - 'stage4/apps/registry.frac'
-      - 'stage4/bootstrap_seed.S'
+      - 'apps/native/registry.frac'
+      - 'compiler/bootstrap_seed.S'
       - 'stage4/Makefile.native'
       - '.github/workflows/franctxt.yml'
   pull_request:
@@ -15,7 +15,7 @@ on:
       - 'franctxt/**'
       - 'lib/franctxt.frac'
       - 'stage4/pack_native.sh'
-      - 'stage4/apps/registry.frac'
+      - 'apps/native/registry.frac'
       - 'stage4/Makefile.native'
       - '.github/workflows/franctxt.yml'
 permissions:
