@@ -60,5 +60,5 @@ jobs:
           bash tests/foundations/run.sh build/out/francos-bios.img
       - name: The toolchain archive loads and refuses damaged disks
         run: bash tests/toolchain/run.sh build/out/francos-bios.img
-      - name: The Franc assembler matches GNU as on the seed
+      - name: The Franc assembler matches GNU as on every kernel input
         run: bash tests/asm_speed/run.sh build/out/francos-bios.img

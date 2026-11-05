@@ -15,3 +15,4 @@ drivers/video/font.S
 kernel/kernel.ld
 stage2/compiler.frac
 compiler/toolchain/assembler.frac
+compiler/toolchain/x86.table

@@ -1,86 +1,264 @@
-\ Minimal x86-64 assembler for the instruction forms in compiler/bootstrap_seed.S.
-\ It reads the seed from the toolchain archive and builds .text, .rodata and .data.
-\ Branches are sized the way GNU as sizes them, so the bytes can be compared
-\ exactly. References it cannot resolve are left as zero, as in an object file.
+\ x86-64 assembler for the AT&T syntax FrancOS is written in. It reads a file from
+\ the toolchain archive, expands includes and macros, and builds each section the
+\ way GNU as does, so the bytes can be compared exactly: branches are sized the same
+\ way, and a reference the linker must finish is left as zero.
 
 \ JIT source must assign a variable before it reads one.
-def as-declare 0 :as-o 0 :as-p 0 :as-end-offset 0 :as-nsym 0 :as-sec 0 :as-nj 0 :as-nf 0 :as-nq 0 :as-pold 0 :as-pnew 0 :as-cs 0 :as-co ;
+def as-declare 0 :as-o 0 :as-p 0 :as-ls 0 :as-to 0 :as-kl 0 :as-kp 0 :as-nkw 0 :as-kc 0 :as-ka 0 :as-kx 0 :ap-sp 0 :ap-ip 0 :ap-o 0 :ap-np 0 :ap-count 0 :ap-nm 0 :as-nsym 0 :as-sec 0 :as-base 0 :as-nj 0 :as-ev 0 :as-eb 0 :as-es 0 :as-ed 0 :as-sz 0 :as-nf 0 :as-tail 0 :as-now 0 :as-rf 0 :as-mode 0 :as-dsize 0 :as-rb 0 :as-pold 0 :as-fsec 0 :as-k 0 :as-raw 0 :as-old 0 :as-cur 0 :as-pnew 0 :as-co 0 :as-rawbase 0 :as-fb 0 :as-outbase ;
 
 def as-src $2800000 ;
-def as-short 44040192 ;
-def as-text 45088768 ;
-def as-ro 46137344 ;
-def as-data 47185920 ;
-def as-hash 48234496 ;
-def as-syms 48758784 ;
-def as-jumps 49807360 ;
-def as-fixes 50855936 ;
-def as-quads 51904512 ;
-def as-prefix 52953088 ;
-def as-prefix2 53477376 ;
-def as-class 54001664 ;
+def as-temp $2C00000 ;
+def as-raw-text $2E00000 ;
+def as-raw-entry $3000000 ;
+def as-ro $3100000 ;
+def as-data $3200000 ;
+def as-out-text $3300000 ;
+def as-out-entry $3500000 ;
+def as-hash $3600000 ;
+def as-kwhash $3640000 ;
+def as-kw $3650000 ;
+def as-syms $3700000 ;
+def as-frags $3800000 ;
+def as-pre $3880000 ;
+def as-fixes $3900000 ;
+def as-class $3B00000 ;
+def as-macros $3B10000 ;
+def as-istack $3B20000 ;
+def as-labels $3B21000 ;
+def as-args $3B22000 ;
+def as-bss-base $3C00000 ;
 
+\ Little-endian fields.
 def as-g3 :as-ga as-ga byte@ as-ga 1 + byte@ 8 shl + as-ga 2 + byte@ 16 shl + ;
 def as-p3 :as-pv :as-pa as-pa as-pv 255 band ! as-pa 1 + as-pv 8 shr 255 band ! as-pa 2 + as-pv 16 shr 255 band ! ;
+def as-g4 :as-gb as-gb as-g3 as-gb 3 + byte@ 16777216 * + :as-gv 2147483647 as-gv - if as-gv 4294967296 - exit then as-gv ;
+def as-p4 :as-qv :as-qa as-qv 4294967296 % :as-qv as-qa as-qv 16777216 % as-p3 as-qa 3 + as-qv 16777216 / floor ! ;
 
+\ Output.
 def as-b :as-bv as-o as-bv ! as-o 1 + :as-o ;
-def as-zero :as-zn begin as-zn neg while as-o 0 ! as-o 1 + :as-o as-zn 1 - :as-zn repeat ;
-def as-u64 :as-uv 8 :as-ui begin as-ui neg while as-uv 256 % as-b as-uv 256 / floor :as-uv as-ui 1 - :as-ui repeat ;
-def as-u32 :as-uv 4 :as-ui begin as-ui neg while as-uv 256 % as-b as-uv 256 / floor :as-uv as-ui 1 - :as-ui repeat ;
+def as-n :as-nn :as-nv begin as-nn neg while as-nv 256 % as-b as-nv 256 / floor :as-nv as-nn 1 - :as-nn repeat ;
+def as-put-n :as-wn :as-wv :as-wa begin as-wn neg while as-wa as-wv 256 % ! as-wv 256 / floor :as-wv as-wa 1 + :as-wa as-wn 1 - :as-wn repeat ;
 
-def as-skip begin as-p byte@ 32 - if0 as-p 1 + :as-p else exit then again ;
-def as-eol begin as-p byte@ :as-c as-c if0 exit then as-p 1 + :as-p as-c 10 - if0 exit then again ;
+\ Tokens. A token's hash comes with it, for both lookup tables.
+def as-skip begin as-p byte@ :as-c as-c 32 - if0 as-p 1 + :as-p else as-c 9 - if0 as-p 1 + :as-p else exit then then again ;
+def as-rest begin as-p byte@ :as-c as-c if0 exit then as-c 10 - if0 exit then as-p 1 + :as-p again ;
 def as-tok as-p :as-ts 0 :as-th begin as-p byte@ :as-c as-class as-c + byte@ ifnz as-th 31 * as-c + 1048575 band :as-th as-p 1 + :as-p else as-p as-ts - :as-tl exit then again ;
-def as-num 1 :as-sg as-p byte@ 45 - if0 -1 :as-sg as-p 1 + :as-p then 0 :as-v begin as-p byte@ 48 - :as-d as-d if as-v as-sg * :as-v exit then as-d 10 - if as-v 10 * as-d + :as-v as-p 1 + :as-p else as-v as-sg * :as-v exit then again ;
-def as-bad "AS-BAD-LINE " type as-ts byte@ emit as-ts 1 + byte@ emit cr 1 :as-failed as-src as-end-offset + :as-p ;
+def as-show :as-sl begin as-sl byte@ :as-c as-c if0 exit then as-c 10 - if0 exit then as-c emit as-sl 1 + :as-sl again ;
+def as-bad 1 :as-failed "AS-BAD-LINE " type as-ls as-show cr ;
+def as-limit :as-lm 1 :as-failed "AS-TOO-MANY " type as-lm type cr ;
+def as-same-text :as-tn :as-tb :as-ta begin as-tn neg while as-ta byte@ as-tb byte@ - ifnz 0 exit then as-ta 1 + :as-ta as-tb 1 + :as-tb as-tn 1 - :as-tn repeat 1 ;
+def as-hex-value :as-hc as-hc 58 - if as-hc 48 - :as-d as-d if -1 exit then as-d exit then as-hc 97 - :as-d as-d if as-hc 65 - :as-d then as-d if -1 exit then 5 as-d - if -1 exit then as-d 10 + ;
+def as-hex 0 :as-hn begin as-p as-hn + byte@ as-hex-value 1 + ifnz 1 else 0 then neg while as-hn 1 + :as-hn repeat 0 :as-v as-hn 16 - if0 as-p byte@ as-hex-value :as-d 7 as-d - if as-d 16 - :as-v as-p 1 + :as-p as-hn 1 - :as-hn then then begin as-hn neg while as-v 16 * as-p byte@ as-hex-value + :as-v as-p 1 + :as-p as-hn 1 - :as-hn repeat as-v ;
+def as-dec-in 0 :as-v begin as-p byte@ 48 - :as-d as-d if as-v exit then 9 as-d - if as-v exit then as-v 10 * as-d + :as-v as-p 1 + :as-p again ;
+def as-number as-p byte@ 48 - if0 as-p 1 + byte@ 120 - if0 as-p 2 + :as-p as-hex exit then then as-dec-in ;
 
-\ Symbol record, 12 bytes: name offset 3, length 1, section 1, offset 3, jump count 3.
-def as-rec 12 * as-syms + ;
-def as-same :as-sr as-sr as-rec :as-sa as-sa 3 + byte@ as-tl - ifnz 0 exit then as-sa as-g3 as-src + :as-na as-ts :as-nb as-tl :as-nn begin as-nn neg while as-na byte@ as-nb byte@ - ifnz 0 exit then as-na 1 + :as-na as-nb 1 + :as-nb as-nn 1 - :as-nn repeat 1 ;
-def as-new as-nsym 1 + :as-nsym as-nsym as-rec :as-sa as-sa as-ts as-src - as-p3 as-sa 3 + as-tl ! as-sa 4 + 0 ! as-nsym ;
+\ Keyword table: mnemonics, registers, directives and macros. Record, 12 bytes:
+\ name 3, length 1, class 1, a 1, b 1, size 1.
+def as-kw-rec 12 * as-kw + ;
+def as-kw-find as-th 4095 band :as-kb begin as-kwhash as-kb 3 * + as-g3 :as-ki as-ki if0 0 exit then as-ki as-kw-rec :as-kr as-kr 3 + byte@ as-tl - if0 as-kr as-g3 as-temp + as-ts as-tl as-same-text ifnz as-kr exit then then as-kb 1 + 4095 band :as-kb again ;
+def as-kw-put :as-ksz :as-ksuf as-to :as-kn 0 :as-th 0 :as-ki begin as-ki as-kl - while as-kp as-ki + byte@ :as-c as-to as-c ! as-th 31 * as-c + 1048575 band :as-th as-to 1 + :as-to as-ki 1 + :as-ki repeat as-ksuf ifnz as-to as-ksuf ! as-th 31 * as-ksuf + 1048575 band :as-th as-to 1 + :as-to then as-nkw 1 + :as-nkw as-nkw as-kw-rec :as-kr as-kr as-kn as-temp - as-p3 as-kr 3 + as-to as-kn - ! as-kr 4 + as-kc ! as-kr 5 + as-ka ! as-kr 6 + as-kx ! as-kr 7 + as-ksz ! as-th 4095 band :as-kb begin as-kwhash as-kb 3 * + :as-kh as-kh as-g3 ifnz as-kb 1 + 4095 band :as-kb else as-kh as-nkw as-p3 exit then again ;
+def as-kw-int as-skip as-number ;
+def as-kw-line begin as-skip as-p byte@ :as-c as-c 35 - if0 as-rest then as-p byte@ 10 - if0 as-p 1 + :as-p 1 else 0 then neg while repeat ;
+def as-kw-load :as-p begin as-kw-line as-p byte@ if0 exit then as-tok as-ts :as-kp as-tl :as-kl as-kw-int :as-kc as-kw-int :as-ka as-kw-int :as-kx as-kw-int :as-kz as-kz 9 - if0 0 0 as-kw-put 98 1 as-kw-put 119 2 as-kw-put 108 4 as-kw-put 113 8 as-kw-put else 0 as-kz as-kw-put then again ;
+
+def as-class-range :as-ce :as-cb begin as-cb as-ce 1 + - while as-class as-cb + 1 ! as-cb 1 + :as-cb repeat ;
+def as-tables 0 :as-i begin as-i 256 - while as-class as-i + 0 ! as-i 1 + :as-i repeat 48 57 as-class-range 65 90 as-class-range 97 122 as-class-range 46 46 as-class-range 95 95 as-class-range 0 :as-i begin as-i 12288 - while as-kwhash as-i + 0 ! as-i 1 + :as-i repeat 0 :as-nkw as-temp :as-to "compiler/toolchain/x86.table" tc-find tc-addr as-kw-load ;
+
+\ Preprocessor: copies text to as-src without comments, expanding as it goes.
+def ap-push :ap-a as-istack ap-sp 4 * + ap-ip as-p4 ap-sp 1 + :ap-sp ap-a :ap-ip ;
+def ap-get begin ap-ip byte@ :ap-c ap-c ifnz ap-ip 1 + :ap-ip ap-c exit then ap-sp if0 0 exit then ap-sp 1 - :ap-sp as-istack ap-sp 4 * + as-g4 :ap-ip again ;
+def ap-put :ap-x ap-o ap-x ! ap-o 1 + :ap-o ;
+def ap-block begin ap-get :ap-c ap-c if0 exit then ap-c 42 - if0 ap-ip byte@ 47 - if0 ap-ip 1 + :ap-ip exit then then again ;
+def ap-hash begin ap-ip byte@ :ap-c ap-c if0 exit then ap-c 10 - if0 exit then ap-ip 1 + :ap-ip again ;
+def ap-string begin ap-get :ap-c ap-c if0 exit then ap-c ap-put ap-c 92 - if0 ap-get ap-put else ap-c 34 - if0 exit then then again ;
+def ap-line ap-o :ap-start begin ap-get :ap-c ap-c if0 ap-o ap-start - if0 0 exit then 10 ap-put 1 exit then ap-c 10 - if0 10 ap-put 1 exit then ap-c 47 - if0 ap-ip byte@ 42 - if0 ap-ip 1 + :ap-ip ap-block else 47 ap-put then else ap-c 35 - if0 ap-hash else ap-c 34 - if0 34 ap-put ap-string else ap-c 39 - if0 39 ap-put ap-get ap-put ap-ip byte@ 39 - if0 ap-get ap-put then else ap-c ap-put then then then then again ;
+\ Leaves ap-ip on the line that starts with the given word.
+def ap-scan :ap-wn :ap-w begin ap-ip :ap-q begin ap-q byte@ :ap-c ap-c 32 - if0 1 else ap-c 9 - if0 1 else 0 then then neg while ap-q 1 + :ap-q repeat ap-q ap-w ap-wn as-same-text ifnz exit then begin ap-ip byte@ :ap-c ap-c if0 1 :as-failed "AS-UNTERMINATED" type cr exit then ap-ip 1 + :ap-ip ap-c 10 - if0 0 else 1 then neg while repeat again ;
+def ap-next-line begin ap-ip byte@ :ap-c ap-c if0 exit then ap-ip 1 + :ap-ip ap-c 10 - if0 exit then again ;
+def ap-digits :ap-dv 10000 :ap-dd begin ap-dd neg while as-to ap-dv ap-dd / floor 10 % 48 + ! as-to 1 + :as-to ap-dd 10 / floor :ap-dd repeat ;
+def ap-entry 16 * as-args + ;
+def ap-match :ap-ms 0 :ap-mi begin ap-mi ap-np - while ap-mi ap-entry :ap-e ap-e 4 + byte@ :ap-ml ap-ms ap-e as-g4 ap-ml as-same-text ifnz as-class ap-ms ap-ml + byte@ + byte@ if0 ap-e exit then then ap-mi 1 + :ap-mi repeat 0 ;
+def ap-copy :ap-cn :ap-cp begin ap-cn neg while as-to ap-cp byte@ ! as-to 1 + :as-to ap-cp 1 + :ap-cp ap-cn 1 - :ap-cn repeat ;
+def ap-subst :ap-se :ap-ss begin ap-ss ap-se - while ap-ss byte@ :ap-c ap-c 92 - if0 ap-ss 1 + byte@ 64 - if0 ap-count ap-digits ap-ss 2 + :ap-ss else ap-ss 1 + ap-match :ap-hit ap-hit ifnz ap-hit 8 + as-g4 ap-hit 12 + as-g3 ap-copy ap-ss 1 + ap-hit 4 + byte@ + :ap-ss else as-to 92 ! as-to 1 + :as-to ap-ss 1 + :ap-ss then then else as-to ap-c ! as-to 1 + :as-to ap-ss 1 + :ap-ss then repeat ;
+def ap-name-copy :ap-nl :ap-ns as-to ap-ns ap-nl ap-copy ;
+def ap-macro as-skip as-tok as-ts :as-kp as-tl :as-kl 45 :as-kc ap-nm :as-ka 0 :as-kx 0 0 as-kw-put as-macros ap-nm 64 * + :ap-m 0 :ap-mp begin as-skip as-p byte@ 44 - if0 as-p 1 + :as-p as-skip then as-tok as-tl ifnz ap-m 8 + ap-mp 8 * + as-ts as-tl ap-name-copy as-p4 ap-m 12 + ap-mp 8 * + as-tl ! ap-mp 1 + :ap-mp 1 else 0 then neg while repeat ap-m 7 + ap-mp ! ap-nm 1 + :ap-nm ap-ip :ap-body ".endm" 5 ap-scan ap-m ap-body as-p4 ap-m 4 + ap-ip ap-body - as-p3 ap-next-line ;
+def ap-arg-end begin as-p byte@ :as-c as-c if0 exit then as-c 10 - if0 exit then as-c 44 - if0 exit then as-c 32 - if0 exit then as-p 1 + :as-p again ;
+def ap-expand :ap-kr as-macros ap-kr 5 + byte@ 64 * + :ap-m ap-m 7 + byte@ :ap-np 0 :ap-mi begin ap-mi ap-np - while ap-mi ap-entry :ap-e ap-e ap-m 8 + ap-mi 8 * + as-g4 as-p4 ap-e 4 + ap-m 12 + ap-mi 8 * + byte@ ! as-skip as-p byte@ 44 - if0 as-p 1 + :as-p as-skip then as-p :ap-as ap-arg-end ap-e 8 + ap-as as-p4 ap-e 12 + as-p ap-as - as-p3 ap-mi 1 + :ap-mi repeat ap-count 1 + :ap-count as-to :ap-t ap-m as-g4 :ap-b ap-b ap-b ap-m 4 + as-g3 + ap-subst as-to 0 ! as-to 1 + :as-to ap-t ap-push ;
+def ap-irp as-skip as-tok 1 :ap-np 0 ap-entry :ap-e ap-e as-ts as-tl ap-name-copy as-p4 ap-e 4 + as-tl ! ap-ip :ap-body ".endr" 5 ap-scan ap-ip :ap-bend ap-next-line as-to :ap-t begin as-skip as-p byte@ 44 - if0 as-p 1 + :as-p 1 else 0 then neg while as-skip as-p :ap-as ap-arg-end as-p ap-as - :ap-vl ap-vl ifnz 0 ap-entry :ap-e ap-e 8 + ap-as as-p4 ap-e 12 + ap-vl as-p3 ap-body ap-bend ap-subst then repeat as-to 0 ! as-to 1 + :as-to ap-t ap-push ;
+def ap-ifc as-skip as-p :ap-as ap-arg-end as-p ap-as - :ap-vl as-p 1 + :as-p as-skip as-p :ap-bs ap-arg-end as-p ap-bs - ap-vl - if0 ap-as ap-bs ap-vl as-same-text else 0 then if0 ".endif" 6 ap-scan ap-next-line then ;
+def ap-include as-skip as-p 1 + :as-p as-p :ap-as begin as-p byte@ 34 - ifnz as-p 1 + :as-p 1 else 0 then neg while repeat as-to :ap-t ap-as as-p ap-as - ap-copy as-to 0 ! as-to 1 + :as-to ap-t tc-find :ap-r ap-r if0 1 :as-failed "AS-NO-FILE " type ap-t type cr exit then ap-r tc-addr ap-push ;
+def ap-directive :ap-kr ap-kr 4 + byte@ :ap-kc ap-kc 45 - if0 ap-kr ap-expand exit then ap-kc 50 - if0 ap-include exit then ap-kc 51 - if0 ap-macro exit then ap-kc 52 - if0 ap-irp exit then ap-kc 53 - if0 ap-ifc exit then ;
+def ap-do ap-start :as-p as-skip as-p byte@ 10 - if0 ap-start :ap-o exit then as-tok as-tl if0 exit then as-kw-find :ap-kr ap-kr if0 exit then 44 ap-kr 4 + byte@ - if ap-start :ap-o ap-kr ap-directive then ;
+def ap-run :ap-ip 0 :ap-sp as-src :ap-o 0 :ap-nm 0 :ap-count begin ap-line neg while ap-do repeat ap-o 0 ! ap-o as-src - :as-end-offset ;
+
+\ Symbols. Record, 24 bytes: name offset 3, length 1, section 1, offset 3, fragment
+\ count 3, flags 1, value 4. Sections: 1 text, 2 rodata, 3 data, 4 bss, 5 text.entry,
+\ 6 absolute, 7 common. Flags: 1 global, 2 defined.
+def as-rec 24 * as-syms + ;
+def as-same :as-sr as-sr as-rec :as-sa as-sa 3 + byte@ as-tl - ifnz 0 exit then as-sa as-g3 as-src + as-ts as-tl as-same-text ;
+def as-new as-nsym 32767 - if0 "symbols" as-limit 0 exit then as-nsym 1 + :as-nsym as-nsym as-rec :as-sa as-sa as-ts as-src - as-p3 as-sa 3 + as-tl ! as-sa 4 + 0 ! as-sa 11 + 0 ! as-nsym ;
 def as-sym as-th 16383 band :as-bk begin as-hash as-bk 3 * + :as-ba as-ba as-g3 :as-si as-si if0 as-new :as-si as-ba as-si as-p3 as-si exit then as-si as-same ifnz as-si exit then as-bk 1 + 16383 band :as-bk again ;
+def as-sec-base :as-sb as-sb 1 - if0 as-raw-text exit then as-sb 2 - if0 as-ro exit then as-sb 3 - if0 as-data exit then as-sb 5 - if0 as-raw-entry exit then as-bss-base ;
+def as-define :as-ds as-ds as-rec :as-la as-la 11 + byte@ 2 band ifnz as-bad then as-la 4 + as-sec ! as-la 5 + as-o as-base - as-p3 as-la 8 + as-nj as-p3 as-la 11 + as-la 11 + byte@ 1 band 2 + ! ;
+def as-flag-global :as-gs as-gs as-rec 11 + :as-gf as-gf as-gf byte@ 1 band if0 as-gf byte@ 1 + else as-gf byte@ then ! ;
+def as-here-sym as-ls :as-ts 0 :as-tl as-new :as-hs as-hs as-define as-hs ;
+\ Numeric labels are stored under a generated name.
+def as-local-name :as-ln :as-ld as-to :as-ts as-to 1 ! as-to 1 + as-ld ! as-to 2 + as-ln as-p3 as-to 5 + :as-to 5 :as-tl 0 :as-th 0 :as-li begin as-li 5 - while as-th 31 * as-ts as-li + byte@ + 1048575 band :as-th as-li 1 + :as-li repeat ;
+def as-label-count 3 * as-labels + as-g3 ;
+def as-local-def :as-ld0 as-labels as-ld0 3 * + as-ld0 as-label-count 1 + as-p3 as-ld0 as-ld0 as-label-count as-local-name as-sym as-define ;
 
-def as-sec-base :as-sb as-sb 1 - if0 as-short exit then as-sb 2 - if0 as-ro exit then as-data ;
-def as-label as-sym as-rec :as-la as-la 4 + as-sec ! as-la 5 + as-o as-sec as-sec-base - as-p3 as-la 8 + as-nj as-p3 as-eol ;
-def as-fix :as-fs as-fixes as-nf 9 * + :as-fa as-fa as-o as-short - as-p3 as-fa 3 + as-fs as-p3 as-fa 6 + as-nj as-p3 as-nf 1 + :as-nf ;
-def as-quad as-quads as-nq 3 * + swap as-p3 as-nq 1 + :as-nq ;
-def as-jump :as-k as-skip as-tok as-sym :as-js as-jumps as-nj 8 * + :as-ja as-ja as-o as-short - as-p3 as-ja 3 + as-js as-p3 as-ja 6 + as-k ! as-ja 7 + 0 ! as-nj 1 + :as-nj as-o 2 + :as-o as-eol ;
+\ Expressions leave symbol as-es, subtracted symbol as-eb and constant as-ev.
+def as-add-sym :as-sg :as-sy as-sy as-rec :as-ar as-ar 4 + byte@ 6 - if0 as-ev as-ar 12 + as-g4 as-sg * + :as-ev exit then as-sg if as-eb ifnz as-bad then as-sy :as-eb exit then as-es ifnz as-bad then as-sy :as-es ;
+def as-digit? :as-dc as-dc 48 - if 0 exit then 57 as-dc - if 0 exit then 1 ;
+def as-factor as-skip as-p byte@ :as-c as-c as-digit? ifnz as-number exit then as-c 39 - if0 as-p 1 + byte@ :as-v as-p 2 + :as-p as-p byte@ 39 - if0 as-p 1 + :as-p then as-v exit then as-tok as-sym as-rec 12 + as-g4 ;
+def as-term :as-tg begin as-skip as-p byte@ :as-c as-c 45 - if0 as-p 1 + :as-p as-tg neg :as-tg 1 else as-c 40 - if0 as-p 1 + byte@ :as-c as-c 37 - ifnz as-c 44 - ifnz as-ed 1 + :as-ed as-p 1 + :as-p 1 else 0 then else 0 then else 0 then then neg while repeat as-p byte@ :as-c as-c 40 - if0 exit then as-c as-digit? ifnz as-number :as-tv as-p byte@ :as-c as-c 102 - if0 as-tv as-tv as-label-count 1 + as-local-name as-sym as-tg as-add-sym as-p 1 + :as-p exit then as-c 98 - if0 as-tv as-tv as-label-count as-local-name as-sym as-tg as-add-sym as-p 1 + :as-p exit then else as-c 39 - if0 as-factor :as-tv else as-tok as-tl 1 - if0 as-ts byte@ 46 - if0 as-here-sym as-tg as-add-sym exit then then as-tl if0 as-bad as-rest exit then as-sym :as-sy as-sy as-rec 4 + byte@ 6 - ifnz as-sy as-tg as-add-sym exit then as-sy as-rec 12 + as-g4 :as-tv then then begin as-skip as-p byte@ 42 - if0 1 else 0 then neg while as-p 1 + :as-p as-tv as-factor * :as-tv repeat as-ev as-tv as-tg * + :as-ev ;
+def as-expr 0 :as-es 0 :as-eb 0 :as-ev 0 :as-ed 1 as-term begin as-skip as-p byte@ :as-c as-c 43 - if0 as-p 1 + :as-p 1 as-term 1 else as-c 45 - if0 as-p 1 + :as-p -1 as-term 1 else as-c 41 - if0 as-ed ifnz as-ed 1 - :as-ed as-p 1 + :as-p 1 else 0 then else 0 then then then neg while repeat ;
 
-def as-switch :as-to as-sec 1 - if0 as-o :as-o1 then as-sec 2 - if0 as-o :as-o2 then as-sec 3 - if0 as-o :as-o3 then as-to :as-sec as-to 1 - if0 as-o1 :as-o exit then as-to 2 - if0 as-o2 :as-o exit then as-o3 :as-o ;
-def as-section as-skip as-tok as-ts 1 + byte@ :as-c as-c 116 - if0 1 as-switch then as-c 114 - if0 2 as-switch then as-c 100 - if0 3 as-switch then as-eol ;
-def as-dot-quad as-skip as-p byte@ 48 - :as-d as-d 10 - if as-d 1 + neg if as-num as-v as-u64 as-eol exit then then as-tok as-sym as-quad 8 as-zero as-eol ;
-def as-dir as-ts 1 + byte@ :as-c as-c 98 - if0 as-skip as-num as-v as-b as-eol exit then as-c 113 - if0 as-dot-quad exit then as-c 115 - if0 as-section exit then as-c 116 - if0 1 as-switch as-eol exit then as-c 103 - if0 as-eol exit then as-c 99 - if0 as-eol exit then as-c 105 - if0 as-eol exit then as-bad ;
+\ Operands. Kinds: 1 register, 2 immediate, 3 memory.
+def as-reg-in as-p 1 + :as-p as-tok as-kw-find :as-kr as-kr if0 as-bad 0 exit then as-kr 4 + byte@ 1 - ifnz as-bad 0 exit then as-kr ;
+def as-operand 0 :as-xy 0 :as-xu 0 :as-xv -1 :as-xb -1 :as-xi 1 :as-xsc 0 :as-xab 0 :as-xc as-skip as-p byte@ 42 - if0 as-p 1 + :as-p as-skip then as-p byte@ :as-c as-c 37 - if0 1 :as-xk as-reg-in :as-kr as-kr if0 exit then as-kr 5 + byte@ :as-xr as-kr 7 + byte@ :as-xs as-kr 6 + byte@ :as-xc as-xs 1 - if0 as-xc if0 3 as-xr - if as-xr 8 - if 1 :as-need40 then then then then exit then as-c 36 - if0 as-p 1 + :as-p as-expr as-es :as-xy as-eb :as-xu as-ev :as-xv 2 :as-xk exit then 3 :as-xk as-c 40 - ifnz as-expr as-es :as-xy as-eb :as-xu as-ev :as-xv then as-p byte@ 40 - if0 as-p 1 + :as-p as-p byte@ 37 - if0 as-reg-in :as-kr as-kr if0 exit then as-kr 5 + byte@ :as-xb as-kr 7 + byte@ :as-xab as-skip then as-p byte@ 44 - if0 as-p 1 + :as-p as-reg-in :as-kr as-kr if0 exit then as-kr 5 + byte@ :as-xi as-kr 7 + byte@ :as-xab as-p byte@ 44 - if0 as-p 1 + :as-p as-number :as-xsc then then as-p byte@ 41 - ifnz as-bad as-rest exit then as-p 1 + :as-p then ;
+def as-save-a as-xk :oa-k as-xr :oa-r as-xs :oa-s as-xc :oa-c as-xb :oa-b as-xi :oa-i as-xsc :oa-sc as-xv :oa-v as-xy :oa-y as-xu :oa-u as-xab :oa-ab ;
+def as-save-b as-xk :ob-k as-xr :ob-r as-xs :ob-s as-xc :ob-c as-xb :ob-b as-xi :ob-i as-xsc :ob-sc as-xv :ob-v as-xy :ob-y as-xu :ob-u as-xab :ob-ab ;
+def as-save-c as-xk :oc-k as-xr :oc-r as-xs :oc-s as-xc :oc-c ;
+def as-use-a oa-k :as-xk oa-r :as-xr oa-s :as-xs oa-c :as-xc oa-b :as-xb oa-i :as-xi oa-sc :as-xsc oa-v :as-xv oa-y :as-xy oa-u :as-xu oa-ab :as-xab ;
+def as-use-b ob-k :as-xk ob-r :as-xr ob-s :as-xs ob-c :as-xc ob-b :as-xb ob-i :as-xi ob-sc :as-xsc ob-v :as-xv ob-y :as-xy ob-u :as-xu ob-ab :as-xab ;
+def as-ops 0 :as-nops 0 :oa-k 0 :ob-k 0 :oc-k begin as-skip as-p byte@ :as-c as-c 10 - if0 0 else as-c if0 0 else 1 then then neg while as-operand as-nops 1 + :as-nops as-nops 1 - if0 as-save-a then as-nops 2 - if0 as-save-b then as-nops 3 - if0 as-save-c then as-skip as-p byte@ 44 - if0 as-p 1 + :as-p then repeat ;
+\ With no suffix, the size comes from the last general register operand.
+def as-size-ok as-sz ifnz exit then as-nops 1 - if0 oa-k 1 - if0 oa-s :as-sz then exit then ob-k 1 - if0 ob-c if0 ob-s :as-sz exit then then oa-k 1 - if0 oa-c if0 oa-s :as-sz then then ;
 
-def as-call $E8 as-b as-skip as-tok as-sym as-fix 4 as-zero as-eol ;
-def as-lea $48 as-b $8D as-b $3D as-b as-skip as-tok as-sym as-fix 4 as-zero as-eol ;
-def as-movabs as-skip as-p 1 + :as-p as-num as-p 4 + byte@ :as-c as-v :as-mv $48 as-b as-c 100 - if0 $BF as-b else $BE as-b then as-mv as-u64 as-eol ;
-def as-movq as-skip as-p 1 + :as-p as-num as-v :as-mv $48 as-b $C7 as-b $C6 as-b as-mv as-u32 as-eol ;
-def as-j as-ts 1 + byte@ :as-c as-c 109 - if0 0 as-jump exit then as-c 122 - if0 2 as-jump exit then as-ts 2 + byte@ 122 - if0 1 as-jump exit then 3 as-jump ;
-def as-instr as-ts byte@ :as-c as-c 99 - if0 as-call exit then as-c 106 - if0 as-j exit then as-c 114 - if0 $C3 as-b as-eol exit then as-c 116 - if0 $48 as-b $85 as-b $C0 as-b as-eol exit then as-c 108 - if0 as-lea exit then as-c 109 - if0 as-tl 7 - if0 as-movabs else as-movq then exit then as-bad ;
-def as-line as-skip as-tok as-tl if0 as-eol exit then as-p byte@ 58 - if0 as-label exit then as-ts byte@ 46 - if0 as-dir exit then as-instr ;
+\ Fixups. Record, 32 bytes: offset 3, section 1, fragment count 3, size 1, pc-relative 1,
+\ tail 1, symbol 3, subtracted symbol 3, addend 4.
+def as-fix-rec 32 * as-fixes + ;
+def as-fix-add :as-fp :as-fz :as-fv :as-fu :as-fy as-nf 65535 - if0 "fixups" as-limit exit then as-nf as-fix-rec :as-fa as-fa as-o as-base - as-p3 as-fa 3 + as-sec ! as-fa 4 + as-nj as-p3 as-fa 7 + as-fz ! as-fa 8 + as-fp ! as-fa 9 + as-tail ! as-fa 10 + as-fy as-p3 as-fa 13 + as-fu as-p3 as-fa 16 + as-fv as-p4 as-nf 1 + :as-nf 0 as-fz as-n ;
+\ A value of n bytes, from an expression that may still need the linker.
+def as-value :as-vn :as-vv :as-vu :as-vy as-vy as-vu + ifnz as-vy as-vu as-vv as-vn 0 as-fix-add else as-vv as-vn as-n then ;
 
-def as-load "compiler/bootstrap_seed.S" tc-find :as-rec0 as-rec0 if0 "AS-NO-SOURCE" type cr 0 exit then as-rec0 tc-addr :as-from as-rec0 tc-size :as-end-offset 0 :as-i begin as-i as-end-offset 1 + - while as-src as-i + as-from as-i + byte@ ! as-i 1 + :as-i repeat 1 ;
-def as-tables 0 :as-i begin as-i 256 - while as-class as-i + 1 ! as-i 1 + :as-i repeat as-class 0 ! as-class 10 + 0 ! as-class 32 + 0 ! as-class 40 + 0 ! as-class 44 + 0 ! as-class 58 + 0 ! 0 :as-i begin as-i 49152 - while as-hash as-i + 0 ! as-i 1 + :as-i repeat ;
-def as-pass 0 :as-nsym 0 :as-nj 0 :as-nf 0 :as-nq 0 :as-failed as-short :as-o as-short :as-o1 as-ro :as-o2 as-data :as-o3 1 :as-sec as-src :as-p begin as-p byte@ neg while as-line repeat as-sec as-switch ;
+\ Encoding. as-rf is the ModRM reg field; as-x* is the r/m operand.
+def as-fit8 :as-f8 as-f8 128 + if 0 exit then 127 as-f8 - if 0 exit then 1 ;
+def as-fit32 :as-f32 as-f32 2147483648 + if 0 exit then 2147483647 as-f32 - if 0 exit then 1 ;
+def as-norm :as-nm as-sz 1 - if0 as-nm 256 % :as-nm 127 as-nm - if as-nm 256 - exit then as-nm exit then as-sz 2 - if0 as-nm 65536 % :as-nm 32767 as-nm - if as-nm 65536 - exit then as-nm exit then as-sz 4 - if0 as-nm 4294967296 % :as-nm 2147483647 as-nm - if as-nm 4294967296 - exit then as-nm exit then as-nm ;
+def as-imm-size as-sz 4 - if as-sz exit then 4 ;
+def as-w as-sz 1 - if0 0 exit then 1 ;
+def as-rex-bits 0 :as-rex as-sz 8 - if0 as-now if0 8 :as-rex then then 7 as-rf - if as-rex 4 + :as-rex then as-xk 1 - if0 7 as-xr - if as-rex 1 + :as-rex then then as-xk 3 - if0 as-xb :as-t as-t 16 - ifnz 7 as-t - if as-rex 1 + :as-rex then then 7 as-xi - if as-rex 2 + :as-rex then then ;
+def as-start as-rex-bits as-xk 3 - if0 as-xab 4 - if0 as-mode 32 - ifnz $67 as-b then then as-xab 2 - if0 as-mode 16 - ifnz $67 as-b then then then as-sz 2 - if0 as-mode 16 - ifnz $66 as-b then then as-sz 4 - if0 as-mode 16 - if0 $66 as-b then then as-mode 64 - if0 as-rex ifnz $40 as-rex + as-b else as-need40 ifnz $40 as-b then then then ;
+def as-disp-mod as-xy as-xu + ifnz 2 exit then as-xv if0 as-t 7 band 5 - ifnz 0 exit then then as-xv as-fit8 ifnz 1 exit then 2 ;
+def as-disp-out :as-dm as-dm 1 - if0 as-xv 1 as-n exit then as-dm 2 - if0 as-xy as-xu as-xv as-dsize as-value then ;
+def as-rm16 as-xb 6 - if0 4 exit then as-xb 7 - if0 5 exit then as-xb 5 - if0 6 exit then 7 ;
+def as-sib-scale as-xsc 2 - if0 64 exit then as-xsc 4 - if0 128 exit then as-xsc 8 - if0 192 exit then 0 ;
+def as-mem16 as-rm16 :as-t as-xy as-xu + if0 as-xv if0 as-t 6 - ifnz as-rb as-t + as-b exit then then as-xv as-fit8 ifnz $40 as-rb + as-t + as-b as-xv 1 as-n exit then then $80 as-rb + as-t + as-b as-xy as-xu as-xv 2 as-value ;
+def as-mem-abs as-mode 64 - if0 $04 as-rb + as-b $25 as-b as-xy as-xu as-xv 4 as-value exit then as-mode 32 - if0 $05 as-rb + as-b as-xy as-xu as-xv 4 as-value exit then $06 as-rb + as-b as-xy as-xu as-xv 2 as-value ;
+def as-mem-base as-xb 7 band :as-t as-disp-mod :as-dm as-xi 1 + ifnz as-dm 64 * as-rb + 4 + as-b as-sib-scale as-xi 7 band 8 * + as-t + as-b else as-t 4 - if0 as-dm 64 * as-rb + 4 + as-b 32 as-t + as-b else as-dm 64 * as-rb + as-t + as-b then then as-dm as-disp-out ;
+def as-modrm as-rf 7 band 8 * :as-rb 4 :as-dsize as-xk 1 - if0 $C0 as-rb + as-xr 7 band + as-b exit then as-xb 1 + if0 as-xi 1 + if0 as-mem-abs exit then $04 as-rb + as-b as-sib-scale as-xi 7 band 8 * + 5 + as-b as-xy as-xu as-xv 4 as-value exit then as-xab 2 - if0 as-mem16 exit then as-xb 16 - if0 $05 as-rb + as-b as-xy as-xu as-xv 4 1 as-fix-add exit then as-mem-base ;
+def as-rm1 :as-op as-start as-op as-b as-modrm ;
+def as-rm2 :as-op as-start $0F as-b as-op as-b as-modrm ;
+def as-none 0 :as-xk 0 :as-rf as-start ;
+\ The first operand as an immediate of n bytes.
+def as-imm-a :as-in oa-y oa-u oa-v as-in as-value ;
+def as-sym-a? oa-y oa-u + ;
+
+\ Instructions, one word per class.
+def as-alu :as-g oa-k 2 - if0 oa-v as-norm :oa-v as-g :as-rf as-use-b as-sym-a? if0 as-sz 1 - ifnz oa-v as-fit8 ifnz 1 :as-tail $83 as-rm1 oa-v 1 as-n exit then then then ob-k 1 - if0 ob-r if0 as-none as-g 8 * 4 + as-w + as-b as-imm-size as-imm-a exit then then as-imm-size :as-tail $80 as-w + as-rm1 as-imm-size as-imm-a exit then oa-k 1 - if0 oa-r :as-rf as-use-b as-g 8 * as-w + as-rm1 exit then ob-r :as-rf as-use-a as-g 8 * 2 + as-w + as-rm1 ;
+def as-test oa-k 2 - if0 oa-v as-norm :oa-v ob-k 1 - if0 ob-r if0 as-none $A8 as-w + as-b as-imm-size as-imm-a exit then then 0 :as-rf as-use-b as-imm-size :as-tail $F6 as-w + as-rm1 as-imm-size as-imm-a exit then oa-k 1 - if0 oa-r :as-rf as-use-b else ob-r :as-rf as-use-a then $84 as-w + as-rm1 ;
+def as-moffs? as-mode 64 - if0 0 exit then as-xk 3 - ifnz 0 exit then as-xb 1 + ifnz 0 exit then as-xi 1 + ifnz 0 exit then 1 ;
+def as-mov-imm ob-k 1 - if0 as-sz 8 - if0 as-sym-a? if0 oa-v as-fit32 if0 as-use-b 0 :as-rf as-start $B8 ob-r 7 band + as-b oa-v 8 as-n exit then then else as-use-b 0 :as-rf as-start as-sz 1 - if0 $B0 else $B8 then ob-r 7 band + as-b as-imm-size as-imm-a exit then then 0 :as-rf as-use-b as-imm-size :as-tail $C6 as-w + as-rm1 as-imm-size as-imm-a ;
+def as-rm2-cr $20 as-rm2 ;
+def as-moffs-size as-mode 16 - if0 2 exit then 4 ;
+def as-xy-a oa-y oa-u oa-v as-moffs-size as-value ;
+def as-xy-b ob-y ob-u ob-v as-moffs-size as-value ;
+def as-mov oa-k 2 - if0 as-mov-imm exit then oa-k 1 - if0 oa-c 1 - if0 ob-k 3 - if0 0 :as-sz then oa-r :as-rf as-use-b $8C as-rm1 exit then oa-c 2 - if0 0 :as-sz oa-r :as-rf as-use-b as-rm2-cr exit then then ob-k 1 - if0 ob-c 1 - if0 0 :as-sz ob-r :as-rf as-use-a $8E as-rm1 exit then ob-c 2 - if0 0 :as-sz ob-r :as-rf as-use-a $22 as-rm2 exit then then oa-k 1 - if0 oa-r if0 as-use-b as-moffs? ifnz as-none $A2 as-w + as-b as-xy-b exit then then oa-r :as-rf as-use-b $88 as-w + as-rm1 exit then ob-r if0 as-use-a as-moffs? ifnz as-none $A0 as-w + as-b as-xy-a exit then then ob-r :as-rf as-use-a $8A as-w + as-rm1 ;
+def as-lea ob-r :as-rf as-use-a $8D as-rm1 ;
+def as-incdec :as-g as-mode 64 - ifnz oa-k 1 - if0 as-sz 1 - ifnz as-none $40 as-g 8 * + oa-r + as-b exit then then then as-g :as-rf as-use-a $FE as-w + as-rm1 ;
+def as-unary :as-g as-g :as-rf as-use-a $F6 as-w + as-rm1 ;
+def as-imul as-nops 1 - if0 5 :as-rf as-use-a $F6 as-w + as-rm1 exit then oa-k 2 - if0 as-nops 3 - if0 oc-r :as-rf as-use-b else ob-r :as-rf as-use-b then as-sym-a? if0 oa-v as-fit8 ifnz 1 :as-tail $6B as-rm1 oa-v 1 as-n exit then then as-imm-size :as-tail $69 as-rm1 as-imm-size as-imm-a exit then ob-r :as-rf as-use-a $AF as-rm2 ;
+def as-shift :as-g as-g :as-rf as-nops 1 - if0 as-use-a $D0 as-w + as-rm1 exit then as-use-b oa-k 2 - if0 oa-v 1 - if0 $D0 as-w + as-rm1 exit then 1 :as-tail $C0 as-w + as-rm1 oa-v 1 as-n exit then $D2 as-w + as-rm1 ;
+def as-push-seg :as-po oa-r 4 - if0 $A0 as-po + :as-t $0F as-b as-t as-b exit then oa-r 5 - if0 $A8 as-po + :as-t $0F as-b as-t as-b exit then oa-r 8 * 6 + as-po + as-b ;
+def as-push as-mode 64 - if0 as-sz if0 8 :as-sz then then 1 :as-now oa-k 1 - if0 oa-c 1 - if0 0 :as-sz as-none 0 as-push-seg exit then 0 :as-rf as-use-a as-start $50 oa-r 7 band + as-b exit then oa-k 2 - if0 as-sym-a? if0 oa-v as-fit8 ifnz $6A as-b oa-v 1 as-n exit then then $68 as-b as-mode 16 - if0 2 else 4 then as-imm-a exit then 6 :as-rf as-use-a $FF as-rm1 ;
+def as-pop as-mode 64 - if0 as-sz if0 8 :as-sz then then 1 :as-now oa-k 1 - if0 oa-c 1 - if0 0 :as-sz as-none 1 as-push-seg exit then 0 :as-rf as-use-a as-start $58 oa-r 7 band + as-b exit then 0 :as-rf as-use-a $8F as-rm1 ;
+def as-movzx :as-g ob-r :as-rf as-use-a as-g as-rm2 ;
+def as-shxd :as-g oa-k 2 - if0 1 :as-tail oa-v :as-t else -1 :as-t then ob-r :as-rf oc-k :as-xk oc-r :as-xr 0 :as-xy as-t if as-g 1 + as-rm2 else as-g as-rm2 as-t 1 as-n then ;
+def as-bt :as-g :as-gx oa-k 2 - if0 as-gx :as-rf as-use-b 1 :as-tail $BA as-rm2 oa-v 1 as-n exit then oa-r :as-rf as-use-b as-g as-rm2 ;
+def as-xchg oa-k 1 - if0 ob-k 1 - if0 as-sz 1 - ifnz oa-r if0 as-use-b 0 :as-rf as-start $90 ob-r 7 band + as-b exit then ob-r if0 as-use-a 0 :as-rf as-start $90 oa-r 7 band + as-b exit then then then then oa-k 1 - if0 oa-r :as-rf as-use-b else ob-r :as-rf as-use-a then $86 as-w + as-rm1 ;
+def as-inout :as-g as-none as-g if0 oa-k 2 - if0 $E4 as-w + as-b oa-v 1 as-n else $EC as-w + as-b then else ob-k 2 - if0 $E6 as-w + as-b ob-v 1 as-n else $EE as-w + as-b then then ;
+def as-int oa-v 3 - if0 $CC as-b exit then $CD as-b oa-v 1 as-n ;
+def as-desc :as-gr :as-gop 0 :as-sz as-gr :as-rf as-use-a as-gop as-rm2 ;
+def as-far :as-g as-g as-b ob-y ob-u ob-v as-moffs-size as-value oa-v 2 as-n ;
+def as-bswap as-use-a 0 :as-rf as-start $0F as-b $C8 oa-r 7 band + as-b ;
+def as-movabs oa-k 2 - if0 as-use-b 0 :as-rf as-start $B8 ob-r 7 band + as-b oa-y oa-u oa-v 8 as-value exit then as-bad ;
+def as-plain :as-g :as-ga0 as-none as-ga0 as-b as-g ifnz as-g as-b then ;
+
+\ Jumps start short. The relaxation pass decides their final size.
+def as-frag-add :as-fk :as-fs as-nj 32767 - if0 "fragments" as-limit exit then as-frags as-nj 16 * + :as-ja as-ja as-o as-base - as-p3 as-ja 3 + as-fs as-p3 as-ja 6 + as-fk ! as-ja 7 + as-mode ! as-ja 8 + 0 ! as-ja 9 + as-sec ! as-ja 10 + 0 as-p3 as-nj 1 + :as-nj ;
+def as-branch :as-g as-expr as-es as-g as-frag-add as-o 2 + :as-o ;
+def as-jmp as-skip as-p byte@ 42 - if0 as-ops 4 :as-rf as-use-a 0 :as-sz $FF as-rm1 exit then 16 as-branch ;
+def as-call as-skip as-p byte@ 42 - if0 as-ops 2 :as-rf as-use-a 0 :as-sz $FF as-rm1 exit then as-expr $E8 as-b as-es as-eb as-ev as-moffs-size 1 as-fix-add ;
+def as-loop as-expr $E2 as-b as-es as-eb as-ev 1 1 as-fix-add ;
+
+\ Directives.
+def as-data-list :as-dn begin as-expr as-es as-eb as-ev as-dn as-value as-skip as-p byte@ 44 - if0 as-p 1 + :as-p 1 else 0 then neg while repeat ;
+def as-escape :as-ec as-ec 110 - if0 10 exit then as-ec 116 - if0 9 exit then as-ec 114 - if0 13 exit then as-ec 48 - if0 0 exit then as-ec 101 - if0 27 exit then as-ec ;
+def as-string :as-z as-skip as-p 1 + :as-p begin as-p byte@ :as-c as-c 34 - ifnz as-c 92 - if0 as-p 1 + :as-p as-p byte@ as-escape :as-c then as-c as-b as-p 1 + :as-p 1 else 0 then neg while repeat as-p 1 + :as-p as-z ifnz 0 as-b then ;
+def as-skip-dir as-expr as-ev :as-sn 0 :as-fillv as-skip as-p byte@ 44 - if0 as-p 1 + :as-p as-expr as-ev :as-fillv then as-sec 4 - if0 as-o as-sn + :as-o exit then begin as-sn neg while as-fillv as-b as-sn 1 - :as-sn repeat ;
+def as-relaxing? as-sec 1 - if0 1 exit then as-sec 5 - if0 1 exit then 0 ;
+def as-align as-expr as-ev :as-al as-rest as-relaxing? ifnz as-mode 16 - ifnz as-bad exit then as-al 8 - neg if as-bad exit then as-al 32 as-frag-add exit then as-al as-o as-base - as-al % - as-al % :as-pad as-sec 4 - if0 as-o as-pad + :as-o exit then begin as-pad neg while 0 as-b as-pad 1 - :as-pad repeat ;
+def as-org as-expr as-ev 33 as-frag-add ;
+def as-saved as-labels 64 + ;
+def as-saved-reset 1 :as-i begin as-i 6 - while as-saved as-i 4 * + as-i as-sec-base as-p4 as-i 1 + :as-i repeat ;
+def as-sec-limit as-o as-base - 1048576 - neg if "section bytes" as-limit then ;
+def as-switch :as-to2 as-saved as-sec 4 * + as-o as-p4 as-to2 :as-sec as-saved as-sec 4 * + as-g4 :as-o as-sec as-sec-base :as-base ;
+def as-is :as-wn :as-ws as-tl as-wn - ifnz 0 exit then as-ts as-ws as-wn as-same-text ;
+def as-section as-skip as-tok ".text.entry" 11 as-is ifnz 5 as-switch as-rest exit then ".text" 5 as-is ifnz 1 as-switch as-rest exit then ".rodata" 7 as-is ifnz 2 as-switch as-rest exit then ".data" 5 as-is ifnz 3 as-switch as-rest exit then ".bss" 4 as-is ifnz 4 as-switch as-rest exit then as-ts ".note" 5 as-same-text ifnz as-rest exit then as-bad as-rest ;
+def as-global begin as-skip as-tok as-sym as-flag-global as-skip as-p byte@ 44 - if0 as-p 1 + :as-p 1 else 0 then neg while repeat ;
+def as-comm as-skip as-tok as-sym :as-cs as-cs as-rec :as-la as-p 1 + :as-p as-expr as-la 4 + 7 ! as-la 12 + as-ev as-p4 as-la 11 + 3 ! as-rest ;
+def as-set as-skip as-tok as-sym :as-cs as-p 1 + :as-p as-expr as-cs as-rec :as-la as-la 4 + 6 ! as-la 12 + as-ev as-p4 as-la 11 + as-la 11 + byte@ 1 band 2 + ! ;
+def as-incbin as-skip as-p 1 + :as-p as-p :as-ib begin as-p byte@ 34 - ifnz as-p 1 + :as-p 1 else 0 then neg while repeat as-to :as-it as-ib as-p as-ib - ap-copy as-to 0 ! as-to 1 + :as-to as-p 1 + :as-p as-it tc-find :as-ir as-ir if0 as-bad exit then as-ir tc-addr :as-ia as-ir tc-size :as-in2 0 :as-i begin as-i as-in2 - while as-ia as-i + byte@ as-b as-i 1 + :as-i repeat ;
+
+def as-directive :as-kr as-kr 4 + byte@ :as-cl as-kr 5 + byte@ :as-ka0 as-cl 30 - if0 as-ka0 as-data-list exit then as-cl 35 - if0 as-section exit then as-cl 39 - if0 as-comm exit then as-cl 31 - if0 as-ka0 as-string exit then as-cl 32 - if0 as-skip-dir exit then as-cl 33 - if0 as-align exit then as-cl 34 - if0 as-org exit then as-cl 36 - if0 as-ka0 as-switch exit then as-cl 37 - if0 as-global exit then as-cl 38 - if0 as-rest exit then as-cl 41 - if0 as-ka0 :as-mode exit then as-cl 42 - if0 as-set exit then as-cl 43 - if0 as-incbin exit then as-bad as-rest ;
+\ Refuses what no encoder here can represent, rather than encoding something else.
+def as-count? :as-wmax :as-wmin as-nops as-wmin - if 0 exit then as-wmax as-nops - if 0 exit then 1 ;
+def as-arity as-cl 7 - if0 0 0 as-count? exit then as-cl 29 - if0 0 0 as-count? exit then as-cl 12 - if0 1 3 as-count? exit then as-cl 13 - if0 1 2 as-count? exit then as-cl 17 - if0 3 3 as-count? exit then as-cl 10 - if0 1 1 as-count? exit then as-cl 11 - if0 1 1 as-count? exit then as-cl 14 - if0 1 1 as-count? exit then as-cl 15 - if0 1 1 as-count? exit then as-cl 21 - if0 1 1 as-count? exit then as-cl 23 - if0 1 1 as-count? exit then as-cl 26 - if0 1 1 as-count? exit then 2 2 as-count? ;
+def as-sized? as-cl 2 - if0 1 exit then as-cl 3 - if0 1 exit then as-cl 9 - if0 1 exit then as-cl 19 - if0 1 exit then 0 ;
+def as-gp-fit? :as-gs0 :as-gk0 :as-gc0 as-gk0 1 - ifnz 1 exit then as-gc0 ifnz 1 exit then as-gs0 as-sz - if0 1 exit then 0 ;
+def as-valid? as-arity if0 0 exit then oa-k 3 - if0 ob-k 3 - if0 0 exit then then ob-k 2 - if0 as-cl 20 - ifnz as-cl 24 - ifnz 0 exit then then then as-sized? ifnz as-sz if0 0 exit then oa-c oa-k oa-s as-gp-fit? if0 0 exit then ob-c ob-k ob-s as-gp-fit? if0 0 exit then then as-cl 8 - if0 oa-k 3 - ifnz 0 exit then then 1 ;
+def as-instr :as-kr as-kr 4 + byte@ :as-cl as-kr 5 + byte@ :as-ka0 as-kr 6 + byte@ :as-kx0 as-kr 7 + byte@ :as-sz 0 :as-now 0 :as-tail 0 :as-need40 0 :as-xk 0 :as-rf as-cl 4 - if0 as-ka0 as-branch exit then as-cl 5 - if0 as-jmp exit then as-cl 6 - if0 as-call exit then as-cl 25 - if0 as-loop exit then as-ops as-size-ok as-valid? if0 as-bad exit then as-cl 3 - if0 as-mov exit then as-cl 2 - if0 as-ka0 as-alu exit then as-cl 7 - if0 as-ka0 as-kx0 as-plain exit then as-cl 8 - if0 as-lea exit then as-cl 9 - if0 as-test exit then as-cl 14 - if0 as-push exit then as-cl 15 - if0 as-pop exit then as-cl 10 - if0 as-ka0 as-incdec exit then as-cl 11 - if0 as-ka0 as-unary exit then as-cl 12 - if0 as-imul exit then as-cl 13 - if0 as-ka0 as-shift exit then as-cl 16 - if0 as-ka0 as-movzx exit then as-cl 17 - if0 as-ka0 as-shxd exit then as-cl 18 - if0 as-kx0 as-ka0 as-bt exit then as-cl 19 - if0 as-xchg exit then as-cl 20 - if0 as-ka0 as-inout exit then as-cl 21 - if0 as-int exit then as-cl 23 - if0 as-ka0 as-kx0 as-desc exit then as-cl 24 - if0 as-ka0 as-far exit then as-cl 26 - if0 as-bswap exit then as-cl 27 - if0 as-movabs exit then as-cl 29 - if0 $0F as-b $AE as-b $F0 as-b exit then as-bad ;
+def as-line as-p :as-ls begin as-skip as-p byte@ :as-c as-c 10 - if0 as-p 1 + :as-p exit then as-c if0 exit then as-tok as-tl if0 as-bad as-rest as-p 1 + :as-p exit then as-p byte@ 58 - if0 as-p 1 + :as-p as-ts byte@ as-digit? ifnz as-ts :as-q as-p :as-q2 as-q :as-p as-number as-q2 :as-p as-local-def else as-sym as-define then 1 else as-kw-find :as-kr as-kr if0 as-bad as-rest as-p 1 + :as-p exit then as-kr 4 + byte@ :as-cl as-cl 22 - if0 $F3 as-b 1 else 29 as-cl - if as-kr as-directive else as-kr as-instr then as-skip as-p byte@ :as-c as-c ifnz as-c 10 - ifnz as-bad as-rest then as-p 1 + :as-p then exit then then neg while repeat ;
+def as-pass 0 :as-nsym 0 :as-nj 0 :as-nf 0 :as-es 0 :as-eb 1 :as-sec as-raw-text :as-base as-base :as-o 64 :as-mode as-saved-reset as-src :as-p begin as-p byte@ neg while as-line as-sec-limit repeat as-sec as-switch ;
 
 \ Branches start short and only ever grow, which reaches the same fixed point as GNU as.
-\ Each pass reads one prefix table and writes the other, so both ends of a
-\ distance come from the same pass. Otherwise growth looks like distance.
-def as-growth :as-gi as-gi 8 * as-jumps + 6 + byte@ if0 3 exit then 4 ;
-def as-final :as-fr as-fr as-rec :as-ra as-ra 5 + as-g3 as-pold as-ra 8 + as-g3 3 * + as-g3 + ;
-def as-text? as-rec 4 + byte@ 1 - if0 1 exit then 0 ;
-def as-relax-pass 0 :as-changed 0 :as-grown 0 :as-i begin as-i as-nj - while as-pold as-i 3 * + as-g3 :as-old as-pnew as-i 3 * + as-grown as-p3 as-jumps as-i 8 * + :as-ja as-ja 7 + byte@ ifnz as-grown as-i as-growth + :as-grown else as-ja 3 + as-g3 :as-js as-js as-text? if0 1 :as-big else as-js as-final as-ja as-g3 as-old + 2 + - :as-dist 0 :as-big as-dist 127 - neg if 1 :as-big then as-dist 128 + if 1 :as-big then then as-big ifnz as-ja 7 + 1 ! 1 :as-changed as-grown as-i as-growth + :as-grown then then as-i 1 + :as-i repeat as-pnew as-nj 3 * + as-grown as-p3 as-pold as-pnew :as-pold :as-pnew ;
-def as-relax as-prefix :as-pold as-prefix2 :as-pnew 0 :as-i begin as-i as-nj 1 + - while as-pold as-i 3 * + 0 as-p3 as-i 1 + :as-i repeat 0 :as-passes begin as-relax-pass as-passes 1 + :as-passes as-changed neg while repeat ;
+\ Each pass reads one prefix table and writes the other, so both ends of a distance
+\ come from the same pass. Otherwise growth looks like distance. Text and text.entry
+\ each have their own table, indexed by the fragment count where a label sits.
+def as-slot 5 - if0 98304 exit then 0 ;
+def as-final :as-fr as-fr as-rec :as-ra as-ra 4 + byte@ :as-rs as-ra 5 + as-g3 as-rs 1 - if0 1 else as-rs 5 - if0 1 else 0 then then ifnz as-pold as-rs as-slot + as-ra 8 + as-g3 3 * + as-g3 + then ;
+def as-reach? :as-ry as-ry if0 0 exit then as-ry as-rec :as-ra as-ra 4 + byte@ as-fsec - ifnz 0 exit then as-ra 11 + byte@ 2 band ifnz 1 exit then 0 ;
+\ A jump to a global in its own section resolves here; a call or data reference does not.
+def as-growth :as-gk :as-gm as-gm 16 - if0 as-gk 16 - if0 1 exit then 2 exit then as-gk 16 - if0 3 exit then 4 ;
+def as-relax-jump as-ja 7 + byte@ as-k as-growth :as-gr2 as-ja 8 + byte@ ifnz as-gr2 exit then as-ja 3 + as-g3 :as-js 0 :as-big as-js as-reach? if0 1 :as-big else as-js as-final as-raw as-old + 2 + - :as-dist 127 as-dist - if 1 :as-big then as-dist 128 + if 1 :as-big then then as-big ifnz as-ja 8 + 1 ! 1 :as-changed as-gr2 exit then 0 ;
+def as-relax-pad as-raw as-cur + :as-pos as-k 32 - if0 as-ja 3 + as-g3 :as-al as-al as-pos as-al % - as-al % :as-pad else as-ja 3 + as-g3 as-pos - :as-pad then as-ja 10 + as-g3 as-pad - ifnz as-ja 10 + as-pad as-p3 1 :as-changed then as-pad ;
+def as-relax-pass 0 :as-changed 0 :as-g0 0 :as-g1 0 :as-i begin as-i as-nj - while as-frags as-i 16 * + :as-ja as-pnew as-i 3 * + as-g0 as-p3 as-pnew 98304 + as-i 3 * + as-g1 as-p3 as-ja 9 + byte@ :as-fsec as-fsec 5 - if0 as-g1 else as-g0 then :as-cur as-ja as-g3 :as-raw as-ja 6 + byte@ :as-k as-pold as-fsec as-slot + as-i 3 * + as-g3 :as-old 31 as-k - if as-relax-pad else as-relax-jump then :as-add as-fsec 5 - if0 as-g1 as-add + :as-g1 else as-g0 as-add + :as-g0 then as-i 1 + :as-i repeat as-pnew as-nj 3 * + as-g0 as-p3 as-pnew 98304 + as-nj 3 * + as-g1 as-p3 as-pold as-pnew :as-pold :as-pnew ;
+def as-relax as-pre :as-pold as-pre 196608 + :as-pnew 0 :as-i begin as-i as-nj 1 + - while as-pold as-i 3 * + 0 as-p3 as-pold 98304 + as-i 3 * + 0 as-p3 as-i 1 + :as-i repeat 0 :as-passes begin as-relax-pass as-passes 1 + :as-passes as-changed neg while repeat ;
 
-def as-copy :as-ce begin as-cs as-ce - while as-co as-short as-cs + byte@ ! as-co 1 + :as-co as-cs 1 + :as-cs repeat ;
-def as-rel32 :as-rv :as-ra as-rv 4294967296 % :as-rv 4 :as-ri begin as-ri neg while as-ra as-rv 255 band ! as-ra 1 + :as-ra as-rv 8 shr :as-rv as-ri 1 - :as-ri repeat ;
+def as-copy :as-ce begin as-cs as-ce - while as-co as-rawbase as-cs + byte@ ! as-co 1 + :as-co as-cs 1 + :as-cs repeat ;
 def as-put :as-pb as-co as-pb ! as-co 1 + :as-co ;
-def as-emit-jump as-jumps as-i 8 * + :as-ja as-ja as-g3 as-copy as-ja 6 + byte@ :as-k as-ja 7 + byte@ if0 as-k 0 - if0 $EB as-put then as-k 1 - if0 $75 as-put then as-k 2 - if0 $74 as-put then as-k 3 - if0 $79 as-put then as-ja 3 + as-g3 as-final as-co 1 + as-text - - 256 % as-put else as-k if0 $E9 as-put else $0F as-put as-k 1 - if0 $85 as-put then as-k 2 - if0 $84 as-put then as-k 3 - if0 $89 as-put then then as-ja 3 + as-g3 :as-js as-js as-text? ifnz as-co as-js as-final as-co 4 + as-text - - as-rel32 else as-co 0 as-rel32 then as-co 4 + :as-co then as-cs 2 + :as-cs ;
-def as-emit-text 0 :as-cs as-text :as-co 0 :as-i begin as-i as-nj - while as-emit-jump as-i 1 + :as-i repeat as-o1 as-short - as-copy ;
-def as-apply as-fixes as-i 9 * + :as-fa as-fa 3 + as-g3 :as-js as-js as-text? ifnz as-fa as-g3 as-pold as-fa 6 + as-g3 3 * + as-g3 + :as-fp as-text as-fp + as-js as-final as-fp 4 + - as-rel32 then ;
+def as-fill :as-fn begin as-fn neg while as-co as-fb ! as-co 1 + :as-co as-fn 1 - :as-fn repeat ;
+def as-long-rel :as-rn as-js as-reach? ifnz as-co as-js as-final as-co as-rn + as-outbase - - as-rn as-put-n then as-co as-rn + :as-co ;
+def as-zero-out :as-fn2 0 :as-fb as-fn2 as-fill ;
+def as-emit-jump as-ja 7 + byte@ :as-m as-ja 6 + byte@ :as-k as-ja 3 + as-g3 :as-js as-ja 8 + byte@ if0 as-k 16 - if0 $EB as-put else $70 as-k + as-put then as-js as-final as-co 1 + as-outbase - - 256 % as-put else as-k 16 - if0 $E9 as-put else $0F as-put $80 as-k + as-put then as-m 16 - if0 2 else 4 then :as-rn2 as-rn2 as-zero-out as-co as-rn2 - :as-co as-rn2 as-long-rel then as-cs 2 + :as-cs ;
+\ GNU as pads 16-bit code with these no-ops. Only 16-bit code aligns inside text here.
+def as-nop3 $8D as-put $74 as-put 0 as-put ;
+def as-nop4 $8D as-put $B4 as-put 0 as-put 0 as-put ;
+def as-nop-tail $8D as-put $BD as-put 0 as-put 0 as-put ;
+def as-nop-fill :as-nz as-nz 1 - if0 $90 as-put exit then as-nz 2 - if0 $89 as-put $F6 as-put exit then as-nz 3 - if0 as-nop3 exit then as-nz 4 - if0 as-nop4 exit then as-nz 5 - if0 $90 as-put as-nop4 exit then as-nz 6 - if0 $89 as-put $F6 as-put as-nop-tail exit then as-nz 7 - if0 as-nop3 as-nop-tail exit then ;
+def as-emit-frag as-ja as-g3 as-copy as-ja 6 + byte@ :as-k 31 as-k - if as-k 32 - if0 as-ja 10 + as-g3 as-nop-fill else as-ja 10 + as-g3 as-zero-out then else as-emit-jump then ;
+def as-emit-section :as-fsec as-fsec as-sec-base :as-rawbase as-fsec 5 - if0 as-out-entry else as-out-text then :as-outbase as-outbase :as-co 0 :as-cs 0 :as-i begin as-i as-nj - while as-frags as-i 16 * + :as-ja as-ja 9 + byte@ as-fsec - if0 as-emit-frag then as-i 1 + :as-i repeat as-saved as-fsec 4 * + as-g4 as-rawbase - as-copy as-co ;
+
+def as-fix-pos :as-fa2 as-fa2 as-g3 as-fa2 3 + byte@ :as-rs as-rs 1 - if0 1 else as-rs 5 - if0 1 else 0 then then ifnz as-pold as-rs as-slot + as-fa2 4 + as-g3 3 * + as-g3 + then ;
+def as-fix-out :as-rs as-rs 1 - if0 as-out-text exit then as-rs 5 - if0 as-out-entry exit then as-rs as-sec-base ;
+def as-apply as-i as-fix-rec :as-fa as-fa 3 + byte@ :as-fsec as-fa as-fix-pos :as-fp2 as-fa 7 + byte@ :as-fz2 as-fa 10 + as-g3 :as-fy2 as-fa 13 + as-g3 :as-fu2 as-fa 16 + as-g4 :as-fv2 as-fsec as-fix-out as-fp2 + :as-fw as-fu2 ifnz as-fy2 as-rec 4 + byte@ as-fu2 as-rec 4 + byte@ - if0 as-fw as-fy2 as-final as-fu2 as-final - as-fv2 + as-fz2 as-put-n then exit then as-fy2 as-rec 4 + byte@ 6 - if0 as-fw as-fy2 as-rec 12 + as-g4 as-fv2 + as-fz2 as-put-n exit then as-fa 8 + byte@ ifnz as-fy2 as-reach? ifnz as-fy2 as-rec 11 + byte@ 1 band if0 as-fy2 as-final as-fv2 + as-fp2 as-fz2 + as-fa 9 + byte@ + - :as-fd as-fz2 1 - if0 as-fd as-fit8 if0 "AS-BAD-LINE loop target out of range" type cr 1 :as-failed then then as-fw as-fd as-fz2 as-put-n then then then ;
 def as-fixups 0 :as-i begin as-i as-nf - while as-apply as-i 1 + :as-i repeat ;
 
 def as-hex-digit :as-x as-x 10 - if as-x 48 + emit else as-x 87 + emit then ;
 def as-dump :as-de :as-dp 0 :as-dc begin as-dp as-de - while as-dp byte@ :as-x2 as-x2 4 shr as-hex-digit as-x2 15 band as-hex-digit as-dc 1 + :as-dc as-dc 64 - if0 cr 0 :as-dc then as-dp 1 + :as-dp repeat cr ;
-
-def as-run "AS-BEGIN" type cr as-load if0 exit then "AS-LOADED " type as-end-offset . cr as-tables as-pass as-failed ifnz "AS-FAILED" type cr exit then "AS-PARSED " type as-nsym . as-nj . as-nf . as-nq . cr as-relax "AS-RELAXED " type as-passes . cr as-emit-text as-fixups "AS-DONE " type as-co as-text - . as-o2 as-ro - . as-o3 as-data - . cr "AS-TEXT" type cr as-text as-co as-dump "AS-RO" type cr as-ro as-o2 as-dump "AS-DATA" type cr as-data as-o3 as-dump "AS-END" type cr ;
+def as-clear as-tables 0 :as-failed 0 :as-i begin as-i 49152 - while as-hash as-i + 0 ! as-i 1 + :as-i repeat 0 :as-i begin as-i 30 - while as-labels as-i + 0 ! as-i 1 + :as-i repeat ;
+\ Assembles one archive file. Returns 1 when every line was understood.
+def as-assemble :as-file as-clear as-file tc-find :as-fr0 as-fr0 if0 "AS-NO-FILE " type as-file type cr 0 exit then as-fr0 tc-addr ap-run as-failed ifnz 0 exit then "AS-EXPANDED " type as-end-offset . as-pass as-failed ifnz 0 exit then "AS-PARSED " type as-nsym . as-nj . as-nf . as-relax "AS-RELAXED " type as-passes . 1 as-emit-section :as-text-end 5 as-emit-section :as-entry-end as-fixups as-failed if0 1 exit then 0 ;
+def as-run :as-file0 "AS-BEGIN" type cr as-file0 as-assemble if0 "AS-FAILED" type cr "AS-END" type cr exit then "AS-TEXT" type cr as-out-text as-text-end as-dump "AS-ENTRY" type cr as-out-entry as-entry-end as-dump "AS-RO" type cr as-ro as-saved 8 + as-g4 as-dump "AS-DATA" type cr as-data as-saved 12 + as-g4 as-dump "AS-BSS" type cr as-saved 16 + as-g4 as-bss-base - . "AS-END" type cr ;
