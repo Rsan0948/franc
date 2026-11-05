@@ -13,6 +13,7 @@ on:
       - 'tests/toolchain/**'
       - 'tests/link/**'
       - 'tests/image/**'
+      - 'tests/selfhost/**'
       - 'lib/toolchain.frac'
       - 'build/toolchain*'
       - 'franctxt/**'
@@ -28,6 +29,7 @@ on:
       - 'tests/toolchain/**'
       - 'tests/link/**'
       - 'tests/image/**'
+      - 'tests/selfhost/**'
       - 'lib/toolchain.frac'
       - 'build/toolchain*'
       - 'franctxt/**'
@@ -53,7 +55,7 @@ jobs:
           done
   foundations:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - name: Install QEMU
@@ -68,5 +70,21 @@ jobs:
         run: bash tests/asm_speed/run.sh build/out/francos-bios.img
       - name: The Franc linker matches GNU ld and objcopy
         run: bash tests/link/run.sh build/out/francos-bios.img build/out/boot.bin build/out/kernel.bin
-      - name: The OS rebuilds itself on a second disk and the result boots
-        run: bash tests/image/run.sh build/out/francos-bios.img
+  self-host:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install QEMU
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
+      - name: Build the reference image with GNU binutils
+        run: make os
+      - name: Delete every host compiler, assembler and linker
+        run: |
+          for tool in as ld ld.bfd ld.gold objcopy objdump gcc cc clang; do
+            while path=$(command -v "$tool"); do sudo rm -f "$(readlink -f "$path")" "$path"; hash -r; done
+          done
+          sudo rm -f /usr/bin/x86_64-linux-gnu-as /usr/bin/x86_64-linux-gnu-ld* /usr/bin/x86_64-linux-gnu-objcopy
+          if command -v as ld objcopy gcc; then exit 1; fi
+      - name: FrancOS rebuilds itself to the same bytes, boots, and does it again
+        run: bash tests/selfhost/run.sh build/out/francos-bios.img
