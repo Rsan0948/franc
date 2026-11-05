@@ -10,6 +10,9 @@ on:
       - 'drivers/storage/**'
       - 'tests/foundations/**'
       - 'tests/asm_speed/**'
+      - 'tests/toolchain/**'
+      - 'lib/toolchain.frac'
+      - 'build/toolchain*'
       - 'franctxt/**'
       - '.github/workflows/native-foundations.yml'
   pull_request:
@@ -20,6 +23,9 @@ on:
       - 'drivers/storage/**'
       - 'tests/foundations/**'
       - 'tests/asm_speed/**'
+      - 'tests/toolchain/**'
+      - 'lib/toolchain.frac'
+      - 'build/toolchain*'
       - 'franctxt/**'
       - '.github/workflows/native-foundations.yml'
 
@@ -52,5 +58,7 @@ jobs:
         run: |
           make os
           bash tests/foundations/run.sh build/out/francos-bios.img
+      - name: The toolchain archive loads and refuses damaged disks
+        run: bash tests/toolchain/run.sh build/out/francos-bios.img
       - name: The Franc assembler matches GNU as on the seed
-        run: bash tests/asm_speed/run.sh
+        run: bash tests/asm_speed/run.sh build/out/francos-bios.img

@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Phase 3 step 1: can a Franc assembler handle the seed in a usable time?
-# Builds a throwaway kernel containing assembler.frac, assembles the seed in the
-# guest, reports how long each stage took, and compares the guest's bytes with
-# GNU as. Needs as, ld, objcopy, python3 and QEMU. Does not change the repo.
-#   usage: bash tests/asm_speed/run.sh
+# Can the Franc assembler handle the seed in a usable time? Boots a normal image,
+# loads the assembler from the toolchain archive through the JIT, assembles the
+# seed in the guest, reports how long each stage took, and compares the guest's
+# bytes with GNU as. Needs as, objcopy and QEMU. Does not change the repo.
+#   usage: bash tests/asm_speed/run.sh [IMAGE]
 set -euo pipefail
 repo=$(cd "$(dirname "$0")/../.." && pwd)
+image=$(realpath "${1:-$repo/build/out/francos-bios.img}")
 scratch=$(mktemp -d)
 guest_pid=""
 cleanup() {
@@ -15,16 +16,6 @@ cleanup() {
 }
 trap cleanup EXIT HUP INT TERM
 
-cp -a "$repo" "$scratch/tree"
-tree=$scratch/tree
-# The kernel size limit leaves no room for both, and this kernel never compiles anything.
-sed -i 's#upgrade.frac aot.frac bundle.frac apps/registry.frac kernel.frac -o#upgrade.frac bundle.frac apps/registry.frac ../tests/asm_speed/assembler.frac kernel.frac -o#' "$tree/stage4/Makefile"
-sed -i --follow-symlinks -e 's/^def bundle-demo .*/def bundle-demo 0 drop ;/' -e 's/^def bundle-kernel .*/def bundle-kernel 0 drop ;/' "$tree/compiler/bundle.frac"
-sed -i "s/^OPS = { /OPS = { 'shl':'fr_lshift','shr':'fr_rshift',/" "$tree/stage4/compiler.py"
-for word in aot-demo aot-program-demo aot-control-demo aot-string-reg-demo; do echo "def $word 0 drop ;" >> "$tree/compiler/bundle.frac"; done
-make -C "$tree/stage4" franos-aot.img >"$scratch/build.log" 2>&1 || { tail -20 "$scratch/build.log" >&2; exit 1; }
-echo "kernel bytes: $(wc -c < "$tree/stage4/kernel.bin") of 195584"
-
 grep -v '\.incbin' "$repo/compiler/bootstrap_seed.S" > "$scratch/seed.S"
 as --64 -o "$scratch/seed.o" "$scratch/seed.S"
 for section in text rodata data; do
@@ -32,13 +23,13 @@ for section in text rodata data; do
 done
 
 disk=$scratch/disk.img
-cp "$tree/stage4/franos-aot.img" "$disk"
-printf 'def apps-init as-run ;\n' > "$scratch/bundle.frac"
-(cd "$tree" && FRANC_SOURCE_LBA=1024 sh build/source_pack.sh "$disk" "$scratch/bundle.frac")
-dd if="$repo/compiler/bootstrap_seed.S" of="$disk" bs=512 seek=2048 conv=notrunc status=none
-size=$(wc -c < "$repo/compiler/bootstrap_seed.S")
-dd if=/dev/zero of="$disk" bs=1 seek=$((2048 * 512 + size)) count=1024 conv=notrunc status=none
-truncate -s 2M "$disk"
+cp "$image" "$disk"
+(cd "$repo" && sh build/toolchain_pack.sh "$disk" compiler/bootstrap_seed.S)
+cat "$repo/lib/toolchain.frac" > "$scratch/bundle.frac"
+cat >> "$scratch/bundle.frac" <<'F'
+def apps-init tc-load . "compiler/toolchain/assembler.frac" tc-compile . "as-run" s2-find s2-run ;
+F
+(cd "$repo" && FRANC_SOURCE_LBA=1024 sh build/source_pack.sh "$disk" "$scratch/bundle.frac")
 
 fifo=$scratch/keys
 log=$scratch/serial.log

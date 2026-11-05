@@ -1,0 +1,21 @@
+\ Loads and verifies the toolchain archive that build/toolchain_pack.sh stages at
+\ LBA 2048, then compiles tools out of it. Nothing here writes to disk. The hashes
+\ catch corruption; they live on the same disk, so they do not stop tampering.
+def tc-base $2200000 ;
+def tc-capacity 4194304 ;
+def tc-reset 0 :tc-count 0 :tc-bytes 0 :tc-table-end ;
+def tc-read :tr-n :tr-o :tr-l begin tr-n neg while tr-l ata-read-sector if0 0 exit then 0 :tr-i begin tr-i 512 - while tr-o tr-i + tr-i sector-byte@ ! tr-i 1 + :tr-i repeat tr-o 512 + :tr-o tr-l 1 + :tr-l tr-n 1 - :tr-n repeat 1 ;
+def tc-same :ts-n :ts-b :ts-a begin ts-n neg while ts-a byte@ ts-b byte@ - ifnz 0 exit then ts-a 1 + :ts-a ts-b 1 + :ts-b ts-n 1 - :ts-n repeat 1 ;
+def tc-num :tn-n :tn-p 0 :tn-v begin tn-n neg while tn-p byte@ 48 - :tn-d tn-d if -1 exit then 9 tn-d - if -1 exit then tn-v 10 * tn-d + :tn-v tn-p 1 + :tn-p tn-n 1 - :tn-n repeat tn-v ;
+def tc-record 128 * tc-base + ;
+def tc-offset 45 + 8 tc-num ;
+def tc-size 54 + 8 tc-num ;
+def tc-addr tc-offset tc-base + ;
+def tc-name-end :te-r 44 :te-n begin te-n neg while te-r te-n 1 - + byte@ 32 - ifnz te-n exit then te-n 1 - :te-n repeat 0 ;
+def tc-type-name :tt-r tt-r tc-name-end :tt-n 0 :tt-i begin tt-i tt-n - while tt-r tt-i + byte@ emit tt-i 1 + :tt-i repeat ;
+def tc-fail type cr 0 :tc-count 0 ;
+def tc-file-ok :tf-r tf-r tc-offset :tf-o tf-r tc-size :tf-s tf-o if 0 exit then tf-s if 0 exit then tf-o tc-table-end - if 0 exit then tc-bytes tf-o tf-s + 1 + - if 0 exit then tc-base tf-o + tf-s + byte@ ifnz 0 exit then tc-base tf-o + tf-s sha256-long :tf-h tf-h if0 0 exit then tf-h tf-r 63 + 64 tc-same ;
+def tc-load tc-reset 2048 tc-base 1 tc-read if0 "TOOLCHAIN READ FAILED" tc-fail exit then tc-base "FRANCTCH 1 " 11 tc-same if0 "TOOLCHAIN MISSING" tc-fail exit then tc-base 11 + 8 tc-num :tl-count tc-base 20 + 8 tc-num :tl-sectors tl-count 1 - if "TOOLCHAIN INVALID" tc-fail exit then tl-sectors 1 - if "TOOLCHAIN INVALID" tc-fail exit then tl-sectors 512 * :tc-bytes tc-capacity tc-bytes - if "TOOLCHAIN INVALID" tc-fail exit then tl-count 1 + 128 * 511 + 512 / floor 512 * :tc-table-end tc-bytes tc-table-end - if "TOOLCHAIN INVALID" tc-fail exit then 2048 tc-base tl-sectors tc-read if0 "TOOLCHAIN READ FAILED" tc-fail exit then tc-base 128 + tl-count 128 * sha256-long :tl-hash tl-hash if0 "TOOLCHAIN INVALID" tc-fail exit then tl-hash tc-base 29 + 64 tc-same if0 "TOOLCHAIN BAD TABLE" tc-fail exit then 1 :tl-i begin tl-i tl-count 1 + - while tl-i tc-record tc-file-ok if0 "TOOLCHAIN BAD FILE " type tl-i tc-record tc-type-name cr 0 :tc-count 0 exit then tl-i 1 + :tl-i repeat tl-count :tc-count tc-count ;
+def tc-match :tm-name :tm-r 0 :tm-i begin tm-name tm-i + byte@ :tm-c tm-c ifnz tm-i 44 - if0 0 exit then tm-r tm-i + byte@ tm-c - ifnz 0 exit then tm-i 1 + :tm-i else tm-i 44 - if0 1 exit then tm-r tm-i + byte@ 32 - if0 1 exit then 0 exit then again ;
+def tc-find :tx-name 1 :tx-i begin tx-i tc-count 1 + - while tx-i tc-record tx-name tc-match ifnz tx-i tc-record exit then tx-i 1 + :tx-i repeat 0 ;
+def tc-compile tc-find :tp-r tp-r if0 0 exit then tp-r tc-addr s2-source ;

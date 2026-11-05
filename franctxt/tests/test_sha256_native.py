@@ -31,6 +31,9 @@ class NativeSHA256(unittest.TestCase):
         cls.raw_hash = cls.module.ft_sha256_raw
         cls.raw_hash.argtypes = (ctypes.c_void_p, ctypes.c_size_t)
         cls.raw_hash.restype = ctypes.c_char_p
+        cls.long_hash = cls.module.ft_sha256_long
+        cls.long_hash.argtypes = (ctypes.c_void_p, ctypes.c_size_t)
+        cls.long_hash.restype = ctypes.c_char_p
 
     @classmethod
     def tearDownClass(cls):
@@ -48,6 +51,22 @@ class NativeSHA256(unittest.TestCase):
             with self.subTest(size=length):
                 expected = hashlib.sha256(DOMAIN + data).hexdigest()
                 self.assertEqual(self.sha_native(data), expected)
+
+    def test_long_input_of_any_length(self):
+        for length in (0, 1, 55, 56, 63, 64, 65, 119, 120, 127, 128, 2047, 2048,
+                       2049, 65536, 1000003):
+            data = bytes((index * 31 + 5) & 255 for index in range(length))
+            with self.subTest(length=length):
+                buf = ctypes.create_string_buffer(data)
+                self.assertEqual(self.long_hash(buf, length).decode("ascii"),
+                                 hashlib.sha256(data).hexdigest())
+        self.assertIsNone(self.long_hash(None, 5))
+
+    def test_long_input_leaves_short_hashes_intact(self):
+        data = b"abc" * 1000
+        self.long_hash(ctypes.create_string_buffer(data), len(data))
+        self.assertEqual(self.sha_native(b"abc"),
+                         hashlib.sha256(DOMAIN + b"abc").hexdigest())
 
     def test_raw_offline_package_source_sha256(self):
         for length in (0, 1, 12, 43, 44, 55, 56, 64, 128, 256, 2047):

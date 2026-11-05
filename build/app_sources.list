@@ -20,6 +20,7 @@ lib/ui.frac
 lib/user_aot.frac
 lib/ide.frac
 lib/franctxt.frac
+lib/toolchain.frac
 drivers/network/pci.frac
 kernel/scheduler/tasks.frac
 drivers/network/net.frac

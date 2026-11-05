@@ -1,0 +1,17 @@
+# Files the guest toolchain needs, named as sources refer to them. Order is part of archive identity.
+boot/bios/boot.S
+runtime/abi.S
+franctxt/sha256_native.S
+stage4/interrupts.S
+stage4/scheduler.S
+stage4/e820.S
+stage4/ring3.S
+stage4/page_owners.S
+stage4/process_spaces.S
+stage4/user_scheduler.S
+stage4/user_compiled.S
+stage4/gop_console.S
+drivers/video/font.S
+kernel/kernel.ld
+stage2/compiler.frac
+compiler/toolchain/assembler.frac

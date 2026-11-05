@@ -25,6 +25,8 @@ ANCHORS = {
     "franctxt": ("lib/franctxt.frac", "def ft-value-buffer"),
     "pages": ("stage4/runtime.S", "fr_page_alloc:"),
     "lite": ("lib/litetofrac.frac", "def lite-put"),
+    "toolchain": ("lib/toolchain.frac", "def tc-base"),
+    "assembler": ("compiler/toolchain/assembler.frac", "def as-src"),
 }
 MAX_RAM = 128 * 1024 * 1024
 

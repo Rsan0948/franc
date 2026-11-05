@@ -20,6 +20,7 @@ lib/ui.frac
 lib/user_aot.frac
 lib/ide.frac
 lib/franctxt.frac
+lib/toolchain.frac
 stage4/pci.frac
 stage4/tasks.frac
 stage4/net.frac
