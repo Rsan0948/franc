@@ -2795,14 +2795,14 @@ fw_646b2d6d6170:
   call fr_reg_set
   leaq reg_fw_646b2d636f6465(%rip), %rdi
   call fr_reg_get
-  movabsq $2, %rdi
+  movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
   call fr_condition
   testq %rax, %rax
   jnz .Lfranc_157
-  movabsq $49, %rdi
+  movabsq $27, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
@@ -2815,12 +2815,26 @@ fw_646b2d6d6170:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_158
-  movabsq $0, %rdi
+  jnz .Lfranc_158
+  movabsq $49, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
 .Lfranc_158:
+  leaq reg_fw_646b2d636f6465(%rip), %rdi
+  call fr_reg_get
+  movabsq $2, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  call fr_sub
+  call fr_condition
+  testq %rax, %rax
+  jns .Lfranc_159
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  ret
+.Lfranc_159:
   leaq reg_fw_646b2d636f6465(%rip), %rdi
   call fr_reg_get
   movabsq $14, %rdi
@@ -2829,14 +2843,14 @@ fw_646b2d6d6170:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_159
+  jns .Lfranc_160
   leaq reg_fw_646b2d7368696674(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_160
+  jnz .Lfranc_161
 .section .rodata
-.Laot_string_161:
+.Laot_string_162:
   .byte 49
   .byte 50
   .byte 51
@@ -2851,13 +2865,13 @@ fw_646b2d6d6170:
   .byte 61
   .byte 0
 .section .text
-  leaq .Laot_string_161(%rip), %rdi
+  leaq .Laot_string_162(%rip), %rdi
   movq $1, %rsi
   call fr_push
-  jmp .Lfranc_162
-.Lfranc_160:
+  jmp .Lfranc_163
+.Lfranc_161:
 .section .rodata
-.Laot_string_163:
+.Laot_string_164:
   .byte 33
   .byte 64
   .byte 35
@@ -2872,10 +2886,10 @@ fw_646b2d6d6170:
   .byte 43
   .byte 0
 .section .text
-  leaq .Laot_string_163(%rip), %rdi
+  leaq .Laot_string_164(%rip), %rdi
   movq $1, %rsi
   call fr_push
-.Lfranc_162:
+.Lfranc_163:
   leaq reg_fw_646b2d636f6465(%rip), %rdi
   call fr_reg_get
   movabsq $2, %rdi
@@ -2885,7 +2899,7 @@ fw_646b2d6d6170:
   call fr_add
   call fr_bfetch
   ret
-.Lfranc_159:
+.Lfranc_160:
   leaq reg_fw_646b2d636f6465(%rip), %rdi
   call fr_reg_get
   movabsq $14, %rdi
@@ -2894,12 +2908,12 @@ fw_646b2d6d6170:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_164
+  jnz .Lfranc_165
   movabsq $8, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_164:
+.Lfranc_165:
   leaq reg_fw_646b2d636f6465(%rip), %rdi
   call fr_reg_get
   movabsq $15, %rdi
@@ -2908,12 +2922,12 @@ fw_646b2d6d6170:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_165
+  jnz .Lfranc_166
   movabsq $9, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_165:
+.Lfranc_166:
   leaq reg_fw_646b2d636f6465(%rip), %rdi
   call fr_reg_get
   movabsq $16, %rdi
@@ -2922,12 +2936,12 @@ fw_646b2d6d6170:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_166
+  jns .Lfranc_167
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_166:
+.Lfranc_167:
   leaq reg_fw_646b2d636f6465(%rip), %rdi
   call fr_reg_get
   movabsq $28, %rdi
@@ -2936,14 +2950,14 @@ fw_646b2d6d6170:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_167
+  jns .Lfranc_168
   leaq reg_fw_646b2d7368696674(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_168
+  jnz .Lfranc_169
 .section .rodata
-.Laot_string_169:
+.Laot_string_170:
   .byte 113
   .byte 119
   .byte 101
@@ -2958,13 +2972,13 @@ fw_646b2d6d6170:
   .byte 93
   .byte 0
 .section .text
-  leaq .Laot_string_169(%rip), %rdi
+  leaq .Laot_string_170(%rip), %rdi
   movq $1, %rsi
   call fr_push
-  jmp .Lfranc_170
-.Lfranc_168:
+  jmp .Lfranc_171
+.Lfranc_169:
 .section .rodata
-.Laot_string_171:
+.Laot_string_172:
   .byte 81
   .byte 87
   .byte 69
@@ -2979,10 +2993,10 @@ fw_646b2d6d6170:
   .byte 125
   .byte 0
 .section .text
-  leaq .Laot_string_171(%rip), %rdi
+  leaq .Laot_string_172(%rip), %rdi
   movq $1, %rsi
   call fr_push
-.Lfranc_170:
+.Lfranc_171:
   leaq reg_fw_646b2d636f6465(%rip), %rdi
   call fr_reg_get
   movabsq $16, %rdi
@@ -2992,7 +3006,7 @@ fw_646b2d6d6170:
   call fr_add
   call fr_bfetch
   ret
-.Lfranc_167:
+.Lfranc_168:
   leaq reg_fw_646b2d636f6465(%rip), %rdi
   call fr_reg_get
   movabsq $28, %rdi
@@ -3001,12 +3015,12 @@ fw_646b2d6d6170:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_172
+  jnz .Lfranc_173
   movabsq $10, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_172:
+.Lfranc_173:
   leaq reg_fw_646b2d636f6465(%rip), %rdi
   call fr_reg_get
   movabsq $30, %rdi
@@ -3015,12 +3029,12 @@ fw_646b2d6d6170:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_173
+  jns .Lfranc_174
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_173:
+.Lfranc_174:
   leaq reg_fw_646b2d636f6465(%rip), %rdi
   call fr_reg_get
   movabsq $39, %rdi
@@ -3029,14 +3043,14 @@ fw_646b2d6d6170:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_174
+  jns .Lfranc_175
   leaq reg_fw_646b2d7368696674(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_175
+  jnz .Lfranc_176
 .section .rodata
-.Laot_string_176:
+.Laot_string_177:
   .byte 97
   .byte 115
   .byte 100
@@ -3048,13 +3062,13 @@ fw_646b2d6d6170:
   .byte 108
   .byte 0
 .section .text
-  leaq .Laot_string_176(%rip), %rdi
+  leaq .Laot_string_177(%rip), %rdi
   movq $1, %rsi
   call fr_push
-  jmp .Lfranc_177
-.Lfranc_175:
+  jmp .Lfranc_178
+.Lfranc_176:
 .section .rodata
-.Laot_string_178:
+.Laot_string_179:
   .byte 65
   .byte 83
   .byte 68
@@ -3066,10 +3080,10 @@ fw_646b2d6d6170:
   .byte 76
   .byte 0
 .section .text
-  leaq .Laot_string_178(%rip), %rdi
+  leaq .Laot_string_179(%rip), %rdi
   movq $1, %rsi
   call fr_push
-.Lfranc_177:
+.Lfranc_178:
   leaq reg_fw_646b2d636f6465(%rip), %rdi
   call fr_reg_get
   movabsq $30, %rdi
@@ -3079,7 +3093,7 @@ fw_646b2d6d6170:
   call fr_add
   call fr_bfetch
   ret
-.Lfranc_174:
+.Lfranc_175:
   leaq reg_fw_646b2d636f6465(%rip), %rdi
   call fr_reg_get
   movabsq $39, %rdi
@@ -3088,23 +3102,23 @@ fw_646b2d6d6170:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_179
+  jnz .Lfranc_180
   leaq reg_fw_646b2d7368696674(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_180
+  jnz .Lfranc_181
   movabsq $59, %rdi
   movabsq $1, %rsi
   call fr_push
-  jmp .Lfranc_181
-.Lfranc_180:
+  jmp .Lfranc_182
+.Lfranc_181:
   movabsq $58, %rdi
   movabsq $1, %rsi
   call fr_push
-.Lfranc_181:
+.Lfranc_182:
   ret
-.Lfranc_179:
+.Lfranc_180:
   leaq reg_fw_646b2d636f6465(%rip), %rdi
   call fr_reg_get
   movabsq $40, %rdi
@@ -3113,23 +3127,23 @@ fw_646b2d6d6170:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_182
+  jnz .Lfranc_183
   leaq reg_fw_646b2d7368696674(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_183
+  jnz .Lfranc_184
   movabsq $39, %rdi
   movabsq $1, %rsi
   call fr_push
-  jmp .Lfranc_184
-.Lfranc_183:
+  jmp .Lfranc_185
+.Lfranc_184:
   movabsq $34, %rdi
   movabsq $1, %rsi
   call fr_push
-.Lfranc_184:
+.Lfranc_185:
   ret
-.Lfranc_182:
+.Lfranc_183:
   leaq reg_fw_646b2d636f6465(%rip), %rdi
   call fr_reg_get
   movabsq $41, %rdi
@@ -3138,23 +3152,23 @@ fw_646b2d6d6170:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_185
+  jnz .Lfranc_186
   leaq reg_fw_646b2d7368696674(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_186
+  jnz .Lfranc_187
   movabsq $96, %rdi
   movabsq $1, %rsi
   call fr_push
-  jmp .Lfranc_187
-.Lfranc_186:
+  jmp .Lfranc_188
+.Lfranc_187:
   movabsq $126, %rdi
   movabsq $1, %rsi
   call fr_push
-.Lfranc_187:
+.Lfranc_188:
   ret
-.Lfranc_185:
+.Lfranc_186:
   leaq reg_fw_646b2d636f6465(%rip), %rdi
   call fr_reg_get
   movabsq $43, %rdi
@@ -3163,23 +3177,23 @@ fw_646b2d6d6170:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_188
+  jnz .Lfranc_189
   leaq reg_fw_646b2d7368696674(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_189
+  jnz .Lfranc_190
   movabsq $92, %rdi
   movabsq $1, %rsi
   call fr_push
-  jmp .Lfranc_190
-.Lfranc_189:
+  jmp .Lfranc_191
+.Lfranc_190:
   movabsq $124, %rdi
   movabsq $1, %rsi
   call fr_push
-.Lfranc_190:
+.Lfranc_191:
   ret
-.Lfranc_188:
+.Lfranc_189:
   leaq reg_fw_646b2d636f6465(%rip), %rdi
   call fr_reg_get
   movabsq $44, %rdi
@@ -3188,12 +3202,12 @@ fw_646b2d6d6170:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_191
+  jns .Lfranc_192
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_191:
+.Lfranc_192:
   leaq reg_fw_646b2d636f6465(%rip), %rdi
   call fr_reg_get
   movabsq $54, %rdi
@@ -3202,14 +3216,14 @@ fw_646b2d6d6170:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_192
+  jns .Lfranc_193
   leaq reg_fw_646b2d7368696674(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_193
+  jnz .Lfranc_194
 .section .rodata
-.Laot_string_194:
+.Laot_string_195:
   .byte 122
   .byte 120
   .byte 99
@@ -3222,13 +3236,13 @@ fw_646b2d6d6170:
   .byte 47
   .byte 0
 .section .text
-  leaq .Laot_string_194(%rip), %rdi
+  leaq .Laot_string_195(%rip), %rdi
   movq $1, %rsi
   call fr_push
-  jmp .Lfranc_195
-.Lfranc_193:
+  jmp .Lfranc_196
+.Lfranc_194:
 .section .rodata
-.Laot_string_196:
+.Laot_string_197:
   .byte 90
   .byte 88
   .byte 67
@@ -3241,10 +3255,10 @@ fw_646b2d6d6170:
   .byte 63
   .byte 0
 .section .text
-  leaq .Laot_string_196(%rip), %rdi
+  leaq .Laot_string_197(%rip), %rdi
   movq $1, %rsi
   call fr_push
-.Lfranc_195:
+.Lfranc_196:
   leaq reg_fw_646b2d636f6465(%rip), %rdi
   call fr_reg_get
   movabsq $44, %rdi
@@ -3254,7 +3268,7 @@ fw_646b2d6d6170:
   call fr_add
   call fr_bfetch
   ret
-.Lfranc_192:
+.Lfranc_193:
   leaq reg_fw_646b2d636f6465(%rip), %rdi
   call fr_reg_get
   movabsq $57, %rdi
@@ -3263,12 +3277,12 @@ fw_646b2d6d6170:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_197
+  jnz .Lfranc_198
   movabsq $32, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_197:
+.Lfranc_198:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -3284,7 +3298,7 @@ fw_646b2d7363616e636f6465:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_198
+  jnz .Lfranc_199
   movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -3294,29 +3308,10 @@ fw_646b2d7363616e636f6465:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_198:
-  leaq reg_fw_646b2d7363616e(%rip), %rdi
-  call fr_reg_get
-  movabsq $42, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  call fr_sub
-  call fr_condition
-  testq %rax, %rax
-  jnz .Lfranc_199
-  movabsq $1, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  leaq reg_fw_646b2d7368696674(%rip), %rdi
-  call fr_reg_set
-  movabsq $-1, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  ret
 .Lfranc_199:
   leaq reg_fw_646b2d7363616e(%rip), %rdi
   call fr_reg_get
-  movabsq $54, %rdi
+  movabsq $42, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
@@ -3335,14 +3330,14 @@ fw_646b2d7363616e636f6465:
 .Lfranc_200:
   leaq reg_fw_646b2d7363616e(%rip), %rdi
   call fr_reg_get
-  movabsq $170, %rdi
+  movabsq $54, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
   call fr_condition
   testq %rax, %rax
   jnz .Lfranc_201
-  movabsq $0, %rdi
+  movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
   leaq reg_fw_646b2d7368696674(%rip), %rdi
@@ -3354,7 +3349,7 @@ fw_646b2d7363616e636f6465:
 .Lfranc_201:
   leaq reg_fw_646b2d7363616e(%rip), %rdi
   call fr_reg_get
-  movabsq $182, %rdi
+  movabsq $170, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
@@ -3373,13 +3368,32 @@ fw_646b2d7363616e636f6465:
 .Lfranc_202:
   leaq reg_fw_646b2d7363616e(%rip), %rdi
   call fr_reg_get
+  movabsq $182, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  call fr_sub
+  call fr_condition
+  testq %rax, %rax
+  jnz .Lfranc_203
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  leaq reg_fw_646b2d7368696674(%rip), %rdi
+  call fr_reg_set
+  movabsq $-1, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  ret
+.Lfranc_203:
+  leaq reg_fw_646b2d7363616e(%rip), %rdi
+  call fr_reg_get
   movabsq $128, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_band
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_203
+  jz .Lfranc_204
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -3389,12 +3403,12 @@ fw_646b2d7363616e636f6465:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_203:
+.Lfranc_204:
   leaq reg_fw_646b2d657874656e646564(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_204
+  jz .Lfranc_205
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -3408,12 +3422,12 @@ fw_646b2d7363616e636f6465:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_205
+  jnz .Lfranc_206
   movabsq $1001, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_205:
+.Lfranc_206:
   leaq reg_fw_646b2d7363616e(%rip), %rdi
   call fr_reg_get
   movabsq $80, %rdi
@@ -3422,12 +3436,12 @@ fw_646b2d7363616e636f6465:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_206
+  jnz .Lfranc_207
   movabsq $1002, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_206:
+.Lfranc_207:
   leaq reg_fw_646b2d7363616e(%rip), %rdi
   call fr_reg_get
   movabsq $75, %rdi
@@ -3436,12 +3450,12 @@ fw_646b2d7363616e636f6465:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_207
+  jnz .Lfranc_208
   movabsq $1003, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_207:
+.Lfranc_208:
   leaq reg_fw_646b2d7363616e(%rip), %rdi
   call fr_reg_get
   movabsq $77, %rdi
@@ -3450,17 +3464,17 @@ fw_646b2d7363616e636f6465:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_208
+  jnz .Lfranc_209
   movabsq $1004, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_208:
+.Lfranc_209:
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_204:
+.Lfranc_205:
   leaq reg_fw_646b2d7363616e(%rip), %rdi
   call fr_reg_get
   call fw_646b2d6d6170
@@ -3470,15 +3484,15 @@ fw_646b2d7363616e636f6465:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_209
+  jnz .Lfranc_210
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
-  jmp .Lfranc_210
-.Lfranc_209:
+  jmp .Lfranc_211
+.Lfranc_210:
   leaq reg_fw_646b2d6173636969(%rip), %rdi
   call fr_reg_get
-.Lfranc_210:
+.Lfranc_211:
   ret
 fw_646b2d7073322d706f6c6c:
   movabsq $100, %rdi
@@ -3491,12 +3505,12 @@ fw_646b2d7073322d706f6c6c:
   call fr_band
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_211
+  jnz .Lfranc_212
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_211:
+.Lfranc_212:
   movabsq $96, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -3507,12 +3521,12 @@ fw_646b2d706f6c6c:
   call fw_68617264776172653f
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_212
+  jnz .Lfranc_213
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_212:
+.Lfranc_213:
   movabsq $1021, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -3523,7 +3537,7 @@ fw_646b2d706f6c6c:
   call fr_band
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_213
+  jz .Lfranc_214
   movabsq $1016, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -3538,28 +3552,28 @@ fw_646b2d706f6c6c:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_214
+  jnz .Lfranc_215
   movabsq $10, %rdi
   movabsq $1, %rsi
   call fr_push
-  jmp .Lfranc_215
-.Lfranc_214:
+  jmp .Lfranc_216
+.Lfranc_215:
   leaq reg_fw_646b2d63686172(%rip), %rdi
   call fr_reg_get
-.Lfranc_215:
+.Lfranc_216:
   ret
-.Lfranc_213:
+.Lfranc_214:
   call fw_646b2d7073322d706f6c6c
   ret
 fw_646b2d6b6579:
   call fw_68617264776172653f
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_216
+  jnz .Lfranc_217
   call fw_686f73742d6b6579
   ret
-.Lfranc_216:
 .Lfranc_217:
+.Lfranc_218:
   call fw_646b2d706f6c6c
   leaq reg_fw_646b2d6576656e74(%rip), %rdi
   call fr_reg_set
@@ -3571,12 +3585,12 @@ fw_646b2d6b6579:
   call fr_add
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_218
+  jz .Lfranc_219
   leaq reg_fw_646b2d6576656e74(%rip), %rdi
   call fr_reg_get
   ret
-.Lfranc_218:
-  jmp .Lfranc_217
+.Lfranc_219:
+  jmp .Lfranc_218
   ret
 fw_6b6579:
   call fw_646b2d6b6579
@@ -3586,7 +3600,7 @@ fw_73322d6571:
   call fr_reg_set
   leaq reg_fw_7332657161(%rip), %rdi
   call fr_reg_set
-.Lfranc_219:
+.Lfranc_220:
   leaq reg_fw_7332657161(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -3600,22 +3614,22 @@ fw_73322d6571:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_220
+  jz .Lfranc_221
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_220:
+.Lfranc_221:
   leaq reg_fw_7332657163(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_221
+  jnz .Lfranc_222
   movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_221:
+.Lfranc_222:
   leaq reg_fw_7332657161(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -3632,7 +3646,7 @@ fw_73322d6571:
   call fr_add
   leaq reg_fw_7332657162(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_219
+  jmp .Lfranc_220
   ret
 fw_73322d66696e64:
   leaq reg_fw_73326e6565646c65(%rip), %rdi
@@ -3640,17 +3654,17 @@ fw_73322d66696e64:
   call fr_dict_head
   leaq reg_fw_73326e6f6465(%rip), %rdi
   call fr_reg_set
-.Lfranc_222:
+.Lfranc_223:
   leaq reg_fw_73326e6f6465(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_223
+  jnz .Lfranc_224
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_223:
+.Lfranc_224:
   leaq reg_fw_73326e6f6465(%rip), %rdi
   call fr_reg_get
   call fr_dict_name
@@ -3659,18 +3673,18 @@ fw_73322d66696e64:
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_224
+  jz .Lfranc_225
   leaq reg_fw_73326e6f6465(%rip), %rdi
   call fr_reg_get
   call fr_dict_code
   ret
-.Lfranc_224:
+.Lfranc_225:
   leaq reg_fw_73326e6f6465(%rip), %rdi
   call fr_reg_get
   call fr_dict_next
   leaq reg_fw_73326e6f6465(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_222
+  jmp .Lfranc_223
   ret
 fw_73322d636f7079:
   call fr_s2_token_buffer
@@ -3685,7 +3699,7 @@ fw_73322d636f7079:
   call fr_push
   leaq reg_fw_733271756f7465(%rip), %rdi
   call fr_reg_set
-.Lfranc_225:
+.Lfranc_226:
   leaq reg_fw_733270(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -3695,7 +3709,7 @@ fw_73322d636f7079:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_226
+  jnz .Lfranc_227
   leaq reg_fw_73327772697465(%rip), %rdi
   call fr_reg_get
   movabsq $0, %rdi
@@ -3705,7 +3719,7 @@ fw_73322d636f7079:
   leaq reg_fw_7332746f6b(%rip), %rdi
   call fr_reg_get
   ret
-.Lfranc_226:
+.Lfranc_227:
   leaq reg_fw_73326368(%rip), %rdi
   call fr_reg_get
   movabsq $34, %rdi
@@ -3714,7 +3728,7 @@ fw_73322d636f7079:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_227
+  jnz .Lfranc_228
   leaq reg_fw_73327772697465(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_73326368(%rip), %rdi
@@ -3740,27 +3754,27 @@ fw_73322d636f7079:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_228
+  jnz .Lfranc_229
   movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
   leaq reg_fw_733271756f7465(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_229
-.Lfranc_228:
+  jmp .Lfranc_230
+.Lfranc_229:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   leaq reg_fw_733271756f7465(%rip), %rdi
   call fr_reg_set
-.Lfranc_229:
-  jmp .Lfranc_230
-.Lfranc_227:
+.Lfranc_230:
+  jmp .Lfranc_231
+.Lfranc_228:
   leaq reg_fw_733271756f7465(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_231
+  jnz .Lfranc_232
   leaq reg_fw_73326368(%rip), %rdi
   call fr_reg_get
   movabsq $33, %rdi
@@ -3769,7 +3783,7 @@ fw_73322d636f7079:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_232
+  jns .Lfranc_233
   leaq reg_fw_73327772697465(%rip), %rdi
   call fr_reg_get
   movabsq $0, %rdi
@@ -3779,8 +3793,8 @@ fw_73322d636f7079:
   leaq reg_fw_7332746f6b(%rip), %rdi
   call fr_reg_get
   ret
+.Lfranc_233:
 .Lfranc_232:
-.Lfranc_231:
   leaq reg_fw_73327772697465(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_73326368(%rip), %rdi
@@ -3802,11 +3816,11 @@ fw_73322d636f7079:
   call fr_add
   leaq reg_fw_73327772697465(%rip), %rdi
   call fr_reg_set
-.Lfranc_230:
-  jmp .Lfranc_225
+.Lfranc_231:
+  jmp .Lfranc_226
   ret
 fw_73322d6e657874:
-.Lfranc_233:
+.Lfranc_234:
   leaq reg_fw_733270(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -3816,12 +3830,12 @@ fw_73322d6e657874:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_234
+  jnz .Lfranc_235
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_234:
+.Lfranc_235:
   leaq reg_fw_73326368(%rip), %rdi
   call fr_reg_get
   movabsq $33, %rdi
@@ -3830,7 +3844,7 @@ fw_73322d6e657874:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_235
+  jns .Lfranc_236
   leaq reg_fw_733270(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -3839,12 +3853,12 @@ fw_73322d6e657874:
   call fr_add
   leaq reg_fw_733270(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_236
-.Lfranc_235:
+  jmp .Lfranc_237
+.Lfranc_236:
   call fw_73322d636f7079
   ret
-.Lfranc_236:
-  jmp .Lfranc_233
+.Lfranc_237:
+  jmp .Lfranc_234
   ret
 fw_73322d6469676974:
   leaq reg_fw_733263686172(%rip), %rdi
@@ -3857,7 +3871,7 @@ fw_73322d6469676974:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_237
+  jns .Lfranc_238
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -3865,7 +3879,7 @@ fw_73322d6469676974:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_237:
+.Lfranc_238:
   leaq reg_fw_733263686172(%rip), %rdi
   call fr_reg_get
   movabsq $58, %rdi
@@ -3874,7 +3888,7 @@ fw_73322d6469676974:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_238
+  jns .Lfranc_239
   leaq reg_fw_733263686172(%rip), %rdi
   call fr_reg_get
   movabsq $48, %rdi
@@ -3885,7 +3899,7 @@ fw_73322d6469676974:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_238:
+.Lfranc_239:
   leaq reg_fw_733263686172(%rip), %rdi
   call fr_reg_get
   movabsq $65, %rdi
@@ -3894,7 +3908,7 @@ fw_73322d6469676974:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_239
+  jns .Lfranc_240
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -3902,7 +3916,7 @@ fw_73322d6469676974:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_239:
+.Lfranc_240:
   leaq reg_fw_733263686172(%rip), %rdi
   call fr_reg_get
   movabsq $71, %rdi
@@ -3911,7 +3925,7 @@ fw_73322d6469676974:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_240
+  jns .Lfranc_241
   leaq reg_fw_733263686172(%rip), %rdi
   call fr_reg_get
   movabsq $65, %rdi
@@ -3926,7 +3940,7 @@ fw_73322d6469676974:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_240:
+.Lfranc_241:
   leaq reg_fw_733263686172(%rip), %rdi
   call fr_reg_get
   movabsq $97, %rdi
@@ -3935,7 +3949,7 @@ fw_73322d6469676974:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_241
+  jns .Lfranc_242
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -3943,7 +3957,7 @@ fw_73322d6469676974:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_241:
+.Lfranc_242:
   leaq reg_fw_733263686172(%rip), %rdi
   call fr_reg_get
   movabsq $103, %rdi
@@ -3952,7 +3966,7 @@ fw_73322d6469676974:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_242
+  jns .Lfranc_243
   leaq reg_fw_733263686172(%rip), %rdi
   call fr_reg_get
   movabsq $97, %rdi
@@ -3967,7 +3981,7 @@ fw_73322d6469676974:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_242:
+.Lfranc_243:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -4002,7 +4016,7 @@ fw_73322d75696e74:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_243
+  jnz .Lfranc_244
   movabsq $16, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -4016,7 +4030,7 @@ fw_73322d75696e74:
   call fr_add
   leaq reg_fw_73327570(%rip), %rdi
   call fr_reg_set
-.Lfranc_243:
+.Lfranc_244:
   leaq reg_fw_73327570(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -4026,7 +4040,7 @@ fw_73322d75696e74:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_244
+  jnz .Lfranc_245
   movabsq $2, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -4040,8 +4054,8 @@ fw_73322d75696e74:
   call fr_add
   leaq reg_fw_73327570(%rip), %rdi
   call fr_reg_set
-.Lfranc_244:
 .Lfranc_245:
+.Lfranc_246:
   leaq reg_fw_73327570(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -4049,23 +4063,6 @@ fw_73322d75696e74:
   call fr_reg_set
   leaq reg_fw_7332756368(%rip), %rdi
   call fr_reg_get
-  call fr_condition
-  testq %rax, %rax
-  jnz .Lfranc_246
-  leaq reg_fw_7332616363(%rip), %rdi
-  call fr_reg_get
-  leaq reg_fw_73327570(%rip), %rdi
-  call fr_reg_get
-  leaq reg_fw_73327365656e(%rip), %rdi
-  call fr_reg_get
-  ret
-.Lfranc_246:
-  leaq reg_fw_7332756368(%rip), %rdi
-  call fr_reg_get
-  movabsq $47, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  call fr_sub
   call fr_condition
   testq %rax, %rax
   jnz .Lfranc_247
@@ -4079,7 +4076,7 @@ fw_73322d75696e74:
 .Lfranc_247:
   leaq reg_fw_7332756368(%rip), %rdi
   call fr_reg_get
-  movabsq $46, %rdi
+  movabsq $47, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
@@ -4096,6 +4093,23 @@ fw_73322d75696e74:
 .Lfranc_248:
   leaq reg_fw_7332756368(%rip), %rdi
   call fr_reg_get
+  movabsq $46, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  call fr_sub
+  call fr_condition
+  testq %rax, %rax
+  jnz .Lfranc_249
+  leaq reg_fw_7332616363(%rip), %rdi
+  call fr_reg_get
+  leaq reg_fw_73327570(%rip), %rdi
+  call fr_reg_get
+  leaq reg_fw_73327365656e(%rip), %rdi
+  call fr_reg_get
+  ret
+.Lfranc_249:
+  leaq reg_fw_7332756368(%rip), %rdi
+  call fr_reg_get
   call fw_73322d6469676974
   leaq reg_fw_7332646967697476616c6964(%rip), %rdi
   call fr_reg_set
@@ -4105,7 +4119,7 @@ fw_73322d75696e74:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_249
+  jnz .Lfranc_250
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -4115,7 +4129,7 @@ fw_73322d75696e74:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_249:
+.Lfranc_250:
   leaq reg_fw_73326469676974(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_733262617365(%rip), %rdi
@@ -4123,7 +4137,7 @@ fw_73322d75696e74:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_250
+  jns .Lfranc_251
   leaq reg_fw_7332616363(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_733262617365(%rip), %rdi
@@ -4147,8 +4161,8 @@ fw_73322d75696e74:
   call fr_add
   leaq reg_fw_73327570(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_251
-.Lfranc_250:
+  jmp .Lfranc_252
+.Lfranc_251:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -4158,8 +4172,8 @@ fw_73322d75696e74:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_251:
-  jmp .Lfranc_245
+.Lfranc_252:
+  jmp .Lfranc_246
   ret
 fw_73322d64656370617274:
   leaq reg_fw_7332646563707472(%rip), %rdi
@@ -4174,7 +4188,7 @@ fw_73322d64656370617274:
   call fr_push
   leaq reg_fw_73327363616c65(%rip), %rdi
   call fr_reg_set
-.Lfranc_252:
+.Lfranc_253:
   leaq reg_fw_7332646563707472(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -4184,7 +4198,7 @@ fw_73322d64656370617274:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_253
+  jnz .Lfranc_254
   leaq reg_fw_7332646563696d616c(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_73327363616c65(%rip), %rdi
@@ -4193,7 +4207,7 @@ fw_73322d64656370617274:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_253:
+.Lfranc_254:
   leaq reg_fw_7332646368(%rip), %rdi
   call fr_reg_get
   call fw_73322d6469676974
@@ -4203,26 +4217,6 @@ fw_73322d64656370617274:
   call fr_reg_set
   leaq reg_fw_73326476616c6964(%rip), %rdi
   call fr_reg_get
-  call fr_condition
-  testq %rax, %rax
-  jnz .Lfranc_254
-  movabsq $0, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  movabsq $1, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  movabsq $0, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  ret
-.Lfranc_254:
-  leaq reg_fw_7332646967(%rip), %rdi
-  call fr_reg_get
-  movabsq $10, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  call fr_sub
   call fr_condition
   testq %rax, %rax
   jnz .Lfranc_255
@@ -4245,7 +4239,27 @@ fw_73322d64656370617274:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_256
+  jnz .Lfranc_256
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  movabsq $1, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  ret
+.Lfranc_256:
+  leaq reg_fw_7332646967(%rip), %rdi
+  call fr_reg_get
+  movabsq $10, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  call fr_sub
+  call fr_condition
+  testq %rax, %rax
+  jns .Lfranc_257
   leaq reg_fw_7332646563696d616c(%rip), %rdi
   call fr_reg_get
   movabsq $10, %rdi
@@ -4273,8 +4287,8 @@ fw_73322d64656370617274:
   call fr_add
   leaq reg_fw_7332646563707472(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_257
-.Lfranc_256:
+  jmp .Lfranc_258
+.Lfranc_257:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -4285,8 +4299,8 @@ fw_73322d64656370617274:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_257:
-  jmp .Lfranc_252
+.Lfranc_258:
+  jmp .Lfranc_253
   ret
 fw_73322d6e756d626572:
   leaq reg_fw_73326e70(%rip), %rdi
@@ -4305,7 +4319,7 @@ fw_73322d6e756d626572:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_258
+  jnz .Lfranc_259
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -4319,8 +4333,8 @@ fw_73322d6e756d626572:
   call fr_add
   leaq reg_fw_73326e70(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_259
-.Lfranc_258:
+  jmp .Lfranc_260
+.Lfranc_259:
   leaq reg_fw_73326e70(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -4330,7 +4344,7 @@ fw_73322d6e756d626572:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_260
+  jnz .Lfranc_261
   leaq reg_fw_73326e70(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -4339,8 +4353,8 @@ fw_73322d6e756d626572:
   call fr_add
   leaq reg_fw_73326e70(%rip), %rdi
   call fr_reg_set
+.Lfranc_261:
 .Lfranc_260:
-.Lfranc_259:
   leaq reg_fw_73326e70(%rip), %rdi
   call fr_reg_get
   call fw_73322d75696e74
@@ -4354,7 +4368,7 @@ fw_73322d6e756d626572:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_261
+  jnz .Lfranc_262
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -4365,13 +4379,13 @@ fw_73322d6e756d626572:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_261:
+.Lfranc_262:
   leaq reg_fw_7332656e64707472(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_262
+  jnz .Lfranc_263
   leaq reg_fw_73326e756d657261746f72(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_73327369676e(%rip), %rdi
@@ -4384,7 +4398,7 @@ fw_73322d6e756d626572:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_262:
+.Lfranc_263:
   leaq reg_fw_7332656e64707472(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -4394,7 +4408,7 @@ fw_73322d6e756d626572:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_263
+  jnz .Lfranc_264
   leaq reg_fw_7332656e64707472(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -4412,7 +4426,7 @@ fw_73322d6e756d626572:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_264
+  jnz .Lfranc_265
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -4423,7 +4437,7 @@ fw_73322d6e756d626572:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_264:
+.Lfranc_265:
   leaq reg_fw_73326e756d657261746f72(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_73326465637363616c65(%rip), %rdi
@@ -4441,7 +4455,7 @@ fw_73322d6e756d626572:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_263:
+.Lfranc_264:
   leaq reg_fw_7332656e64707472(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -4451,7 +4465,7 @@ fw_73322d6e756d626572:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_265
+  jnz .Lfranc_266
   leaq reg_fw_7332656e64707472(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -4469,24 +4483,7 @@ fw_73322d6e756d626572:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_266
-  movabsq $0, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  movabsq $1, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  movabsq $0, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  ret
-.Lfranc_266:
-  leaq reg_fw_733266696e616c707472(%rip), %rdi
-  call fr_reg_get
-  call fr_bfetch
-  call fr_condition
-  testq %rax, %rax
-  jz .Lfranc_267
+  jnz .Lfranc_267
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -4498,6 +4495,23 @@ fw_73322d6e756d626572:
   call fr_push
   ret
 .Lfranc_267:
+  leaq reg_fw_733266696e616c707472(%rip), %rdi
+  call fr_reg_get
+  call fr_bfetch
+  call fr_condition
+  testq %rax, %rax
+  jz .Lfranc_268
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  movabsq $1, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  ret
+.Lfranc_268:
   leaq reg_fw_73326e756d657261746f72(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_73327369676e(%rip), %rdi
@@ -4509,7 +4523,7 @@ fw_73322d6e756d626572:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_265:
+.Lfranc_266:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -4545,7 +4559,7 @@ fw_73322d753634:
   call fr_push
   leaq reg_fw_733269(%rip), %rdi
   call fr_reg_set
-.Lfranc_268:
+.Lfranc_269:
   leaq reg_fw_733269(%rip), %rdi
   call fr_reg_get
   movabsq $8, %rdi
@@ -4554,7 +4568,7 @@ fw_73322d753634:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_269
+  jns .Lfranc_270
   leaq reg_fw_7332776f7264(%rip), %rdi
   call fr_reg_get
   movabsq $256, %rdi
@@ -4579,8 +4593,8 @@ fw_73322d753634:
   call fr_add
   leaq reg_fw_733269(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_268
-.Lfranc_269:
+  jmp .Lfranc_269
+.Lfranc_270:
   ret
 fw_73322d63616c6c:
   leaq reg_fw_733263616c6c6565(%rip), %rdi
@@ -4683,7 +4697,7 @@ fw_73322d753332:
   call fr_push
   leaq reg_fw_733275333269(%rip), %rdi
   call fr_reg_set
-.Lfranc_270:
+.Lfranc_271:
   leaq reg_fw_733275333269(%rip), %rdi
   call fr_reg_get
   movabsq $4, %rdi
@@ -4692,7 +4706,7 @@ fw_73322d753332:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_271
+  jns .Lfranc_272
   leaq reg_fw_733275333276(%rip), %rdi
   call fr_reg_get
   movabsq $256, %rdi
@@ -4717,8 +4731,8 @@ fw_73322d753332:
   call fr_add
   leaq reg_fw_733275333269(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_270
-.Lfranc_271:
+  jmp .Lfranc_271
+.Lfranc_272:
   ret
 fw_73322d77726974653634:
   leaq reg_fw_73327776(%rip), %rdi
@@ -4730,7 +4744,7 @@ fw_73322d77726974653634:
   call fr_push
   leaq reg_fw_73327769(%rip), %rdi
   call fr_reg_set
-.Lfranc_272:
+.Lfranc_273:
   leaq reg_fw_73327769(%rip), %rdi
   call fr_reg_get
   movabsq $8, %rdi
@@ -4739,7 +4753,7 @@ fw_73322d77726974653634:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_273
+  jns .Lfranc_274
   leaq reg_fw_73327761(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_73327769(%rip), %rdi
@@ -4769,8 +4783,8 @@ fw_73322d77726974653634:
   call fr_add
   leaq reg_fw_73327769(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_272
-.Lfranc_273:
+  jmp .Lfranc_273
+.Lfranc_274:
   ret
 fw_73322d726561643634:
   leaq reg_fw_73327261(%rip), %rdi
@@ -4790,7 +4804,7 @@ fw_73322d726561643634:
   call fr_push
   leaq reg_fw_73327269(%rip), %rdi
   call fr_reg_set
-.Lfranc_274:
+.Lfranc_275:
   leaq reg_fw_73327269(%rip), %rdi
   call fr_reg_get
   movabsq $8, %rdi
@@ -4799,7 +4813,7 @@ fw_73322d726561643634:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_275
+  jns .Lfranc_276
   leaq reg_fw_73327261(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_73327269(%rip), %rdi
@@ -4830,8 +4844,8 @@ fw_73322d726561643634:
   call fr_add
   leaq reg_fw_73327269(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_274
-.Lfranc_275:
+  jmp .Lfranc_275
+.Lfranc_276:
   leaq reg_fw_73327276(%rip), %rdi
   call fr_reg_get
   ret
@@ -4848,12 +4862,12 @@ fw_73322d6374726c2d70757368:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_276
+  jnz .Lfranc_277
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_276:
+.Lfranc_277:
   call fr_s2_control_buffer
   leaq reg_fw_73327370(%rip), %rdi
   call fr_reg_get
@@ -4895,7 +4909,7 @@ fw_73322d6374726c2d706f70:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_277
+  jnz .Lfranc_278
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -4903,7 +4917,7 @@ fw_73322d6374726c2d706f70:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_277:
+.Lfranc_278:
   leaq reg_fw_73327370(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -4958,7 +4972,7 @@ fw_73322d7061746368:
   call fr_push
   leaq reg_fw_7332706174636869(%rip), %rdi
   call fr_reg_set
-.Lfranc_278:
+.Lfranc_279:
   leaq reg_fw_7332706174636869(%rip), %rdi
   call fr_reg_get
   movabsq $4, %rdi
@@ -4967,7 +4981,7 @@ fw_73322d7061746368:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_279
+  jns .Lfranc_280
   leaq reg_fw_7332706174636861646472(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_7332706174636869(%rip), %rdi
@@ -4997,8 +5011,8 @@ fw_73322d7061746368:
   call fr_add
   leaq reg_fw_7332706174636869(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_278
-.Lfranc_279:
+  jmp .Lfranc_279
+.Lfranc_280:
   ret
 fw_73322d6a756d70:
   movabsq $233, %rdi
@@ -5057,18 +5071,18 @@ fw_73322d636f6e74726f6c:
   leaq reg_fw_733263746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_280:
+.Laot_string_281:
   .byte 105
   .byte 102
   .byte 0
 .section .text
-  leaq .Laot_string_280(%rip), %rdi
+  leaq .Laot_string_281(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_281
+  jz .Lfranc_282
   movabsq $137, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -5079,23 +5093,23 @@ fw_73322d636f6e74726f6c:
   call fr_swap
   call fw_73322d6374726c2d70757368
   ret
-.Lfranc_281:
+.Lfranc_282:
   leaq reg_fw_733263746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_282:
+.Laot_string_283:
   .byte 105
   .byte 102
   .byte 48
   .byte 0
 .section .text
-  leaq .Laot_string_282(%rip), %rdi
+  leaq .Laot_string_283(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_283
+  jz .Lfranc_284
   movabsq $133, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -5106,24 +5120,24 @@ fw_73322d636f6e74726f6c:
   call fr_swap
   call fw_73322d6374726c2d70757368
   ret
-.Lfranc_283:
+.Lfranc_284:
   leaq reg_fw_733263746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_284:
+.Laot_string_285:
   .byte 105
   .byte 102
   .byte 110
   .byte 122
   .byte 0
 .section .text
-  leaq .Laot_string_284(%rip), %rdi
+  leaq .Laot_string_285(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_285
+  jz .Lfranc_286
   movabsq $132, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -5134,11 +5148,11 @@ fw_73322d636f6e74726f6c:
   call fr_swap
   call fw_73322d6374726c2d70757368
   ret
-.Lfranc_285:
+.Lfranc_286:
   leaq reg_fw_733263746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_286:
+.Laot_string_287:
   .byte 98
   .byte 101
   .byte 103
@@ -5146,13 +5160,13 @@ fw_73322d636f6e74726f6c:
   .byte 110
   .byte 0
 .section .text
-  leaq .Laot_string_286(%rip), %rdi
+  leaq .Laot_string_287(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_287
+  jz .Lfranc_288
   movabsq $3, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -5160,11 +5174,11 @@ fw_73322d636f6e74726f6c:
   call fr_reg_get
   call fw_73322d6374726c2d70757368
   ret
-.Lfranc_287:
+.Lfranc_288:
   leaq reg_fw_733263746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_288:
+.Laot_string_289:
   .byte 119
   .byte 104
   .byte 105
@@ -5172,13 +5186,13 @@ fw_73322d636f6e74726f6c:
   .byte 101
   .byte 0
 .section .text
-  leaq .Laot_string_288(%rip), %rdi
+  leaq .Laot_string_289(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_289
+  jz .Lfranc_290
   movabsq $137, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -5189,24 +5203,24 @@ fw_73322d636f6e74726f6c:
   call fr_swap
   call fw_73322d6374726c2d70757368
   ret
-.Lfranc_289:
+.Lfranc_290:
   leaq reg_fw_733263746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_290:
+.Laot_string_291:
   .byte 101
   .byte 108
   .byte 115
   .byte 101
   .byte 0
 .section .text
-  leaq .Laot_string_290(%rip), %rdi
+  leaq .Laot_string_291(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_291
+  jz .Lfranc_292
   call fw_73322d6374726c2d706f70
   leaq reg_fw_73326f6c64706f73(%rip), %rdi
   call fr_reg_set
@@ -5220,12 +5234,12 @@ fw_73322d636f6e74726f6c:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_292
+  jz .Lfranc_293
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_292:
+.Lfranc_293:
   call fw_73322d6a756d70
   leaq reg_fw_7332656c7365706f73(%rip), %rdi
   call fr_reg_set
@@ -5241,24 +5255,24 @@ fw_73322d636f6e74726f6c:
   call fr_reg_get
   call fw_73322d6374726c2d70757368
   ret
-.Lfranc_291:
+.Lfranc_292:
   leaq reg_fw_733263746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_293:
+.Laot_string_294:
   .byte 116
   .byte 104
   .byte 101
   .byte 110
   .byte 0
 .section .text
-  leaq .Laot_string_293(%rip), %rdi
+  leaq .Laot_string_294(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_294
+  jz .Lfranc_295
   call fw_73322d6374726c2d706f70
   leaq reg_fw_73326f6c64706f73(%rip), %rdi
   call fr_reg_set
@@ -5267,25 +5281,6 @@ fw_73322d636f6e74726f6c:
   leaq reg_fw_73326f6c64746167(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  call fr_sub
-  call fr_condition
-  testq %rax, %rax
-  jnz .Lfranc_295
-  leaq reg_fw_73326f6c64706f73(%rip), %rdi
-  call fr_reg_get
-  leaq reg_fw_73326f7574(%rip), %rdi
-  call fr_reg_get
-  call fw_73322d7061746368
-  movabsq $1, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  ret
-.Lfranc_295:
-  leaq reg_fw_73326f6c64746167(%rip), %rdi
-  call fr_reg_get
-  movabsq $2, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
@@ -5302,15 +5297,34 @@ fw_73322d636f6e74726f6c:
   call fr_push
   ret
 .Lfranc_296:
+  leaq reg_fw_73326f6c64746167(%rip), %rdi
+  call fr_reg_get
+  movabsq $2, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  call fr_sub
+  call fr_condition
+  testq %rax, %rax
+  jnz .Lfranc_297
+  leaq reg_fw_73326f6c64706f73(%rip), %rdi
+  call fr_reg_get
+  leaq reg_fw_73326f7574(%rip), %rdi
+  call fr_reg_get
+  call fw_73322d7061746368
+  movabsq $1, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  ret
+.Lfranc_297:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_294:
+.Lfranc_295:
   leaq reg_fw_733263746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_297:
+.Laot_string_298:
   .byte 97
   .byte 103
   .byte 97
@@ -5318,13 +5332,13 @@ fw_73322d636f6e74726f6c:
   .byte 110
   .byte 0
 .section .text
-  leaq .Laot_string_297(%rip), %rdi
+  leaq .Laot_string_298(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_298
+  jz .Lfranc_299
   call fw_73322d6374726c2d706f70
   leaq reg_fw_73326f6c64706f73(%rip), %rdi
   call fr_reg_set
@@ -5338,12 +5352,12 @@ fw_73322d636f6e74726f6c:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_299
+  jz .Lfranc_300
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_299:
+.Lfranc_300:
   call fw_73322d6a756d70
   leaq reg_fw_73326f6c64706f73(%rip), %rdi
   call fr_reg_get
@@ -5352,11 +5366,11 @@ fw_73322d636f6e74726f6c:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_298:
+.Lfranc_299:
   leaq reg_fw_733263746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_300:
+.Laot_string_301:
   .byte 114
   .byte 101
   .byte 112
@@ -5365,13 +5379,13 @@ fw_73322d636f6e74726f6c:
   .byte 116
   .byte 0
 .section .text
-  leaq .Laot_string_300(%rip), %rdi
+  leaq .Laot_string_301(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_301
+  jz .Lfranc_302
   call fw_73322d6374726c2d706f70
   leaq reg_fw_73326f6c64706f73(%rip), %rdi
   call fr_reg_set
@@ -5385,12 +5399,12 @@ fw_73322d636f6e74726f6c:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_302
+  jz .Lfranc_303
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_302:
+.Lfranc_303:
   leaq reg_fw_73326f6c64706f73(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_73327768696c65706f73(%rip), %rdi
@@ -5408,12 +5422,12 @@ fw_73322d636f6e74726f6c:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_303
+  jz .Lfranc_304
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_303:
+.Lfranc_304:
   call fw_73322d6a756d70
   leaq reg_fw_73326f6c64706f73(%rip), %rdi
   call fr_reg_get
@@ -5427,30 +5441,30 @@ fw_73322d636f6e74726f6c:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_301:
+.Lfranc_302:
   leaq reg_fw_733263746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_304:
+.Laot_string_305:
   .byte 101
   .byte 120
   .byte 105
   .byte 116
   .byte 0
 .section .text
-  leaq .Laot_string_304(%rip), %rdi
+  leaq .Laot_string_305(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_305
+  jz .Lfranc_306
   call fw_73322d6570696c6f677565
   movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_305:
+.Lfranc_306:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -5470,18 +5484,18 @@ fw_73322d737472696e672d6c6974:
   call fr_reg_get
   leaq reg_fw_73327363616e(%rip), %rdi
   call fr_reg_set
-.Lfranc_306:
+.Lfranc_307:
   leaq reg_fw_73327363616e(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_307
+  jnz .Lfranc_308
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_307:
+.Lfranc_308:
   leaq reg_fw_73327363616e(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -5491,7 +5505,7 @@ fw_73322d737472696e672d6c6974:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_308
+  jnz .Lfranc_309
   leaq reg_fw_73327363616e(%rip), %rdi
   call fr_reg_get
   movabsq $0, %rdi
@@ -5520,7 +5534,7 @@ fw_73322d737472696e672d6c6974:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_308:
+.Lfranc_309:
   leaq reg_fw_73327363616e(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -5529,7 +5543,7 @@ fw_73322d737472696e672d6c6974:
   call fr_add
   leaq reg_fw_73327363616e(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_306
+  jmp .Lfranc_307
   ret
 fw_73322d7661722d73747562:
   leaq reg_fw_73327663656c6c(%rip), %rdi
@@ -5579,12 +5593,12 @@ fw_73322d6e65772d766172:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_309
+  jnz .Lfranc_310
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_309:
+.Lfranc_310:
   leaq reg_fw_733276736c6f74(%rip), %rdi
   call fr_reg_get
   movabsq $0, %rdi
@@ -5674,12 +5688,12 @@ fw_73322d746f6b656e2d656d6974:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_310
+  jnz .Lfranc_311
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_73322d737472696e672d6c6974
   ret
-.Lfranc_310:
+.Lfranc_311:
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_73322d66696e64
@@ -5689,7 +5703,7 @@ fw_73322d746f6b656e2d656d6974:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_311
+  jz .Lfranc_312
   leaq reg_fw_7332746172676574(%rip), %rdi
   call fr_reg_get
   call fw_73322d63616c6c
@@ -5697,7 +5711,7 @@ fw_73322d746f6b656e2d656d6974:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_311:
+.Lfranc_312:
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -5707,7 +5721,7 @@ fw_73322d746f6b656e2d656d6974:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_312
+  jnz .Lfranc_313
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -5721,12 +5735,12 @@ fw_73322d746f6b656e2d656d6974:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_313
+  jnz .Lfranc_314
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_313:
+.Lfranc_314:
   leaq reg_fw_733271756f746561646472(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -5737,118 +5751,118 @@ fw_73322d746f6b656e2d656d6974:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_312:
+.Lfranc_313:
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_314:
+.Laot_string_315:
   .byte 105
   .byte 102
   .byte 0
 .section .text
-  leaq .Laot_string_314(%rip), %rdi
+  leaq .Laot_string_315(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_315
+  jz .Lfranc_316
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_73322d636f6e74726f6c
   ret
-.Lfranc_315:
+.Lfranc_316:
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_316:
+.Laot_string_317:
   .byte 105
   .byte 102
   .byte 48
   .byte 0
 .section .text
-  leaq .Laot_string_316(%rip), %rdi
+  leaq .Laot_string_317(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_317
+  jz .Lfranc_318
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_73322d636f6e74726f6c
   ret
-.Lfranc_317:
+.Lfranc_318:
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_318:
+.Laot_string_319:
   .byte 105
   .byte 102
   .byte 110
   .byte 122
   .byte 0
 .section .text
-  leaq .Laot_string_318(%rip), %rdi
+  leaq .Laot_string_319(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_319
+  jz .Lfranc_320
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_73322d636f6e74726f6c
   ret
-.Lfranc_319:
+.Lfranc_320:
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_320:
+.Laot_string_321:
   .byte 101
   .byte 108
   .byte 115
   .byte 101
   .byte 0
 .section .text
-  leaq .Laot_string_320(%rip), %rdi
+  leaq .Laot_string_321(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_321
+  jz .Lfranc_322
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_73322d636f6e74726f6c
   ret
-.Lfranc_321:
+.Lfranc_322:
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_322:
+.Laot_string_323:
   .byte 116
   .byte 104
   .byte 101
   .byte 110
   .byte 0
 .section .text
-  leaq .Laot_string_322(%rip), %rdi
+  leaq .Laot_string_323(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_323
+  jz .Lfranc_324
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_73322d636f6e74726f6c
   ret
-.Lfranc_323:
+.Lfranc_324:
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_324:
+.Laot_string_325:
   .byte 98
   .byte 101
   .byte 103
@@ -5856,22 +5870,22 @@ fw_73322d746f6b656e2d656d6974:
   .byte 110
   .byte 0
 .section .text
-  leaq .Laot_string_324(%rip), %rdi
+  leaq .Laot_string_325(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_325
+  jz .Lfranc_326
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_73322d636f6e74726f6c
   ret
-.Lfranc_325:
+.Lfranc_326:
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_326:
+.Laot_string_327:
   .byte 119
   .byte 104
   .byte 105
@@ -5879,22 +5893,22 @@ fw_73322d746f6b656e2d656d6974:
   .byte 101
   .byte 0
 .section .text
-  leaq .Laot_string_326(%rip), %rdi
+  leaq .Laot_string_327(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_327
+  jz .Lfranc_328
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_73322d636f6e74726f6c
   ret
-.Lfranc_327:
+.Lfranc_328:
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_328:
+.Laot_string_329:
   .byte 114
   .byte 101
   .byte 112
@@ -5903,22 +5917,22 @@ fw_73322d746f6b656e2d656d6974:
   .byte 116
   .byte 0
 .section .text
-  leaq .Laot_string_328(%rip), %rdi
+  leaq .Laot_string_329(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_329
+  jz .Lfranc_330
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_73322d636f6e74726f6c
   ret
-.Lfranc_329:
+.Lfranc_330:
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_330:
+.Laot_string_331:
   .byte 97
   .byte 103
   .byte 97
@@ -5926,40 +5940,40 @@ fw_73322d746f6b656e2d656d6974:
   .byte 110
   .byte 0
 .section .text
-  leaq .Laot_string_330(%rip), %rdi
+  leaq .Laot_string_331(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_331
+  jz .Lfranc_332
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_73322d636f6e74726f6c
   ret
-.Lfranc_331:
+.Lfranc_332:
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_332:
+.Laot_string_333:
   .byte 101
   .byte 120
   .byte 105
   .byte 116
   .byte 0
 .section .text
-  leaq .Laot_string_332(%rip), %rdi
+  leaq .Laot_string_333(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_333
+  jz .Lfranc_334
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_73322d636f6e74726f6c
   ret
-.Lfranc_333:
+.Lfranc_334:
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_73322d66696e64
@@ -5969,7 +5983,7 @@ fw_73322d746f6b656e2d656d6974:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_334
+  jz .Lfranc_335
   leaq reg_fw_7332746172676574(%rip), %rdi
   call fr_reg_get
   call fw_73322d63616c6c
@@ -5977,7 +5991,7 @@ fw_73322d746f6b656e2d656d6974:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_334:
+.Lfranc_335:
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -5987,12 +6001,12 @@ fw_73322d746f6b656e2d656d6974:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_335
+  jnz .Lfranc_336
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_73322d6e65772d766172
   ret
-.Lfranc_335:
+.Lfranc_336:
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_73322d6e756d626572
@@ -6006,12 +6020,12 @@ fw_73322d746f6b656e2d656d6974:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_336
+  jnz .Lfranc_337
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_336:
+.Lfranc_337:
   leaq reg_fw_73326c697476616c(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_733264656e76616c32(%rip), %rdi
@@ -6031,22 +6045,22 @@ fw_73322d636f6d70696c65:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_337
+  jnz .Lfranc_338
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_337:
+.Lfranc_338:
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_338:
+.Laot_string_339:
   .byte 100
   .byte 101
   .byte 102
   .byte 0
 .section .text
-  leaq .Laot_string_338(%rip), %rdi
+  leaq .Laot_string_339(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
@@ -6069,7 +6083,7 @@ fw_73322d636f6d70696c65:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_339
+  jz .Lfranc_340
   call fw_73322d6e657874
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_set
@@ -6077,27 +6091,27 @@ fw_73322d636f6d70696c65:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_340
+  jnz .Lfranc_341
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_340:
+.Lfranc_341:
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_7332626567696e(%rip), %rdi
   call fr_reg_get
   call fr_s2_define
-  jmp .Lfranc_341
-.Lfranc_339:
+  jmp .Lfranc_342
+.Lfranc_340:
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_73322d746f6b656e2d656d6974
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_342
+  jnz .Lfranc_343
 .section .rodata
-.Laot_string_343:
+.Laot_string_344:
   .byte 115
   .byte 116
   .byte 97
@@ -6125,7 +6139,7 @@ fw_73322d636f6d70696c65:
   .byte 110
   .byte 0
 .section .text
-  leaq .Laot_string_343(%rip), %rdi
+  leaq .Laot_string_344(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -6133,9 +6147,9 @@ fw_73322d636f6d70696c65:
   movabsq $1, %rsi
   call fr_push
   ret
+.Lfranc_343:
 .Lfranc_342:
-.Lfranc_341:
-.Lfranc_344:
+.Lfranc_345:
   call fw_73322d6e657874
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_set
@@ -6143,14 +6157,14 @@ fw_73322d636f6d70696c65:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_345
+  jnz .Lfranc_346
   leaq reg_fw_73327370(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_346
+  jz .Lfranc_347
 .section .rodata
-.Laot_string_347:
+.Laot_string_348:
   .byte 115
   .byte 116
   .byte 97
@@ -6177,7 +6191,7 @@ fw_73322d636f6d70696c65:
   .byte 108
   .byte 0
 .section .text
-  leaq .Laot_string_347(%rip), %rdi
+  leaq .Laot_string_348(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -6185,7 +6199,7 @@ fw_73322d636f6d70696c65:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_346:
+.Lfranc_347:
   call fw_73322d6570696c6f677565
   leaq reg_fw_73326f7574(%rip), %rdi
   call fr_reg_get
@@ -6193,33 +6207,33 @@ fw_73322d636f6d70696c65:
   leaq reg_fw_7332626567696e(%rip), %rdi
   call fr_reg_get
   ret
-.Lfranc_345:
+.Lfranc_346:
   leaq reg_fw_73326465666d6f6465(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_348
+  jz .Lfranc_349
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_349:
+.Laot_string_350:
   .byte 59
   .byte 0
 .section .text
-  leaq .Laot_string_349(%rip), %rdi
+  leaq .Laot_string_350(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_350
+  jz .Lfranc_351
   leaq reg_fw_73327370(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_351
+  jz .Lfranc_352
 .section .rodata
-.Laot_string_352:
+.Laot_string_353:
   .byte 115
   .byte 116
   .byte 97
@@ -6246,7 +6260,7 @@ fw_73322d636f6d70696c65:
   .byte 108
   .byte 0
 .section .text
-  leaq .Laot_string_352(%rip), %rdi
+  leaq .Laot_string_353(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -6254,7 +6268,7 @@ fw_73322d636f6d70696c65:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_351:
+.Lfranc_352:
   call fw_73322d6570696c6f677565
   leaq reg_fw_73326f7574(%rip), %rdi
   call fr_reg_get
@@ -6262,16 +6276,16 @@ fw_73322d636f6d70696c65:
   leaq reg_fw_7332626567696e(%rip), %rdi
   call fr_reg_get
   ret
-.Lfranc_350:
-.Lfranc_348:
+.Lfranc_351:
+.Lfranc_349:
   leaq reg_fw_7332746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_73322d746f6b656e2d656d6974
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_353
+  jnz .Lfranc_354
 .section .rodata
-.Laot_string_354:
+.Laot_string_355:
   .byte 115
   .byte 116
   .byte 97
@@ -6299,7 +6313,7 @@ fw_73322d636f6d70696c65:
   .byte 110
   .byte 0
 .section .text
-  leaq .Laot_string_354(%rip), %rdi
+  leaq .Laot_string_355(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -6307,8 +6321,8 @@ fw_73322d636f6d70696c65:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_353:
-  jmp .Lfranc_344
+.Lfranc_354:
+  jmp .Lfranc_345
   ret
 fw_73322d726561642d6c696e65:
   call fr_s2_line_buffer
@@ -6319,7 +6333,7 @@ fw_73322d726561642d6c696e65:
   call fr_push
   leaq reg_fw_73326c696e652d6c656e(%rip), %rdi
   call fr_reg_set
-.Lfranc_355:
+.Lfranc_356:
   leaq reg_fw_733273726369(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -6329,7 +6343,7 @@ fw_73322d726561642d6c696e65:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_356
+  jnz .Lfranc_357
   leaq reg_fw_7332647374(%rip), %rdi
   call fr_reg_get
   movabsq $0, %rdi
@@ -6339,7 +6353,7 @@ fw_73322d726561642d6c696e65:
   leaq reg_fw_73326c696e652d6c656e(%rip), %rdi
   call fr_reg_get
   ret
-.Lfranc_356:
+.Lfranc_357:
   leaq reg_fw_73327363686172(%rip), %rdi
   call fr_reg_get
   movabsq $10, %rdi
@@ -6348,7 +6362,7 @@ fw_73322d726561642d6c696e65:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_357
+  jnz .Lfranc_358
   leaq reg_fw_733273726369(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -6367,7 +6381,7 @@ fw_73322d726561642d6c696e65:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_357:
+.Lfranc_358:
   leaq reg_fw_7332647374(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_73327363686172(%rip), %rdi
@@ -6397,7 +6411,7 @@ fw_73322d726561642d6c696e65:
   call fr_add
   leaq reg_fw_73326c696e652d6c656e(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_355
+  jmp .Lfranc_356
   ret
 fw_73322d736f75726365:
   leaq reg_fw_733273726369(%rip), %rdi
@@ -6407,7 +6421,7 @@ fw_73322d736f75726365:
   call fr_push
   leaq reg_fw_73326c696e6573(%rip), %rdi
   call fr_reg_set
-.Lfranc_358:
+.Lfranc_359:
   call fw_73322d726561642d6c696e65
   leaq reg_fw_7332657869737473(%rip), %rdi
   call fr_reg_set
@@ -6415,11 +6429,11 @@ fw_73322d736f75726365:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_359
+  jnz .Lfranc_360
   leaq reg_fw_73326c696e6573(%rip), %rdi
   call fr_reg_get
   ret
-.Lfranc_359:
+.Lfranc_360:
   call fr_s2_line_buffer
   call fr_bfetch
   leaq reg_fw_73326669727374(%rip), %rdi
@@ -6428,7 +6442,7 @@ fw_73322d736f75726365:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_360
+  jz .Lfranc_361
   leaq reg_fw_73326669727374(%rip), %rdi
   call fr_reg_get
   movabsq $92, %rdi
@@ -6437,7 +6451,7 @@ fw_73322d736f75726365:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_361
+  jz .Lfranc_362
   call fr_s2_line_buffer
   call fw_73322d636f6d70696c65
   call fr_drop
@@ -6449,9 +6463,9 @@ fw_73322d736f75726365:
   call fr_add
   leaq reg_fw_73326c696e6573(%rip), %rdi
   call fr_reg_set
+.Lfranc_362:
 .Lfranc_361:
-.Lfranc_360:
-  jmp .Lfranc_358
+  jmp .Lfranc_359
   ret
 fw_73322d6576616c:
   leaq reg_fw_73326576616c2d74657874(%rip), %rdi
@@ -6462,13 +6476,13 @@ fw_73322d6576616c:
   call fr_reg_set
   call fw_73322d6e657874
 .section .rodata
-.Laot_string_362:
+.Laot_string_363:
   .byte 100
   .byte 101
   .byte 102
   .byte 0
 .section .text
-  leaq .Laot_string_362(%rip), %rdi
+  leaq .Laot_string_363(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
@@ -6483,25 +6497,25 @@ fw_73322d6576616c:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_363
+  jnz .Lfranc_364
   ret
-.Lfranc_363:
+.Lfranc_364:
   leaq reg_fw_73326576616c2d646566(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_364
+  jnz .Lfranc_365
   leaq reg_fw_73326576616c2d636f6465(%rip), %rdi
   call fr_reg_get
   call fr_s2_run
-.Lfranc_364:
+.Lfranc_365:
   ret
 fw_726c2d6572617365:
   leaq reg_fw_726c2d6c656e(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_365
+  jz .Lfranc_366
   leaq reg_fw_726c2d6c656e(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -6530,7 +6544,7 @@ fw_726c2d6572617365:
   movabsq $1, %rsi
   call fr_push
   call fw_76632d707574
-.Lfranc_365:
+.Lfranc_366:
   ret
 fw_726c2d617070656e64:
   leaq reg_fw_726c2d6c656e(%rip), %rdi
@@ -6541,7 +6555,7 @@ fw_726c2d617070656e64:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_366
+  jns .Lfranc_367
   call fr_repl_buffer
   leaq reg_fw_726c2d6c656e(%rip), %rdi
   call fr_reg_get
@@ -6568,7 +6582,7 @@ fw_726c2d617070656e64:
   movabsq $1, %rsi
   call fr_push
   call fr_bstore
-.Lfranc_366:
+.Lfranc_367:
   ret
 fw_726c2d72656164:
   movabsq $0, %rdi
@@ -6581,7 +6595,7 @@ fw_726c2d72656164:
   movabsq $1, %rsi
   call fr_push
   call fr_bstore
-.Lfranc_367:
+.Lfranc_368:
   call fw_646b2d6b6579
   leaq reg_fw_726c2d6368(%rip), %rdi
   call fr_reg_set
@@ -6593,33 +6607,15 @@ fw_726c2d72656164:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_368
-  movabsq $1, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  ret
-.Lfranc_368:
-  leaq reg_fw_726c2d6368(%rip), %rdi
-  call fr_reg_get
-  movabsq $10, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  call fr_sub
-  call fr_condition
-  testq %rax, %rax
   jnz .Lfranc_369
-  movabsq $10, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  call fw_76632d707574
-  movabsq $0, %rdi
+  movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
 .Lfranc_369:
   leaq reg_fw_726c2d6368(%rip), %rdi
   call fr_reg_get
-  movabsq $13, %rdi
+  movabsq $10, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
@@ -6637,16 +6633,34 @@ fw_726c2d72656164:
 .Lfranc_370:
   leaq reg_fw_726c2d6368(%rip), %rdi
   call fr_reg_get
-  movabsq $8, %rdi
+  movabsq $13, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
   call fr_condition
   testq %rax, %rax
   jnz .Lfranc_371
-  call fw_726c2d6572617365
-  jmp .Lfranc_372
+  movabsq $10, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  call fw_76632d707574
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  ret
 .Lfranc_371:
+  leaq reg_fw_726c2d6368(%rip), %rdi
+  call fr_reg_get
+  movabsq $8, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  call fr_sub
+  call fr_condition
+  testq %rax, %rax
+  jnz .Lfranc_372
+  call fw_726c2d6572617365
+  jmp .Lfranc_373
+.Lfranc_372:
   leaq reg_fw_726c2d6368(%rip), %rdi
   call fr_reg_get
   movabsq $127, %rdi
@@ -6655,10 +6669,10 @@ fw_726c2d72656164:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_373
+  jnz .Lfranc_374
   call fw_726c2d6572617365
-  jmp .Lfranc_374
-.Lfranc_373:
+  jmp .Lfranc_375
+.Lfranc_374:
   leaq reg_fw_726c2d6368(%rip), %rdi
   call fr_reg_get
   movabsq $32, %rdi
@@ -6667,9 +6681,9 @@ fw_726c2d72656164:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_375
-  jmp .Lfranc_376
-.Lfranc_375:
+  jns .Lfranc_376
+  jmp .Lfranc_377
+.Lfranc_376:
   leaq reg_fw_726c2d6368(%rip), %rdi
   call fr_reg_get
   movabsq $127, %rdi
@@ -6678,13 +6692,13 @@ fw_726c2d72656164:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_377
+  jns .Lfranc_378
   call fw_726c2d617070656e64
+.Lfranc_378:
 .Lfranc_377:
-.Lfranc_376:
-.Lfranc_374:
-.Lfranc_372:
-  jmp .Lfranc_367
+.Lfranc_375:
+.Lfranc_373:
+  jmp .Lfranc_368
   ret
 fw_726c2d6576616c:
   call fr_depth
@@ -6699,25 +6713,25 @@ fw_726c2d6576616c:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_378
+  jz .Lfranc_379
   leaq reg_fw_726c2d6572726f72(%rip), %rdi
   call fr_reg_get
   call fw_76632d73686f77
   ret
-.Lfranc_378:
+.Lfranc_379:
   call fr_depth
   leaq reg_fw_726c2d6265666f7265(%rip), %rdi
   call fr_reg_get
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_379
+  jz .Lfranc_380
   call fr_dot
-.Lfranc_379:
+.Lfranc_380:
   ret
 fw_726c2d6d61696e:
 .section .rodata
-.Laot_string_380:
+.Laot_string_381:
   .byte 70
   .byte 114
   .byte 97
@@ -6752,14 +6766,14 @@ fw_726c2d6d61696e:
   .byte 117
   .byte 0
 .section .text
-  leaq .Laot_string_380(%rip), %rdi
+  leaq .Laot_string_381(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
-.Lfranc_381:
+.Lfranc_382:
 .section .rodata
-.Laot_string_382:
+.Laot_string_383:
   .byte 70
   .byte 114
   .byte 97
@@ -6768,28 +6782,28 @@ fw_726c2d6d61696e:
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_382(%rip), %rdi
+  leaq .Laot_string_383(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_726c2d72656164
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_383
+  jz .Lfranc_384
   ret
-.Lfranc_383:
+.Lfranc_384:
   call fr_repl_buffer
   call fr_bfetch
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_384
+  jz .Lfranc_385
   call fw_726c2d6576616c
-.Lfranc_384:
-  jmp .Lfranc_381
+.Lfranc_385:
+  jmp .Lfranc_382
   ret
 fw_757067726164652d6c6f6164:
 .section .rodata
-.Laot_string_385:
+.Laot_string_386:
   .byte 115
   .byte 116
   .byte 97
@@ -6804,7 +6818,7 @@ fw_757067726164652d6c6f6164:
   .byte 99
   .byte 0
 .section .text
-  leaq .Laot_string_385(%rip), %rdi
+  leaq .Laot_string_386(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_66732d736f75726365
@@ -6814,38 +6828,12 @@ fw_757067726164652d6c6f6164:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_386
+  jnz .Lfranc_387
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_386:
-.section .rodata
-.Laot_string_387:
-  .byte 115
-  .byte 116
-  .byte 97
-  .byte 114
-  .byte 116
-  .byte 117
-  .byte 112
-  .byte 45
-  .byte 109
-  .byte 97
-  .byte 105
-  .byte 110
-  .byte 0
-.section .text
-  leaq .Laot_string_387(%rip), %rdi
-  movq $1, %rsi
-  call fr_push
-  call fw_73322d66696e64
-  leaq reg_fw_75672d6265666f7265(%rip), %rdi
-  call fr_reg_set
-  leaq reg_fw_75672d736f75726365(%rip), %rdi
-  call fr_reg_get
-  call fw_73322d736f75726365
-  call fr_drop
+.Lfranc_387:
 .section .rodata
 .Laot_string_388:
   .byte 115
@@ -6866,23 +6854,36 @@ fw_757067726164652d6c6f6164:
   movq $1, %rsi
   call fr_push
   call fw_73322d66696e64
+  leaq reg_fw_75672d6265666f7265(%rip), %rdi
+  call fr_reg_set
+  leaq reg_fw_75672d736f75726365(%rip), %rdi
+  call fr_reg_get
+  call fw_73322d736f75726365
+  call fr_drop
+.section .rodata
+.Laot_string_389:
+  .byte 115
+  .byte 116
+  .byte 97
+  .byte 114
+  .byte 116
+  .byte 117
+  .byte 112
+  .byte 45
+  .byte 109
+  .byte 97
+  .byte 105
+  .byte 110
+  .byte 0
+.section .text
+  leaq .Laot_string_389(%rip), %rdi
+  movq $1, %rsi
+  call fr_push
+  call fw_73322d66696e64
   leaq reg_fw_75672d6166746572(%rip), %rdi
   call fr_reg_set
   leaq reg_fw_75672d6166746572(%rip), %rdi
   call fr_reg_get
-  call fr_condition
-  testq %rax, %rax
-  jnz .Lfranc_389
-  movabsq $0, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  ret
-.Lfranc_389:
-  leaq reg_fw_75672d6166746572(%rip), %rdi
-  call fr_reg_get
-  leaq reg_fw_75672d6265666f7265(%rip), %rdi
-  call fr_reg_get
-  call fr_sub
   call fr_condition
   testq %rax, %rax
   jnz .Lfranc_390
@@ -6891,6 +6892,19 @@ fw_757067726164652d6c6f6164:
   call fr_push
   ret
 .Lfranc_390:
+  leaq reg_fw_75672d6166746572(%rip), %rdi
+  call fr_reg_get
+  leaq reg_fw_75672d6265666f7265(%rip), %rdi
+  call fr_reg_get
+  call fr_sub
+  call fr_condition
+  testq %rax, %rax
+  jnz .Lfranc_391
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  ret
+.Lfranc_391:
   leaq reg_fw_75672d6166746572(%rip), %rdi
   call fr_reg_get
   call fr_s2_run
@@ -6911,24 +6925,24 @@ fw_616f742d646563:
   call fr_push
   leaq reg_fw_61642d706c616365(%rip), %rdi
   call fr_reg_set
-.Lfranc_391:
+.Lfranc_392:
   leaq reg_fw_61642d706c616365(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_392
+  jnz .Lfranc_393
   leaq reg_fw_61642d7374617274(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_393
+  jnz .Lfranc_394
   movabsq $48, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_emit
-.Lfranc_393:
+.Lfranc_394:
   ret
-.Lfranc_392:
+.Lfranc_393:
   leaq reg_fw_61642d6e(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_61642d706c616365(%rip), %rdi
@@ -6945,18 +6959,18 @@ fw_616f742d646563:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_394
+  jz .Lfranc_395
   movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
   leaq reg_fw_61642d7374617274(%rip), %rdi
   call fr_reg_set
-.Lfranc_394:
+.Lfranc_395:
   leaq reg_fw_61642d7374617274(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_395
+  jz .Lfranc_396
   leaq reg_fw_61642d6469676974(%rip), %rdi
   call fr_reg_get
   movabsq $48, %rdi
@@ -6964,7 +6978,7 @@ fw_616f742d646563:
   call fr_push
   call fr_add
   call fr_emit
-.Lfranc_395:
+.Lfranc_396:
   leaq reg_fw_61642d706c616365(%rip), %rdi
   call fr_reg_get
   movabsq $10, %rdi
@@ -6974,7 +6988,7 @@ fw_616f742d646563:
   call fr_floor
   leaq reg_fw_61642d706c616365(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_391
+  jmp .Lfranc_392
   ret
 fw_616f742d7369676e6564:
   leaq reg_fw_61732d6e(%rip), %rdi
@@ -6987,7 +7001,7 @@ fw_616f742d7369676e6564:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_396
+  jns .Lfranc_397
   movabsq $45, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -6996,12 +7010,12 @@ fw_616f742d7369676e6564:
   call fr_reg_get
   call fr_neg
   call fw_616f742d646563
-  jmp .Lfranc_397
-.Lfranc_396:
+  jmp .Lfranc_398
+.Lfranc_397:
   leaq reg_fw_61732d6e(%rip), %rdi
   call fr_reg_get
   call fw_616f742d646563
-.Lfranc_397:
+.Lfranc_398:
   ret
 fw_616f742d666974733332:
   leaq reg_fw_61662d76(%rip), %rdi
@@ -7014,13 +7028,13 @@ fw_616f742d666974733332:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_398
+  jns .Lfranc_399
   leaq reg_fw_61662d76(%rip), %rdi
   call fr_reg_get
   call fr_neg
   leaq reg_fw_61662d76(%rip), %rdi
   call fr_reg_set
-.Lfranc_398:
+.Lfranc_399:
   leaq reg_fw_61662d76(%rip), %rdi
   call fr_reg_get
   movabsq $2147483648, %rdi
@@ -7029,16 +7043,16 @@ fw_616f742d666974733332:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_399
+  jns .Lfranc_400
   movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
-  jmp .Lfranc_400
-.Lfranc_399:
+  jmp .Lfranc_401
+.Lfranc_400:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
-.Lfranc_400:
+.Lfranc_401:
   ret
 fw_616f742d6c69746572616c:
   leaq reg_fw_616c2d64656e(%rip), %rdi
@@ -7046,7 +7060,7 @@ fw_616f742d6c69746572616c:
   leaq reg_fw_616c2d6e756d(%rip), %rdi
   call fr_reg_set
 .section .rodata
-.Laot_string_401:
+.Laot_string_402:
   .byte 32
   .byte 32
   .byte 109
@@ -7060,7 +7074,7 @@ fw_616f742d6c69746572616c:
   .byte 36
   .byte 0
 .section .text
-  leaq .Laot_string_401(%rip), %rdi
+  leaq .Laot_string_402(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -7068,7 +7082,7 @@ fw_616f742d6c69746572616c:
   call fr_reg_get
   call fw_616f742d7369676e6564
 .section .rodata
-.Laot_string_402:
+.Laot_string_403:
   .byte 44
   .byte 32
   .byte 37
@@ -7077,7 +7091,7 @@ fw_616f742d6c69746572616c:
   .byte 105
   .byte 0
 .section .text
-  leaq .Laot_string_402(%rip), %rdi
+  leaq .Laot_string_403(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -7086,7 +7100,7 @@ fw_616f742d6c69746572616c:
   call fr_push
   call fr_emit
 .section .rodata
-.Laot_string_403:
+.Laot_string_404:
   .byte 32
   .byte 32
   .byte 109
@@ -7100,7 +7114,7 @@ fw_616f742d6c69746572616c:
   .byte 36
   .byte 0
 .section .text
-  leaq .Laot_string_403(%rip), %rdi
+  leaq .Laot_string_404(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -7108,7 +7122,7 @@ fw_616f742d6c69746572616c:
   call fr_reg_get
   call fw_616f742d7369676e6564
 .section .rodata
-.Laot_string_404:
+.Laot_string_405:
   .byte 44
   .byte 32
   .byte 37
@@ -7117,7 +7131,7 @@ fw_616f742d6c69746572616c:
   .byte 105
   .byte 0
 .section .text
-  leaq .Laot_string_404(%rip), %rdi
+  leaq .Laot_string_405(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -7126,7 +7140,7 @@ fw_616f742d6c69746572616c:
   call fr_push
   call fr_emit
 .section .rodata
-.Laot_string_405:
+.Laot_string_406:
   .byte 32
   .byte 32
   .byte 99
@@ -7143,7 +7157,7 @@ fw_616f742d6c69746572616c:
   .byte 104
   .byte 0
 .section .text
-  leaq .Laot_string_405(%rip), %rdi
+  leaq .Laot_string_406(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -7157,7 +7171,7 @@ fw_616f742d6c69746572616c:
   ret
 fw_616f742d6f70732d6f6e65:
 .section .rodata
-.Laot_string_406:
+.Laot_string_407:
   .byte 43
   .byte 124
   .byte 102
@@ -7960,13 +7974,13 @@ fw_616f742d6f70732d6f6e65:
   .byte 124
   .byte 0
 .section .text
-  leaq .Laot_string_406(%rip), %rdi
+  leaq .Laot_string_407(%rip), %rdi
   movq $1, %rsi
   call fr_push
   ret
 fw_616f742d6f70732d74776f:
 .section .rodata
-.Laot_string_407:
+.Laot_string_408:
   .byte 108
   .byte 97
   .byte 115
@@ -8925,13 +8939,13 @@ fw_616f742d6f70732d74776f:
   .byte 124
   .byte 0
 .section .text
-  leaq .Laot_string_407(%rip), %rdi
+  leaq .Laot_string_408(%rip), %rdi
   movq $1, %rsi
   call fr_push
   ret
 fw_616f742d6f70732d7468726565:
 .section .rodata
-.Laot_string_408:
+.Laot_string_409:
   .byte 115
   .byte 50
   .byte 45
@@ -9118,7 +9132,7 @@ fw_616f742d6f70732d7468726565:
   .byte 124
   .byte 0
 .section .text
-  leaq .Laot_string_408(%rip), %rdi
+  leaq .Laot_string_409(%rip), %rdi
   movq $1, %rsi
   call fr_push
   ret
@@ -9127,7 +9141,7 @@ fw_616f742d6669656c642d6571:
   call fr_reg_set
   leaq reg_fw_6166652d74657874(%rip), %rdi
   call fr_reg_set
-.Lfranc_409:
+.Lfranc_410:
   leaq reg_fw_6166652d6669656c64(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -9141,24 +9155,24 @@ fw_616f742d6669656c642d6571:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_410
+  jnz .Lfranc_411
   leaq reg_fw_6166652d74657874(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_411
+  jnz .Lfranc_412
   movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
-  jmp .Lfranc_412
-.Lfranc_411:
+  jmp .Lfranc_413
+.Lfranc_412:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
-.Lfranc_412:
+.Lfranc_413:
   ret
-.Lfranc_410:
+.Lfranc_411:
   leaq reg_fw_6166652d74657874(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -9167,12 +9181,12 @@ fw_616f742d6669656c642d6571:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_413
+  jz .Lfranc_414
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_413:
+.Lfranc_414:
   leaq reg_fw_6166652d6669656c64(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -9189,12 +9203,12 @@ fw_616f742d6669656c642d6571:
   call fr_add
   leaq reg_fw_6166652d74657874(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_409
+  jmp .Lfranc_410
   ret
 fw_616f742d6669656c642d656e64:
   leaq reg_fw_61666e2d706f73(%rip), %rdi
   call fr_reg_set
-.Lfranc_414:
+.Lfranc_415:
   leaq reg_fw_61666e2d706f73(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -9206,26 +9220,26 @@ fw_616f742d6669656c642d656e64:
   movabsq $1, %rsi
   call fr_push
   call fr_sub
-  call fr_condition
-  testq %rax, %rax
-  jnz .Lfranc_415
-  leaq reg_fw_61666e2d706f73(%rip), %rdi
-  call fr_reg_get
-  movabsq $1, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  call fr_add
-  ret
-.Lfranc_415:
-  leaq reg_fw_61666e2d62(%rip), %rdi
-  call fr_reg_get
   call fr_condition
   testq %rax, %rax
   jnz .Lfranc_416
   leaq reg_fw_61666e2d706f73(%rip), %rdi
   call fr_reg_get
+  movabsq $1, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  call fr_add
   ret
 .Lfranc_416:
+  leaq reg_fw_61666e2d62(%rip), %rdi
+  call fr_reg_get
+  call fr_condition
+  testq %rax, %rax
+  jnz .Lfranc_417
+  leaq reg_fw_61666e2d706f73(%rip), %rdi
+  call fr_reg_get
+  ret
+.Lfranc_417:
   leaq reg_fw_61666e2d706f73(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -9234,12 +9248,12 @@ fw_616f742d6669656c642d656e64:
   call fr_add
   leaq reg_fw_61666e2d706f73(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_414
+  jmp .Lfranc_415
   ret
 fw_616f742d7072696e742d6669656c64:
   leaq reg_fw_6170662d706f73(%rip), %rdi
   call fr_reg_set
-.Lfranc_417:
+.Lfranc_418:
   leaq reg_fw_6170662d706f73(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -9251,20 +9265,20 @@ fw_616f742d7072696e742d6669656c64:
   movabsq $1, %rsi
   call fr_push
   call fr_sub
-  call fr_condition
-  testq %rax, %rax
-  jnz .Lfranc_418
-  call fr_cr
-  ret
-.Lfranc_418:
-  leaq reg_fw_6170662d63(%rip), %rdi
-  call fr_reg_get
   call fr_condition
   testq %rax, %rax
   jnz .Lfranc_419
   call fr_cr
   ret
 .Lfranc_419:
+  leaq reg_fw_6170662d63(%rip), %rdi
+  call fr_reg_get
+  call fr_condition
+  testq %rax, %rax
+  jnz .Lfranc_420
+  call fr_cr
+  ret
+.Lfranc_420:
   leaq reg_fw_6170662d63(%rip), %rdi
   call fr_reg_get
   call fr_emit
@@ -9276,25 +9290,25 @@ fw_616f742d7072696e742d6669656c64:
   call fr_add
   leaq reg_fw_6170662d706f73(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_417
+  jmp .Lfranc_418
   ret
 fw_616f742d6f702d6d6170:
   leaq reg_fw_616f6d2d706f73(%rip), %rdi
   call fr_reg_set
   leaq reg_fw_616f6d2d776f7264(%rip), %rdi
   call fr_reg_set
-.Lfranc_420:
+.Lfranc_421:
   leaq reg_fw_616f6d2d706f73(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_421
+  jnz .Lfranc_422
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_421:
+.Lfranc_422:
   leaq reg_fw_616f6d2d776f7264(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_616f6d2d706f73(%rip), %rdi
@@ -9302,9 +9316,9 @@ fw_616f742d6f702d6d6170:
   call fw_616f742d6669656c642d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_422
+  jz .Lfranc_423
 .section .rodata
-.Laot_string_423:
+.Laot_string_424:
   .byte 32
   .byte 32
   .byte 99
@@ -9314,7 +9328,7 @@ fw_616f742d6f702d6d6170:
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_423(%rip), %rdi
+  leaq .Laot_string_424(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -9326,14 +9340,14 @@ fw_616f742d6f702d6d6170:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_422:
+.Lfranc_423:
   leaq reg_fw_616f6d2d706f73(%rip), %rdi
   call fr_reg_get
   call fw_616f742d6669656c642d656e64
   call fw_616f742d6669656c642d656e64
   leaq reg_fw_616f6d2d706f73(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_420
+  jmp .Lfranc_421
   ret
 fw_616f742d6f70657261746f72:
   leaq reg_fw_616f2d74(%rip), %rdi
@@ -9344,24 +9358,24 @@ fw_616f742d6f70657261746f72:
   call fw_616f742d6f702d6d6170
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_424
-  movabsq $1, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  ret
-.Lfranc_424:
-  leaq reg_fw_616f2d74(%rip), %rdi
-  call fr_reg_get
-  call fw_616f742d6f70732d74776f
-  call fw_616f742d6f702d6d6170
-  call fr_condition
-  testq %rax, %rax
   jz .Lfranc_425
   movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
 .Lfranc_425:
+  leaq reg_fw_616f2d74(%rip), %rdi
+  call fr_reg_get
+  call fw_616f742d6f70732d74776f
+  call fw_616f742d6f702d6d6170
+  call fr_condition
+  testq %rax, %rax
+  jz .Lfranc_426
+  movabsq $1, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  ret
+.Lfranc_426:
   leaq reg_fw_616f2d74(%rip), %rdi
   call fr_reg_get
   call fw_616f742d6f70732d7468726565
@@ -9375,12 +9389,12 @@ fw_616f742d746f6b656e:
   call fw_616f742d6f70657261746f72
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_426
+  jz .Lfranc_427
   movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_426:
+.Lfranc_427:
   leaq reg_fw_61742d746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_73322d6e756d626572
@@ -9394,12 +9408,12 @@ fw_616f742d746f6b656e:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_427
+  jnz .Lfranc_428
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_427:
+.Lfranc_428:
   leaq reg_fw_61742d6e756d(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_61742d64656e(%rip), %rdi
@@ -9410,7 +9424,7 @@ fw_616f742d736f75726365:
   leaq reg_fw_733270(%rip), %rdi
   call fr_reg_set
 .section .rodata
-.Laot_string_428:
+.Laot_string_429:
   .byte 70
   .byte 82
   .byte 65
@@ -9428,23 +9442,6 @@ fw_616f742d736f75726365:
   .byte 78
   .byte 0
 .section .text
-  leaq .Laot_string_428(%rip), %rdi
-  movq $1, %rsi
-  call fr_push
-  call fr_type
-  movabsq $10, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  call fr_emit
-.section .rodata
-.Laot_string_429:
-  .byte 46
-  .byte 116
-  .byte 101
-  .byte 120
-  .byte 116
-  .byte 0
-.section .text
   leaq .Laot_string_429(%rip), %rdi
   movq $1, %rsi
   call fr_push
@@ -9455,6 +9452,23 @@ fw_616f742d736f75726365:
   call fr_emit
 .section .rodata
 .Laot_string_430:
+  .byte 46
+  .byte 116
+  .byte 101
+  .byte 120
+  .byte 116
+  .byte 0
+.section .text
+  leaq .Laot_string_430(%rip), %rdi
+  movq $1, %rsi
+  call fr_push
+  call fr_type
+  movabsq $10, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  call fr_emit
+.section .rodata
+.Laot_string_431:
   .byte 46
   .byte 103
   .byte 108
@@ -9480,7 +9494,7 @@ fw_616f742d736f75726365:
   .byte 121
   .byte 0
 .section .text
-  leaq .Laot_string_430(%rip), %rdi
+  leaq .Laot_string_431(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -9489,7 +9503,7 @@ fw_616f742d736f75726365:
   call fr_push
   call fr_emit
 .section .rodata
-.Laot_string_431:
+.Laot_string_432:
   .byte 102
   .byte 114
   .byte 97
@@ -9508,7 +9522,7 @@ fw_616f742d736f75726365:
   .byte 58
   .byte 0
 .section .text
-  leaq .Laot_string_431(%rip), %rdi
+  leaq .Laot_string_432(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -9516,7 +9530,7 @@ fw_616f742d736f75726365:
   movabsq $1, %rsi
   call fr_push
   call fr_emit
-.Lfranc_432:
+.Lfranc_433:
   call fw_73322d6e657874
   leaq reg_fw_61742d6e657874(%rip), %rdi
   call fr_reg_set
@@ -9524,9 +9538,9 @@ fw_616f742d736f75726365:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_433
+  jnz .Lfranc_434
 .section .rodata
-.Laot_string_434:
+.Laot_string_435:
   .byte 32
   .byte 32
   .byte 114
@@ -9534,7 +9548,7 @@ fw_616f742d736f75726365:
   .byte 116
   .byte 0
 .section .text
-  leaq .Laot_string_434(%rip), %rdi
+  leaq .Laot_string_435(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -9543,7 +9557,7 @@ fw_616f742d736f75726365:
   call fr_push
   call fr_emit
 .section .rodata
-.Laot_string_435:
+.Laot_string_436:
   .byte 70
   .byte 82
   .byte 65
@@ -9559,7 +9573,7 @@ fw_616f742d736f75726365:
   .byte 68
   .byte 0
 .section .text
-  leaq .Laot_string_435(%rip), %rdi
+  leaq .Laot_string_436(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -9571,15 +9585,15 @@ fw_616f742d736f75726365:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_433:
+.Lfranc_434:
   leaq reg_fw_61742d6e657874(%rip), %rdi
   call fr_reg_get
   call fw_616f742d746f6b656e
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_436
+  jnz .Lfranc_437
 .section .rodata
-.Laot_string_437:
+.Laot_string_438:
   .byte 70
   .byte 82
   .byte 65
@@ -9597,7 +9611,7 @@ fw_616f742d736f75726365:
   .byte 82
   .byte 0
 .section .text
-  leaq .Laot_string_437(%rip), %rdi
+  leaq .Laot_string_438(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -9609,12 +9623,12 @@ fw_616f742d736f75726365:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_436:
-  jmp .Lfranc_432
+.Lfranc_437:
+  jmp .Lfranc_433
   ret
 fw_616f742d64656d6f:
 .section .rodata
-.Laot_string_438:
+.Laot_string_439:
   .byte 50
   .byte 32
   .byte 51
@@ -9624,7 +9638,7 @@ fw_616f742d64656d6f:
   .byte 46
   .byte 0
 .section .text
-  leaq .Laot_string_438(%rip), %rdi
+  leaq .Laot_string_439(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_616f742d736f75726365
@@ -9641,7 +9655,7 @@ fw_616f742d6e6962626c65:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_439
+  jns .Lfranc_440
   leaq reg_fw_616e2d6e(%rip), %rdi
   call fr_reg_get
   movabsq $48, %rdi
@@ -9649,8 +9663,8 @@ fw_616f742d6e6962626c65:
   call fr_push
   call fr_add
   call fr_emit
-  jmp .Lfranc_440
-.Lfranc_439:
+  jmp .Lfranc_441
+.Lfranc_440:
   leaq reg_fw_616e2d6e(%rip), %rdi
   call fr_reg_get
   movabsq $10, %rdi
@@ -9662,23 +9676,23 @@ fw_616f742d6e6962626c65:
   call fr_push
   call fr_add
   call fr_emit
-.Lfranc_440:
+.Lfranc_441:
   ret
 fw_616f742d6e616d65:
   leaq reg_fw_616e2d6e616d65(%rip), %rdi
   call fr_reg_set
 .section .rodata
-.Laot_string_441:
+.Laot_string_442:
   .byte 102
   .byte 119
   .byte 95
   .byte 0
 .section .text
-  leaq .Laot_string_441(%rip), %rdi
+  leaq .Laot_string_442(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
-.Lfranc_442:
+.Lfranc_443:
   leaq reg_fw_616e2d6e616d65(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -9688,9 +9702,9 @@ fw_616f742d6e616d65:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_443
+  jnz .Lfranc_444
   ret
-.Lfranc_443:
+.Lfranc_444:
   leaq reg_fw_616e2d62797465(%rip), %rdi
   call fr_reg_get
   movabsq $16, %rdi
@@ -9714,13 +9728,13 @@ fw_616f742d6e616d65:
   call fr_add
   leaq reg_fw_616e2d6e616d65(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_442
+  jmp .Lfranc_443
   ret
 fw_616f742d63616c6c:
   leaq reg_fw_61632d6e616d65(%rip), %rdi
   call fr_reg_set
 .section .rodata
-.Laot_string_444:
+.Laot_string_445:
   .byte 32
   .byte 32
   .byte 99
@@ -9730,7 +9744,7 @@ fw_616f742d63616c6c:
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_444(%rip), %rdi
+  leaq .Laot_string_445(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -9754,12 +9768,12 @@ fw_616f742d70726f672d746f6b656e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_445
+  jnz .Lfranc_446
   leaq reg_fw_6170742d746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_616f742d737472696e67
   ret
-.Lfranc_445:
+.Lfranc_446:
   leaq reg_fw_6170742d746f6b656e(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -9769,7 +9783,7 @@ fw_616f742d70726f672d746f6b656e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_446
+  jnz .Lfranc_447
   leaq reg_fw_6170742d746f6b656e(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -9778,18 +9792,18 @@ fw_616f742d70726f672d746f6b656e:
   call fr_add
   call fw_616f742d7265672d736574
   ret
-.Lfranc_446:
+.Lfranc_447:
   leaq reg_fw_6170742d746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_616f742d6f70657261746f72
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_447
+  jz .Lfranc_448
   movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_447:
+.Lfranc_448:
   leaq reg_fw_6170742d746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_73322d6e756d626572
@@ -9803,25 +9817,25 @@ fw_616f742d70726f672d746f6b656e:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_448
+  jz .Lfranc_449
   leaq reg_fw_6170742d6e756d(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_6170742d64656e(%rip), %rdi
   call fr_reg_get
   call fw_616f742d6c69746572616c
   ret
-.Lfranc_448:
+.Lfranc_449:
   leaq reg_fw_6170742d746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_616f742d7265672d676574
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_449
+  jz .Lfranc_450
   movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_449:
+.Lfranc_450:
   leaq reg_fw_6170742d746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_616f742d63616c6c
@@ -9837,7 +9851,7 @@ fw_616f742d70726f6772616d:
   leaq reg_fw_733270(%rip), %rdi
   call fr_reg_set
 .section .rodata
-.Laot_string_450:
+.Laot_string_451:
   .byte 70
   .byte 82
   .byte 65
@@ -9859,20 +9873,6 @@ fw_616f742d70726f6772616d:
   .byte 78
   .byte 0
 .section .text
-  leaq .Laot_string_450(%rip), %rdi
-  movq $1, %rsi
-  call fr_push
-  call fr_type
-  call fr_cr
-.section .rodata
-.Laot_string_451:
-  .byte 46
-  .byte 116
-  .byte 101
-  .byte 120
-  .byte 116
-  .byte 0
-.section .text
   leaq .Laot_string_451(%rip), %rdi
   movq $1, %rsi
   call fr_push
@@ -9881,28 +9881,10 @@ fw_616f742d70726f6772616d:
 .section .rodata
 .Laot_string_452:
   .byte 46
-  .byte 103
-  .byte 108
-  .byte 111
-  .byte 98
-  .byte 97
-  .byte 108
-  .byte 32
-  .byte 102
-  .byte 114
-  .byte 97
-  .byte 110
-  .byte 99
-  .byte 95
-  .byte 97
-  .byte 111
   .byte 116
-  .byte 95
   .byte 101
-  .byte 110
+  .byte 120
   .byte 116
-  .byte 114
-  .byte 121
   .byte 0
 .section .text
   leaq .Laot_string_452(%rip), %rdi
@@ -9912,6 +9894,38 @@ fw_616f742d70726f6772616d:
   call fr_cr
 .section .rodata
 .Laot_string_453:
+  .byte 46
+  .byte 103
+  .byte 108
+  .byte 111
+  .byte 98
+  .byte 97
+  .byte 108
+  .byte 32
+  .byte 102
+  .byte 114
+  .byte 97
+  .byte 110
+  .byte 99
+  .byte 95
+  .byte 97
+  .byte 111
+  .byte 116
+  .byte 95
+  .byte 101
+  .byte 110
+  .byte 116
+  .byte 114
+  .byte 121
+  .byte 0
+.section .text
+  leaq .Laot_string_453(%rip), %rdi
+  movq $1, %rsi
+  call fr_push
+  call fr_type
+  call fr_cr
+.section .rodata
+.Laot_string_454:
   .byte 102
   .byte 114
   .byte 97
@@ -9930,7 +9944,7 @@ fw_616f742d70726f6772616d:
   .byte 58
   .byte 0
 .section .text
-  leaq .Laot_string_453(%rip), %rdi
+  leaq .Laot_string_454(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -9939,9 +9953,9 @@ fw_616f742d70726f6772616d:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_454
+  jz .Lfranc_455
 .section .rodata
-.Laot_string_455:
+.Laot_string_456:
   .byte 46
   .byte 103
   .byte 108
@@ -9963,13 +9977,13 @@ fw_616f742d70726f6772616d:
   .byte 121
   .byte 0
 .section .text
-  leaq .Laot_string_455(%rip), %rdi
+  leaq .Laot_string_456(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
 .section .rodata
-.Laot_string_456:
+.Laot_string_457:
   .byte 102
   .byte 114
   .byte 97
@@ -9984,45 +9998,45 @@ fw_616f742d70726f6772616d:
   .byte 58
   .byte 0
 .section .text
-  leaq .Laot_string_456(%rip), %rdi
+  leaq .Laot_string_457(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
-.Lfranc_454:
+.Lfranc_455:
   leaq reg_fw_616f742d6b65726e656c2d6d6f6465(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_457
+  jz .Lfranc_458
 .section .rodata
-.Laot_string_458:
+.Laot_string_459:
   .byte 98
   .byte 111
   .byte 111
   .byte 116
   .byte 0
 .section .text
-  leaq .Laot_string_458(%rip), %rdi
+  leaq .Laot_string_459(%rip), %rdi
   movq $1, %rsi
   call fr_push
-  jmp .Lfranc_459
-.Lfranc_457:
+  jmp .Lfranc_460
+.Lfranc_458:
 .section .rodata
-.Laot_string_460:
+.Laot_string_461:
   .byte 109
   .byte 97
   .byte 105
   .byte 110
   .byte 0
 .section .text
-  leaq .Laot_string_460(%rip), %rdi
+  leaq .Laot_string_461(%rip), %rdi
   movq $1, %rsi
   call fr_push
-.Lfranc_459:
+.Lfranc_460:
   call fw_616f742d63616c6c
 .section .rodata
-.Laot_string_461:
+.Laot_string_462:
   .byte 32
   .byte 32
   .byte 114
@@ -10030,7 +10044,7 @@ fw_616f742d70726f6772616d:
   .byte 116
   .byte 0
 .section .text
-  leaq .Laot_string_461(%rip), %rdi
+  leaq .Laot_string_462(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -10057,7 +10071,7 @@ fw_616f742d70726f6772616d:
   call fr_reg_get
   leaq reg_fw_733270(%rip), %rdi
   call fr_reg_set
-.Lfranc_462:
+.Lfranc_463:
   call fw_616f742d6e657874
   leaq reg_fw_61702d746f6b656e(%rip), %rdi
   call fr_reg_set
@@ -10065,14 +10079,14 @@ fw_616f742d70726f6772616d:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_463
+  jnz .Lfranc_464
   leaq reg_fw_61702d696e2d646566(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_464
+  jz .Lfranc_465
 .section .rodata
-.Laot_string_465:
+.Laot_string_466:
   .byte 70
   .byte 82
   .byte 65
@@ -10094,7 +10108,7 @@ fw_616f742d70726f6772616d:
   .byte 82
   .byte 0
 .section .text
-  leaq .Laot_string_465(%rip), %rdi
+  leaq .Laot_string_466(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -10103,19 +10117,19 @@ fw_616f742d70726f6772616d:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_464:
+.Lfranc_465:
   leaq reg_fw_616f742d6b65726e656c2d6d6f6465(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_466
+  jz .Lfranc_467
   leaq reg_fw_61702d696e707574(%rip), %rdi
   call fr_reg_get
   call fw_616f742d656d69742d6b65726e656c2d6d65746164617461
-.Lfranc_466:
+.Lfranc_467:
   call fw_616f742d656d69742d63656c6c73
 .section .rodata
-.Laot_string_467:
+.Laot_string_468:
   .byte 70
   .byte 82
   .byte 65
@@ -10135,7 +10149,7 @@ fw_616f742d70726f6772616d:
   .byte 68
   .byte 0
 .section .text
-  leaq .Laot_string_467(%rip), %rdi
+  leaq .Laot_string_468(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -10144,30 +10158,30 @@ fw_616f742d70726f6772616d:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_463:
+.Lfranc_464:
   leaq reg_fw_61702d746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_468:
+.Laot_string_469:
   .byte 100
   .byte 101
   .byte 102
   .byte 0
 .section .text
-  leaq .Laot_string_468(%rip), %rdi
+  leaq .Laot_string_469(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_469
+  jz .Lfranc_470
   leaq reg_fw_61702d696e2d646566(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_470
+  jz .Lfranc_471
 .section .rodata
-.Laot_string_471:
+.Laot_string_472:
   .byte 70
   .byte 82
   .byte 65
@@ -10189,7 +10203,7 @@ fw_616f742d70726f6772616d:
   .byte 82
   .byte 0
 .section .text
-  leaq .Laot_string_471(%rip), %rdi
+  leaq .Laot_string_472(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -10198,7 +10212,7 @@ fw_616f742d70726f6772616d:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_470:
+.Lfranc_471:
   call fw_616f742d6e657874
   leaq reg_fw_61702d6e616d65(%rip), %rdi
   call fr_reg_set
@@ -10206,9 +10220,9 @@ fw_616f742d70726f6772616d:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_472
+  jnz .Lfranc_473
 .section .rodata
-.Laot_string_473:
+.Laot_string_474:
   .byte 70
   .byte 82
   .byte 65
@@ -10230,7 +10244,7 @@ fw_616f742d70726f6772616d:
   .byte 82
   .byte 0
 .section .text
-  leaq .Laot_string_473(%rip), %rdi
+  leaq .Laot_string_474(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -10239,16 +10253,16 @@ fw_616f742d70726f6772616d:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_472:
+.Lfranc_473:
   leaq reg_fw_61702d6e616d65(%rip), %rdi
   call fr_reg_get
   call fw_616f742d6e616d65
 .section .rodata
-.Laot_string_474:
+.Laot_string_475:
   .byte 58
   .byte 0
 .section .text
-  leaq .Laot_string_474(%rip), %rdi
+  leaq .Laot_string_475(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -10258,29 +10272,29 @@ fw_616f742d70726f6772616d:
   call fr_push
   leaq reg_fw_61702d696e2d646566(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_475
-.Lfranc_469:
+  jmp .Lfranc_476
+.Lfranc_470:
   leaq reg_fw_61702d746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_476:
+.Laot_string_477:
   .byte 59
   .byte 0
 .section .text
-  leaq .Laot_string_476(%rip), %rdi
+  leaq .Laot_string_477(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_477
+  jz .Lfranc_478
   leaq reg_fw_61702d696e2d646566(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_478
+  jnz .Lfranc_479
 .section .rodata
-.Laot_string_479:
+.Laot_string_480:
   .byte 70
   .byte 82
   .byte 65
@@ -10302,7 +10316,7 @@ fw_616f742d70726f6772616d:
   .byte 82
   .byte 0
 .section .text
-  leaq .Laot_string_479(%rip), %rdi
+  leaq .Laot_string_480(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -10311,14 +10325,14 @@ fw_616f742d70726f6772616d:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_478:
+.Lfranc_479:
   leaq reg_fw_73327370(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_480
+  jz .Lfranc_481
 .section .rodata
-.Laot_string_481:
+.Laot_string_482:
   .byte 70
   .byte 82
   .byte 65
@@ -10338,25 +10352,6 @@ fw_616f742d70726f6772616d:
   .byte 82
   .byte 79
   .byte 82
-  .byte 0
-.section .text
-  leaq .Laot_string_481(%rip), %rdi
-  movq $1, %rsi
-  call fr_push
-  call fr_type
-  call fr_cr
-  movabsq $0, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  ret
-.Lfranc_480:
-.section .rodata
-.Laot_string_482:
-  .byte 32
-  .byte 32
-  .byte 114
-  .byte 101
-  .byte 116
   .byte 0
 .section .text
   leaq .Laot_string_482(%rip), %rdi
@@ -10367,17 +10362,36 @@ fw_616f742d70726f6772616d:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
+  ret
+.Lfranc_481:
+.section .rodata
+.Laot_string_483:
+  .byte 32
+  .byte 32
+  .byte 114
+  .byte 101
+  .byte 116
+  .byte 0
+.section .text
+  leaq .Laot_string_483(%rip), %rdi
+  movq $1, %rsi
+  call fr_push
+  call fr_type
+  call fr_cr
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
   leaq reg_fw_61702d696e2d646566(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_483
-.Lfranc_477:
+  jmp .Lfranc_484
+.Lfranc_478:
   leaq reg_fw_61702d696e2d646566(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_484
+  jnz .Lfranc_485
 .section .rodata
-.Laot_string_485:
+.Laot_string_486:
   .byte 70
   .byte 82
   .byte 65
@@ -10399,7 +10413,7 @@ fw_616f742d70726f6772616d:
   .byte 82
   .byte 0
 .section .text
-  leaq .Laot_string_485(%rip), %rdi
+  leaq .Laot_string_486(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -10408,15 +10422,15 @@ fw_616f742d70726f6772616d:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_484:
+.Lfranc_485:
   leaq reg_fw_61702d746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_616f742d70726f6772616d2d776f7264
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_486
+  jnz .Lfranc_487
 .section .rodata
-.Laot_string_487:
+.Laot_string_488:
   .byte 70
   .byte 82
   .byte 65
@@ -10438,7 +10452,7 @@ fw_616f742d70726f6772616d:
   .byte 82
   .byte 0
 .section .text
-  leaq .Laot_string_487(%rip), %rdi
+  leaq .Laot_string_488(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -10447,14 +10461,14 @@ fw_616f742d70726f6772616d:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_486:
-.Lfranc_483:
-.Lfranc_475:
-  jmp .Lfranc_462
+.Lfranc_487:
+.Lfranc_484:
+.Lfranc_476:
+  jmp .Lfranc_463
   ret
 fw_616f742d70726f6772616d2d64656d6f:
 .section .rodata
-.Laot_string_488:
+.Laot_string_489:
   .byte 100
   .byte 101
   .byte 102
@@ -10497,7 +10511,7 @@ fw_616f742d70726f6772616d2d64656d6f:
   .byte 59
   .byte 0
 .section .text
-  leaq .Laot_string_488(%rip), %rdi
+  leaq .Laot_string_489(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_616f742d70726f6772616d
@@ -10519,7 +10533,7 @@ fw_616f742d6c6162656c:
   leaq reg_fw_61632d6964(%rip), %rdi
   call fr_reg_set
 .section .rodata
-.Laot_string_489:
+.Laot_string_490:
   .byte 46
   .byte 76
   .byte 102
@@ -10530,7 +10544,7 @@ fw_616f742d6c6162656c:
   .byte 95
   .byte 0
 .section .text
-  leaq .Laot_string_489(%rip), %rdi
+  leaq .Laot_string_490(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -10545,11 +10559,11 @@ fw_616f742d6d61726b:
   call fr_reg_get
   call fw_616f742d6c6162656c
 .section .rodata
-.Laot_string_490:
+.Laot_string_491:
   .byte 58
   .byte 0
 .section .text
-  leaq .Laot_string_490(%rip), %rdi
+  leaq .Laot_string_491(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -10561,12 +10575,12 @@ fw_616f742d6a756d70:
   leaq reg_fw_61632d6f70(%rip), %rdi
   call fr_reg_set
 .section .rodata
-.Laot_string_491:
+.Laot_string_492:
   .byte 32
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_491(%rip), %rdi
+  leaq .Laot_string_492(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -10574,11 +10588,11 @@ fw_616f742d6a756d70:
   call fr_reg_get
   call fr_type
 .section .rodata
-.Laot_string_492:
+.Laot_string_493:
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_492(%rip), %rdi
+  leaq .Laot_string_493(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -10601,17 +10615,17 @@ fw_616f742d6966:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_493
+  jnz .Lfranc_494
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_493:
+.Lfranc_494:
   call fw_616f742d6964
   leaq reg_fw_61692d6964(%rip), %rdi
   call fr_reg_set
 .section .rodata
-.Laot_string_494:
+.Laot_string_495:
   .byte 32
   .byte 32
   .byte 99
@@ -10633,13 +10647,13 @@ fw_616f742d6966:
   .byte 110
   .byte 0
 .section .text
-  leaq .Laot_string_494(%rip), %rdi
+  leaq .Laot_string_495(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
 .section .rodata
-.Laot_string_495:
+.Laot_string_496:
   .byte 32
   .byte 32
   .byte 116
@@ -10660,7 +10674,7 @@ fw_616f742d6966:
   .byte 120
   .byte 0
 .section .text
-  leaq .Laot_string_495(%rip), %rdi
+  leaq .Laot_string_496(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -10678,16 +10692,16 @@ fw_616f742d6966:
   call fw_73322d6374726c2d70757368
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_496
+  jnz .Lfranc_497
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
-  jmp .Lfranc_497
-.Lfranc_496:
+  jmp .Lfranc_498
+.Lfranc_497:
   movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
-.Lfranc_497:
+.Lfranc_498:
   ret
 fw_616f742d626567696e:
   leaq reg_fw_73327370(%rip), %rdi
@@ -10698,12 +10712,12 @@ fw_616f742d626567696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_498
+  jnz .Lfranc_499
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_498:
+.Lfranc_499:
   call fw_616f742d6964
   leaq reg_fw_61622d6964(%rip), %rdi
   call fr_reg_set
@@ -10718,28 +10732,28 @@ fw_616f742d626567696e:
   call fw_73322d6374726c2d70757368
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_499
+  jnz .Lfranc_500
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
-  jmp .Lfranc_500
-.Lfranc_499:
+  jmp .Lfranc_501
+.Lfranc_500:
   movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
-.Lfranc_500:
+.Lfranc_501:
   ret
 fw_616f742d656c7365:
   leaq reg_fw_73327370(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_501
+  jnz .Lfranc_502
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_501:
+.Lfranc_502:
   call fw_73322d6374726c2d706f70
   leaq reg_fw_61652d6f6c64(%rip), %rdi
   call fr_reg_set
@@ -10753,23 +10767,23 @@ fw_616f742d656c7365:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_502
+  jz .Lfranc_503
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_502:
+.Lfranc_503:
   call fw_616f742d6964
   leaq reg_fw_61652d656e64(%rip), %rdi
   call fr_reg_set
 .section .rodata
-.Laot_string_503:
+.Laot_string_504:
   .byte 106
   .byte 109
   .byte 112
   .byte 0
 .section .text
-  leaq .Laot_string_503(%rip), %rdi
+  leaq .Laot_string_504(%rip), %rdi
   movq $1, %rsi
   call fr_push
   leaq reg_fw_61652d656e64(%rip), %rdi
@@ -10786,28 +10800,28 @@ fw_616f742d656c7365:
   call fw_73322d6374726c2d70757368
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_504
+  jnz .Lfranc_505
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
-  jmp .Lfranc_505
-.Lfranc_504:
+  jmp .Lfranc_506
+.Lfranc_505:
   movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
-.Lfranc_505:
+.Lfranc_506:
   ret
 fw_616f742d7468656e:
   leaq reg_fw_73327370(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_506
+  jnz .Lfranc_507
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_506:
+.Lfranc_507:
   call fw_73322d6374726c2d706f70
   leaq reg_fw_61742d6964(%rip), %rdi
   call fr_reg_set
@@ -10816,23 +10830,6 @@ fw_616f742d7468656e:
   leaq reg_fw_61742d746167(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  call fr_sub
-  call fr_condition
-  testq %rax, %rax
-  jnz .Lfranc_507
-  leaq reg_fw_61742d6964(%rip), %rdi
-  call fr_reg_get
-  call fw_616f742d6d61726b
-  movabsq $1, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  ret
-.Lfranc_507:
-  leaq reg_fw_61742d746167(%rip), %rdi
-  call fr_reg_get
-  movabsq $2, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
@@ -10847,6 +10844,23 @@ fw_616f742d7468656e:
   call fr_push
   ret
 .Lfranc_508:
+  leaq reg_fw_61742d746167(%rip), %rdi
+  call fr_reg_get
+  movabsq $2, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  call fr_sub
+  call fr_condition
+  testq %rax, %rax
+  jnz .Lfranc_509
+  leaq reg_fw_61742d6964(%rip), %rdi
+  call fr_reg_get
+  call fw_616f742d6d61726b
+  movabsq $1, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  ret
+.Lfranc_509:
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -10856,12 +10870,12 @@ fw_616f742d7768696c65:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_509
+  jnz .Lfranc_510
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_509:
+.Lfranc_510:
   call fw_73322d6374726c2d706f70
   leaq reg_fw_61772d626567696e(%rip), %rdi
   call fr_reg_set
@@ -10875,12 +10889,12 @@ fw_616f742d7768696c65:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_510
+  jz .Lfranc_511
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_510:
+.Lfranc_511:
   movabsq $3, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -10892,7 +10906,7 @@ fw_616f742d7768696c65:
   leaq reg_fw_61772d656e64(%rip), %rdi
   call fr_reg_set
 .section .rodata
-.Laot_string_511:
+.Laot_string_512:
   .byte 32
   .byte 32
   .byte 99
@@ -10914,13 +10928,13 @@ fw_616f742d7768696c65:
   .byte 110
   .byte 0
 .section .text
-  leaq .Laot_string_511(%rip), %rdi
+  leaq .Laot_string_512(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
 .section .rodata
-.Laot_string_512:
+.Laot_string_513:
   .byte 32
   .byte 32
   .byte 116
@@ -10941,19 +10955,19 @@ fw_616f742d7768696c65:
   .byte 120
   .byte 0
 .section .text
-  leaq .Laot_string_512(%rip), %rdi
+  leaq .Laot_string_513(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
 .section .rodata
-.Laot_string_513:
+.Laot_string_514:
   .byte 106
   .byte 110
   .byte 115
   .byte 0
 .section .text
-  leaq .Laot_string_513(%rip), %rdi
+  leaq .Laot_string_514(%rip), %rdi
   movq $1, %rsi
   call fr_push
   leaq reg_fw_61772d656e64(%rip), %rdi
@@ -10967,28 +10981,28 @@ fw_616f742d7768696c65:
   call fw_73322d6374726c2d70757368
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_514
+  jnz .Lfranc_515
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
-  jmp .Lfranc_515
-.Lfranc_514:
+  jmp .Lfranc_516
+.Lfranc_515:
   movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
-.Lfranc_515:
+.Lfranc_516:
   ret
 fw_616f742d616761696e:
   leaq reg_fw_73327370(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_516
+  jnz .Lfranc_517
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_516:
+.Lfranc_517:
   call fw_73322d6374726c2d706f70
   leaq reg_fw_61612d7374617274(%rip), %rdi
   call fr_reg_set
@@ -11002,20 +11016,20 @@ fw_616f742d616761696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_517
+  jz .Lfranc_518
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_517:
+.Lfranc_518:
 .section .rodata
-.Laot_string_518:
+.Laot_string_519:
   .byte 106
   .byte 109
   .byte 112
   .byte 0
 .section .text
-  leaq .Laot_string_518(%rip), %rdi
+  leaq .Laot_string_519(%rip), %rdi
   movq $1, %rsi
   call fr_push
   leaq reg_fw_61612d7374617274(%rip), %rdi
@@ -11030,12 +11044,12 @@ fw_616f742d726570656174:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_519
+  jnz .Lfranc_520
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_519:
+.Lfranc_520:
   call fw_73322d6374726c2d706f70
   leaq reg_fw_61722d656e64(%rip), %rdi
   call fr_reg_set
@@ -11049,22 +11063,22 @@ fw_616f742d726570656174:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_520
-  movabsq $-1, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  ret
-.Lfranc_520:
-  leaq reg_fw_73327370(%rip), %rdi
-  call fr_reg_get
-  call fr_condition
-  testq %rax, %rax
-  jnz .Lfranc_521
+  jz .Lfranc_521
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
 .Lfranc_521:
+  leaq reg_fw_73327370(%rip), %rdi
+  call fr_reg_get
+  call fr_condition
+  testq %rax, %rax
+  jnz .Lfranc_522
+  movabsq $-1, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  ret
+.Lfranc_522:
   call fw_73322d6374726c2d706f70
   leaq reg_fw_61722d7374617274(%rip), %rdi
   call fr_reg_set
@@ -11078,20 +11092,20 @@ fw_616f742d726570656174:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_522
+  jz .Lfranc_523
   movabsq $-1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_522:
+.Lfranc_523:
 .section .rodata
-.Laot_string_523:
+.Laot_string_524:
   .byte 106
   .byte 109
   .byte 112
   .byte 0
 .section .text
-  leaq .Laot_string_523(%rip), %rdi
+  leaq .Laot_string_524(%rip), %rdi
   movq $1, %rsi
   call fr_push
   leaq reg_fw_61722d7374617274(%rip), %rdi
@@ -11110,66 +11124,50 @@ fw_616f742d636f6e74726f6c:
   leaq reg_fw_6163742d74(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_524:
+.Laot_string_525:
   .byte 105
   .byte 102
   .byte 0
 .section .text
-  leaq .Laot_string_524(%rip), %rdi
+  leaq .Laot_string_525(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_525
+  jz .Lfranc_526
 .section .rodata
-.Laot_string_526:
+.Laot_string_527:
   .byte 106
   .byte 110
   .byte 115
   .byte 0
 .section .text
-  leaq .Laot_string_526(%rip), %rdi
+  leaq .Laot_string_527(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_616f742d6966
   ret
-.Lfranc_525:
+.Lfranc_526:
   leaq reg_fw_6163742d74(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_527:
+.Laot_string_528:
   .byte 105
   .byte 102
   .byte 48
   .byte 0
 .section .text
-  leaq .Laot_string_527(%rip), %rdi
+  leaq .Laot_string_528(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_528
-.section .rodata
-.Laot_string_529:
-  .byte 106
-  .byte 110
-  .byte 122
-  .byte 0
-.section .text
-  leaq .Laot_string_529(%rip), %rdi
-  movq $1, %rsi
-  call fr_push
-  call fw_616f742d6966
-  ret
-.Lfranc_528:
-  leaq reg_fw_6163742d74(%rip), %rdi
-  call fr_reg_get
+  jz .Lfranc_529
 .section .rodata
 .Laot_string_530:
-  .byte 105
-  .byte 102
+  .byte 106
   .byte 110
   .byte 122
   .byte 0
@@ -11177,66 +11175,82 @@ fw_616f742d636f6e74726f6c:
   leaq .Laot_string_530(%rip), %rdi
   movq $1, %rsi
   call fr_push
+  call fw_616f742d6966
+  ret
+.Lfranc_529:
+  leaq reg_fw_6163742d74(%rip), %rdi
+  call fr_reg_get
+.section .rodata
+.Laot_string_531:
+  .byte 105
+  .byte 102
+  .byte 110
+  .byte 122
+  .byte 0
+.section .text
+  leaq .Laot_string_531(%rip), %rdi
+  movq $1, %rsi
+  call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_531
+  jz .Lfranc_532
 .section .rodata
-.Laot_string_532:
+.Laot_string_533:
   .byte 106
   .byte 122
   .byte 0
 .section .text
-  leaq .Laot_string_532(%rip), %rdi
+  leaq .Laot_string_533(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_616f742d6966
   ret
-.Lfranc_531:
+.Lfranc_532:
   leaq reg_fw_6163742d74(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_533:
+.Laot_string_534:
   .byte 101
   .byte 108
   .byte 115
   .byte 101
   .byte 0
 .section .text
-  leaq .Laot_string_533(%rip), %rdi
+  leaq .Laot_string_534(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_534
+  jz .Lfranc_535
   call fw_616f742d656c7365
   ret
-.Lfranc_534:
+.Lfranc_535:
   leaq reg_fw_6163742d74(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_535:
+.Laot_string_536:
   .byte 116
   .byte 104
   .byte 101
   .byte 110
   .byte 0
 .section .text
-  leaq .Laot_string_535(%rip), %rdi
+  leaq .Laot_string_536(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_536
+  jz .Lfranc_537
   call fw_616f742d7468656e
   ret
-.Lfranc_536:
+.Lfranc_537:
   leaq reg_fw_6163742d74(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_537:
+.Laot_string_538:
   .byte 98
   .byte 101
   .byte 103
@@ -11244,20 +11258,20 @@ fw_616f742d636f6e74726f6c:
   .byte 110
   .byte 0
 .section .text
-  leaq .Laot_string_537(%rip), %rdi
+  leaq .Laot_string_538(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_538
+  jz .Lfranc_539
   call fw_616f742d626567696e
   ret
-.Lfranc_538:
+.Lfranc_539:
   leaq reg_fw_6163742d74(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_539:
+.Laot_string_540:
   .byte 119
   .byte 104
   .byte 105
@@ -11265,20 +11279,20 @@ fw_616f742d636f6e74726f6c:
   .byte 101
   .byte 0
 .section .text
-  leaq .Laot_string_539(%rip), %rdi
+  leaq .Laot_string_540(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_540
+  jz .Lfranc_541
   call fw_616f742d7768696c65
   ret
-.Lfranc_540:
+.Lfranc_541:
   leaq reg_fw_6163742d74(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_541:
+.Laot_string_542:
   .byte 97
   .byte 103
   .byte 97
@@ -11286,20 +11300,20 @@ fw_616f742d636f6e74726f6c:
   .byte 110
   .byte 0
 .section .text
-  leaq .Laot_string_541(%rip), %rdi
+  leaq .Laot_string_542(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_542
+  jz .Lfranc_543
   call fw_616f742d616761696e
   ret
-.Lfranc_542:
+.Lfranc_543:
   leaq reg_fw_6163742d74(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_543:
+.Laot_string_544:
   .byte 114
   .byte 101
   .byte 112
@@ -11308,16 +11322,16 @@ fw_616f742d636f6e74726f6c:
   .byte 116
   .byte 0
 .section .text
-  leaq .Laot_string_543(%rip), %rdi
+  leaq .Laot_string_544(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_544
+  jz .Lfranc_545
   call fw_616f742d726570656174
   ret
-.Lfranc_544:
+.Lfranc_545:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -11334,41 +11348,41 @@ fw_616f742d70726f6772616d2d776f7264:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_545
+  jns .Lfranc_546
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_545:
+.Lfranc_546:
   leaq reg_fw_6170772d737461747573(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_546
+  jz .Lfranc_547
   movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_546:
+.Lfranc_547:
   leaq reg_fw_6170772d746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_547:
+.Laot_string_548:
   .byte 101
   .byte 120
   .byte 105
   .byte 116
   .byte 0
 .section .text
-  leaq .Laot_string_547(%rip), %rdi
+  leaq .Laot_string_548(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_548
+  jz .Lfranc_549
 .section .rodata
-.Laot_string_549:
+.Laot_string_550:
   .byte 32
   .byte 32
   .byte 114
@@ -11376,7 +11390,7 @@ fw_616f742d70726f6772616d2d776f7264:
   .byte 116
   .byte 0
 .section .text
-  leaq .Laot_string_549(%rip), %rdi
+  leaq .Laot_string_550(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -11385,14 +11399,14 @@ fw_616f742d70726f6772616d2d776f7264:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_548:
+.Lfranc_549:
   leaq reg_fw_6170772d746f6b656e(%rip), %rdi
   call fr_reg_get
   call fw_616f742d70726f672d746f6b656e
   ret
 fw_616f742d636f6e74726f6c2d64656d6f:
 .section .rodata
-.Laot_string_550:
+.Laot_string_551:
   .byte 100
   .byte 101
   .byte 102
@@ -11478,13 +11492,13 @@ fw_616f742d636f6e74726f6c2d64656d6f:
   .byte 59
   .byte 0
 .section .text
-  leaq .Laot_string_550(%rip), %rdi
+  leaq .Laot_string_551(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_616f742d70726f6772616d
   call fr_drop
 .section .rodata
-.Laot_string_551:
+.Laot_string_552:
   .byte 70
   .byte 82
   .byte 65
@@ -11504,7 +11518,7 @@ fw_616f742d636f6e74726f6c2d64656d6f:
   .byte 68
   .byte 0
 .section .text
-  leaq .Laot_string_551(%rip), %rdi
+  leaq .Laot_string_552(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -11514,7 +11528,7 @@ fw_616f742d646174612d62797465:
   leaq reg_fw_6164622d6e(%rip), %rdi
   call fr_reg_set
 .section .rodata
-.Laot_string_552:
+.Laot_string_553:
   .byte 32
   .byte 32
   .byte 46
@@ -11525,7 +11539,7 @@ fw_616f742d646174612d62797465:
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_552(%rip), %rdi
+  leaq .Laot_string_553(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -11538,7 +11552,7 @@ fw_616f742d7374722d6c6162656c:
   leaq reg_fw_61736c2d6964(%rip), %rdi
   call fr_reg_set
 .section .rodata
-.Laot_string_553:
+.Laot_string_554:
   .byte 46
   .byte 76
   .byte 97
@@ -11554,7 +11568,7 @@ fw_616f742d7374722d6c6162656c:
   .byte 95
   .byte 0
 .section .text
-  leaq .Laot_string_553(%rip), %rdi
+  leaq .Laot_string_554(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -11569,7 +11583,7 @@ fw_616f742d737472696e67:
   leaq reg_fw_617374722d6964(%rip), %rdi
   call fr_reg_set
 .section .rodata
-.Laot_string_554:
+.Laot_string_555:
   .byte 46
   .byte 115
   .byte 101
@@ -11588,7 +11602,7 @@ fw_616f742d737472696e67:
   .byte 97
   .byte 0
 .section .text
-  leaq .Laot_string_554(%rip), %rdi
+  leaq .Laot_string_555(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -11597,11 +11611,11 @@ fw_616f742d737472696e67:
   call fr_reg_get
   call fw_616f742d7374722d6c6162656c
 .section .rodata
-.Laot_string_555:
+.Laot_string_556:
   .byte 58
   .byte 0
 .section .text
-  leaq .Laot_string_555(%rip), %rdi
+  leaq .Laot_string_556(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -11614,7 +11628,7 @@ fw_616f742d737472696e67:
   call fr_add
   leaq reg_fw_617374722d706f73(%rip), %rdi
   call fr_reg_set
-.Lfranc_556:
+.Lfranc_557:
   leaq reg_fw_617374722d706f73(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -11624,12 +11638,12 @@ fw_616f742d737472696e67:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_557
+  jnz .Lfranc_558
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_557:
+.Lfranc_558:
   leaq reg_fw_617374722d62797465(%rip), %rdi
   call fr_reg_get
   movabsq $34, %rdi
@@ -11638,13 +11652,13 @@ fw_616f742d737472696e67:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_558
+  jnz .Lfranc_559
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   call fw_616f742d646174612d62797465
 .section .rodata
-.Laot_string_559:
+.Laot_string_560:
   .byte 46
   .byte 115
   .byte 101
@@ -11661,13 +11675,13 @@ fw_616f742d737472696e67:
   .byte 116
   .byte 0
 .section .text
-  leaq .Laot_string_559(%rip), %rdi
+  leaq .Laot_string_560(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
 .section .rodata
-.Laot_string_560:
+.Laot_string_561:
   .byte 32
   .byte 32
   .byte 108
@@ -11677,7 +11691,7 @@ fw_616f742d737472696e67:
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_560(%rip), %rdi
+  leaq .Laot_string_561(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -11685,7 +11699,7 @@ fw_616f742d737472696e67:
   call fr_reg_get
   call fw_616f742d7374722d6c6162656c
 .section .rodata
-.Laot_string_561:
+.Laot_string_562:
   .byte 40
   .byte 37
   .byte 114
@@ -11700,13 +11714,13 @@ fw_616f742d737472696e67:
   .byte 105
   .byte 0
 .section .text
-  leaq .Laot_string_561(%rip), %rdi
+  leaq .Laot_string_562(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
 .section .rodata
-.Laot_string_562:
+.Laot_string_563:
   .byte 32
   .byte 32
   .byte 109
@@ -11724,13 +11738,13 @@ fw_616f742d737472696e67:
   .byte 105
   .byte 0
 .section .text
-  leaq .Laot_string_562(%rip), %rdi
+  leaq .Laot_string_563(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
 .section .rodata
-.Laot_string_563:
+.Laot_string_564:
   .byte 32
   .byte 32
   .byte 99
@@ -11747,7 +11761,7 @@ fw_616f742d737472696e67:
   .byte 104
   .byte 0
 .section .text
-  leaq .Laot_string_563(%rip), %rdi
+  leaq .Laot_string_564(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -11756,7 +11770,7 @@ fw_616f742d737472696e67:
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_558:
+.Lfranc_559:
   leaq reg_fw_617374722d62797465(%rip), %rdi
   call fr_reg_get
   movabsq $92, %rdi
@@ -11765,7 +11779,7 @@ fw_616f742d737472696e67:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_564
+  jnz .Lfranc_565
   leaq reg_fw_617374722d706f73(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -11783,12 +11797,12 @@ fw_616f742d737472696e67:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_565
+  jnz .Lfranc_566
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_565:
+.Lfranc_566:
   leaq reg_fw_617374722d62797465(%rip), %rdi
   call fr_reg_get
   movabsq $110, %rdi
@@ -11797,13 +11811,13 @@ fw_616f742d737472696e67:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_566
+  jnz .Lfranc_567
   movabsq $10, %rdi
   movabsq $1, %rsi
   call fr_push
   leaq reg_fw_617374722d62797465(%rip), %rdi
   call fr_reg_set
-.Lfranc_566:
+.Lfranc_567:
   leaq reg_fw_617374722d62797465(%rip), %rdi
   call fr_reg_get
   movabsq $114, %rdi
@@ -11812,13 +11826,13 @@ fw_616f742d737472696e67:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_567
+  jnz .Lfranc_568
   movabsq $13, %rdi
   movabsq $1, %rsi
   call fr_push
   leaq reg_fw_617374722d62797465(%rip), %rdi
   call fr_reg_set
-.Lfranc_567:
+.Lfranc_568:
   leaq reg_fw_617374722d62797465(%rip), %rdi
   call fr_reg_get
   movabsq $116, %rdi
@@ -11827,13 +11841,13 @@ fw_616f742d737472696e67:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_568
+  jnz .Lfranc_569
   movabsq $9, %rdi
   movabsq $1, %rsi
   call fr_push
   leaq reg_fw_617374722d62797465(%rip), %rdi
   call fr_reg_set
-.Lfranc_568:
+.Lfranc_569:
   leaq reg_fw_617374722d62797465(%rip), %rdi
   call fr_reg_get
   movabsq $48, %rdi
@@ -11842,14 +11856,14 @@ fw_616f742d737472696e67:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_569
+  jnz .Lfranc_570
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   leaq reg_fw_617374722d62797465(%rip), %rdi
   call fr_reg_set
-.Lfranc_569:
-.Lfranc_564:
+.Lfranc_570:
+.Lfranc_565:
   leaq reg_fw_617374722d62797465(%rip), %rdi
   call fr_reg_get
   call fw_616f742d646174612d62797465
@@ -11861,12 +11875,12 @@ fw_616f742d737472696e67:
   call fr_add
   leaq reg_fw_617374722d706f73(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_556
+  jmp .Lfranc_557
   ret
 fw_616f742d7265672d656e64:
   leaq reg_fw_6172652d706f73(%rip), %rdi
   call fr_reg_set
-.Lfranc_570:
+.Lfranc_571:
   call fr_s2_line_buffer
   leaq reg_fw_6172652d706f73(%rip), %rdi
   call fr_reg_get
@@ -11874,7 +11888,7 @@ fw_616f742d7265672d656e64:
   call fr_bfetch
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_571
+  jnz .Lfranc_572
   leaq reg_fw_6172652d706f73(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -11882,7 +11896,7 @@ fw_616f742d7265672d656e64:
   call fr_push
   call fr_add
   ret
-.Lfranc_571:
+.Lfranc_572:
   leaq reg_fw_6172652d706f73(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -11891,7 +11905,7 @@ fw_616f742d7265672d656e64:
   call fr_add
   leaq reg_fw_6172652d706f73(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_570
+  jmp .Lfranc_571
   ret
 fw_616f742d7265672d66696e64:
   leaq reg_fw_6172662d6e616d65(%rip), %rdi
@@ -11901,7 +11915,7 @@ fw_616f742d7265672d66696e64:
   call fr_push
   leaq reg_fw_6172662d706f73(%rip), %rdi
   call fr_reg_set
-.Lfranc_572:
+.Lfranc_573:
   leaq reg_fw_6172662d706f73(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_616f742d7265672d75736564(%rip), %rdi
@@ -11909,12 +11923,12 @@ fw_616f742d7265672d66696e64:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_573
+  jnz .Lfranc_574
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_573:
+.Lfranc_574:
   call fr_s2_line_buffer
   leaq reg_fw_6172662d706f73(%rip), %rdi
   call fr_reg_get
@@ -11924,18 +11938,18 @@ fw_616f742d7265672d66696e64:
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_574
+  jz .Lfranc_575
   movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_574:
+.Lfranc_575:
   leaq reg_fw_6172662d706f73(%rip), %rdi
   call fr_reg_get
   call fw_616f742d7265672d656e64
   leaq reg_fw_6172662d706f73(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_572
+  jmp .Lfranc_573
   ret
 fw_616f742d7265672d72656d656d626572:
   leaq reg_fw_6172722d6e616d65(%rip), %rdi
@@ -11945,14 +11959,14 @@ fw_616f742d7265672d72656d656d626572:
   call fw_616f742d7265672d66696e64
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_575
+  jz .Lfranc_576
   ret
-.Lfranc_575:
+.Lfranc_576:
   leaq reg_fw_616f742d7265672d75736564(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_6172722d706f73(%rip), %rdi
   call fr_reg_set
-.Lfranc_576:
+.Lfranc_577:
   leaq reg_fw_6172722d6e616d65(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -11966,9 +11980,9 @@ fw_616f742d7265672d72656d656d626572:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_577
+  jnz .Lfranc_578
   ret
-.Lfranc_577:
+.Lfranc_578:
   call fr_s2_line_buffer
   leaq reg_fw_6172722d706f73(%rip), %rdi
   call fr_reg_get
@@ -11996,14 +12010,14 @@ fw_616f742d7265672d72656d656d626572:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_578
+  jnz .Lfranc_579
   leaq reg_fw_6172722d706f73(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_616f742d7265672d75736564(%rip), %rdi
   call fr_reg_set
   ret
-.Lfranc_578:
-  jmp .Lfranc_576
+.Lfranc_579:
+  jmp .Lfranc_577
   ret
 fw_616f742d7265672d7363616e:
   leaq reg_fw_6172732d736f75726365(%rip), %rdi
@@ -12017,7 +12031,7 @@ fw_616f742d7265672d7363616e:
   call fr_reg_get
   leaq reg_fw_733270(%rip), %rdi
   call fr_reg_set
-.Lfranc_579:
+.Lfranc_580:
   call fw_616f742d6e657874
   leaq reg_fw_6172732d746f6b656e(%rip), %rdi
   call fr_reg_set
@@ -12025,9 +12039,9 @@ fw_616f742d7265672d7363616e:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_580
+  jnz .Lfranc_581
   ret
-.Lfranc_580:
+.Lfranc_581:
   leaq reg_fw_6172732d746f6b656e(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -12037,7 +12051,7 @@ fw_616f742d7265672d7363616e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_581
+  jnz .Lfranc_582
   leaq reg_fw_6172732d746f6b656e(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -12045,21 +12059,21 @@ fw_616f742d7265672d7363616e:
   call fr_push
   call fr_add
   call fw_616f742d7265672d72656d656d626572
-.Lfranc_581:
-  jmp .Lfranc_579
+.Lfranc_582:
+  jmp .Lfranc_580
   ret
 fw_616f742d7265672d6c6162656c:
   leaq reg_fw_61726c2d6e616d65(%rip), %rdi
   call fr_reg_set
 .section .rodata
-.Laot_string_582:
+.Laot_string_583:
   .byte 114
   .byte 101
   .byte 103
   .byte 95
   .byte 0
 .section .text
-  leaq .Laot_string_582(%rip), %rdi
+  leaq .Laot_string_583(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -12071,7 +12085,7 @@ fw_616f742d7265672d61646472:
   leaq reg_fw_6172612d6e616d65(%rip), %rdi
   call fr_reg_set
 .section .rodata
-.Laot_string_583:
+.Laot_string_584:
   .byte 32
   .byte 32
   .byte 108
@@ -12081,7 +12095,7 @@ fw_616f742d7265672d61646472:
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_583(%rip), %rdi
+  leaq .Laot_string_584(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -12089,7 +12103,7 @@ fw_616f742d7265672d61646472:
   call fr_reg_get
   call fw_616f742d7265672d6c6162656c
 .section .rodata
-.Laot_string_584:
+.Laot_string_585:
   .byte 40
   .byte 37
   .byte 114
@@ -12104,7 +12118,7 @@ fw_616f742d7265672d61646472:
   .byte 105
   .byte 0
 .section .text
-  leaq .Laot_string_584(%rip), %rdi
+  leaq .Laot_string_585(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -12117,7 +12131,7 @@ fw_616f742d7265672d736574:
   call fr_reg_get
   call fw_616f742d7265672d61646472
 .section .rodata
-.Laot_string_585:
+.Laot_string_586:
   .byte 32
   .byte 32
   .byte 99
@@ -12137,7 +12151,7 @@ fw_616f742d7265672d736574:
   .byte 116
   .byte 0
 .section .text
-  leaq .Laot_string_585(%rip), %rdi
+  leaq .Laot_string_586(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -12148,7 +12162,7 @@ fw_616f742d7265672d736574:
   ret
 fw_616f742d656d69742d63656c6c73:
 .section .rodata
-.Laot_string_586:
+.Laot_string_587:
   .byte 46
   .byte 115
   .byte 101
@@ -12164,13 +12178,13 @@ fw_616f742d656d69742d63656c6c73:
   .byte 115
   .byte 0
 .section .text
-  leaq .Laot_string_586(%rip), %rdi
+  leaq .Laot_string_587(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
 .section .rodata
-.Laot_string_587:
+.Laot_string_588:
   .byte 46
   .byte 98
   .byte 97
@@ -12183,7 +12197,7 @@ fw_616f742d656d69742d63656c6c73:
   .byte 54
   .byte 0
 .section .text
-  leaq .Laot_string_587(%rip), %rdi
+  leaq .Laot_string_588(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -12193,7 +12207,7 @@ fw_616f742d656d69742d63656c6c73:
   call fr_push
   leaq reg_fw_6165632d706f73(%rip), %rdi
   call fr_reg_set
-.Lfranc_588:
+.Lfranc_589:
   leaq reg_fw_6165632d706f73(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_616f742d7265672d75736564(%rip), %rdi
@@ -12201,26 +12215,26 @@ fw_616f742d656d69742d63656c6c73:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_589
+  jnz .Lfranc_590
   ret
-.Lfranc_589:
+.Lfranc_590:
   call fr_s2_line_buffer
   leaq reg_fw_6165632d706f73(%rip), %rdi
   call fr_reg_get
   call fr_add
   call fw_616f742d7265672d6c6162656c
 .section .rodata
-.Laot_string_590:
+.Laot_string_591:
   .byte 58
   .byte 0
 .section .text
-  leaq .Laot_string_590(%rip), %rdi
+  leaq .Laot_string_591(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
 .section .rodata
-.Laot_string_591:
+.Laot_string_592:
   .byte 32
   .byte 32
   .byte 46
@@ -12233,7 +12247,7 @@ fw_616f742d656d69742d63656c6c73:
   .byte 54
   .byte 0
 .section .text
-  leaq .Laot_string_591(%rip), %rdi
+  leaq .Laot_string_592(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -12243,7 +12257,7 @@ fw_616f742d656d69742d63656c6c73:
   call fw_616f742d7265672d656e64
   leaq reg_fw_6165632d706f73(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_588
+  jmp .Lfranc_589
   ret
 fw_616f742d7265672d676574:
   leaq reg_fw_6172672d6e616d65(%rip), %rdi
@@ -12253,17 +12267,17 @@ fw_616f742d7265672d676574:
   call fw_616f742d7265672d66696e64
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_592
+  jnz .Lfranc_593
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_592:
+.Lfranc_593:
   leaq reg_fw_6172672d6e616d65(%rip), %rdi
   call fr_reg_get
   call fw_616f742d7265672d61646472
 .section .rodata
-.Laot_string_593:
+.Laot_string_594:
   .byte 32
   .byte 32
   .byte 99
@@ -12283,7 +12297,7 @@ fw_616f742d7265672d676574:
   .byte 116
   .byte 0
 .section .text
-  leaq .Laot_string_593(%rip), %rdi
+  leaq .Laot_string_594(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -12294,7 +12308,7 @@ fw_616f742d7265672d676574:
   ret
 fw_616f742d737472696e672d7265672d64656d6f:
 .section .rodata
-.Laot_string_594:
+.Laot_string_595:
   .byte 100
   .byte 101
   .byte 102
@@ -12350,13 +12364,13 @@ fw_616f742d737472696e672d7265672d64656d6f:
   .byte 59
   .byte 0
 .section .text
-  leaq .Laot_string_594(%rip), %rdi
+  leaq .Laot_string_595(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_616f742d70726f6772616d
   call fr_drop
 .section .rodata
-.Laot_string_595:
+.Laot_string_596:
   .byte 70
   .byte 82
   .byte 65
@@ -12375,14 +12389,14 @@ fw_616f742d737472696e672d7265672d64656d6f:
   .byte 68
   .byte 0
 .section .text
-  leaq .Laot_string_595(%rip), %rdi
+  leaq .Laot_string_596(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
   ret
 fw_616f742d736b69702d636f6d6d656e74:
-.Lfranc_596:
+.Lfranc_597:
   leaq reg_fw_733270(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -12392,9 +12406,9 @@ fw_616f742d736b69702d636f6d6d656e74:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_597
+  jnz .Lfranc_598
   ret
-.Lfranc_597:
+.Lfranc_598:
   leaq reg_fw_733270(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -12411,13 +12425,13 @@ fw_616f742d736b69702d636f6d6d656e74:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_598
+  jnz .Lfranc_599
   ret
-.Lfranc_598:
-  jmp .Lfranc_596
+.Lfranc_599:
+  jmp .Lfranc_597
   ret
 fw_616f742d6e657874:
-.Lfranc_599:
+.Lfranc_600:
   leaq reg_fw_733270(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -12427,12 +12441,12 @@ fw_616f742d6e657874:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_600
+  jnz .Lfranc_601
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_600:
+.Lfranc_601:
   leaq reg_fw_61782d6368(%rip), %rdi
   call fr_reg_get
   movabsq $33, %rdi
@@ -12441,7 +12455,7 @@ fw_616f742d6e657874:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_601
+  jns .Lfranc_602
   leaq reg_fw_733270(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -12450,8 +12464,8 @@ fw_616f742d6e657874:
   call fr_add
   leaq reg_fw_733270(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_602
-.Lfranc_601:
+  jmp .Lfranc_603
+.Lfranc_602:
   leaq reg_fw_61782d6368(%rip), %rdi
   call fr_reg_get
   movabsq $92, %rdi
@@ -12460,10 +12474,10 @@ fw_616f742d6e657874:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_603
+  jnz .Lfranc_604
   call fw_616f742d736b69702d636f6d6d656e74
-  jmp .Lfranc_604
-.Lfranc_603:
+  jmp .Lfranc_605
+.Lfranc_604:
   call fr_s2_token_buffer
   leaq reg_fw_61782d647374(%rip), %rdi
   call fr_reg_set
@@ -12482,7 +12496,7 @@ fw_616f742d6e657874:
   call fr_push
   leaq reg_fw_61782d636f756e74(%rip), %rdi
   call fr_reg_set
-.Lfranc_605:
+.Lfranc_606:
   leaq reg_fw_733270(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -12492,7 +12506,7 @@ fw_616f742d6e657874:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_606
+  jnz .Lfranc_607
   leaq reg_fw_61782d647374(%rip), %rdi
   call fr_reg_get
   movabsq $0, %rdi
@@ -12501,12 +12515,12 @@ fw_616f742d6e657874:
   call fr_bstore
   call fr_s2_token_buffer
   ret
-.Lfranc_606:
+.Lfranc_607:
   leaq reg_fw_61782d71756f7465(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_607
+  jnz .Lfranc_608
   leaq reg_fw_61782d6368(%rip), %rdi
   call fr_reg_get
   movabsq $33, %rdi
@@ -12515,25 +12529,7 @@ fw_616f742d6e657874:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_608
-  leaq reg_fw_61782d647374(%rip), %rdi
-  call fr_reg_get
-  movabsq $0, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  call fr_bstore
-  call fr_s2_token_buffer
-  ret
-.Lfranc_608:
-  leaq reg_fw_61782d6368(%rip), %rdi
-  call fr_reg_get
-  movabsq $92, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  call fr_sub
-  call fr_condition
-  testq %rax, %rax
-  jnz .Lfranc_609
+  jns .Lfranc_609
   leaq reg_fw_61782d647374(%rip), %rdi
   call fr_reg_get
   movabsq $0, %rdi
@@ -12543,7 +12539,25 @@ fw_616f742d6e657874:
   call fr_s2_token_buffer
   ret
 .Lfranc_609:
-.Lfranc_607:
+  leaq reg_fw_61782d6368(%rip), %rdi
+  call fr_reg_get
+  movabsq $92, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  call fr_sub
+  call fr_condition
+  testq %rax, %rax
+  jnz .Lfranc_610
+  leaq reg_fw_61782d647374(%rip), %rdi
+  call fr_reg_get
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  call fr_bstore
+  call fr_s2_token_buffer
+  ret
+.Lfranc_610:
+.Lfranc_608:
   leaq reg_fw_61782d636f756e74(%rip), %rdi
   call fr_reg_get
   movabsq $1000, %rdi
@@ -12552,12 +12566,12 @@ fw_616f742d6e657874:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_610
+  jnz .Lfranc_611
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_610:
+.Lfranc_611:
   leaq reg_fw_61782d647374(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_61782d6368(%rip), %rdi
@@ -12571,32 +12585,32 @@ fw_616f742d6e657874:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_611
+  jnz .Lfranc_612
   leaq reg_fw_61782d657363617065(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_612
+  jnz .Lfranc_613
   leaq reg_fw_61782d71756f7465(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_613
+  jnz .Lfranc_614
   movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
   leaq reg_fw_61782d71756f7465(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_614
-.Lfranc_613:
+  jmp .Lfranc_615
+.Lfranc_614:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   leaq reg_fw_61782d71756f7465(%rip), %rdi
   call fr_reg_set
-.Lfranc_614:
+.Lfranc_615:
+.Lfranc_613:
 .Lfranc_612:
-.Lfranc_611:
   leaq reg_fw_61782d6368(%rip), %rdi
   call fr_reg_get
   movabsq $92, %rdi
@@ -12605,39 +12619,39 @@ fw_616f742d6e657874:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_615
+  jnz .Lfranc_616
   leaq reg_fw_61782d71756f7465(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_616
+  jz .Lfranc_617
   leaq reg_fw_61782d657363617065(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_617
+  jnz .Lfranc_618
   movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
   leaq reg_fw_61782d657363617065(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_618
-.Lfranc_617:
-  movabsq $0, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  leaq reg_fw_61782d657363617065(%rip), %rdi
-  call fr_reg_set
-.Lfranc_618:
-.Lfranc_616:
   jmp .Lfranc_619
-.Lfranc_615:
+.Lfranc_618:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   leaq reg_fw_61782d657363617065(%rip), %rdi
   call fr_reg_set
 .Lfranc_619:
+.Lfranc_617:
+  jmp .Lfranc_620
+.Lfranc_616:
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  leaq reg_fw_61782d657363617065(%rip), %rdi
+  call fr_reg_set
+.Lfranc_620:
   leaq reg_fw_61782d647374(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -12662,10 +12676,10 @@ fw_616f742d6e657874:
   call fr_add
   leaq reg_fw_61782d636f756e74(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_605
-.Lfranc_604:
-.Lfranc_602:
-  jmp .Lfranc_599
+  jmp .Lfranc_606
+.Lfranc_605:
+.Lfranc_603:
+  jmp .Lfranc_600
   ret
 fw_616f742d6b65726e656c2d66726f6d2d736f75726365:
   leaq reg_fw_616b2d736f75726365(%rip), %rdi
@@ -12691,7 +12705,7 @@ fw_616f742d6b65726e656c2d66726f6d2d736f75726365:
 fw_616f742d656d69742d6e616d652d6279746573:
   leaq reg_fw_616e622d6e616d65(%rip), %rdi
   call fr_reg_set
-.Lfranc_620:
+.Lfranc_621:
   leaq reg_fw_616e622d6e616d65(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -12701,13 +12715,13 @@ fw_616f742d656d69742d6e616d652d6279746573:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_621
+  jnz .Lfranc_622
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   call fw_616f742d646174612d62797465
   ret
-.Lfranc_621:
+.Lfranc_622:
   leaq reg_fw_616e622d63686172(%rip), %rdi
   call fr_reg_get
   call fw_616f742d646174612d62797465
@@ -12719,12 +12733,12 @@ fw_616f742d656d69742d6e616d652d6279746573:
   call fr_add
   leaq reg_fw_616e622d6e616d65(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_620
+  jmp .Lfranc_621
   ret
 fw_616f742d656d69742d6669656c642d6279746573:
   leaq reg_fw_6166622d6e616d65(%rip), %rdi
   call fr_reg_set
-.Lfranc_622:
+.Lfranc_623:
   leaq reg_fw_6166622d6e616d65(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -12738,13 +12752,13 @@ fw_616f742d656d69742d6669656c642d6279746573:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_623
+  jnz .Lfranc_624
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   call fw_616f742d646174612d62797465
   ret
-.Lfranc_623:
+.Lfranc_624:
   leaq reg_fw_6166622d63686172(%rip), %rdi
   call fr_reg_get
   call fw_616f742d646174612d62797465
@@ -12756,12 +12770,12 @@ fw_616f742d656d69742d6669656c642d6279746573:
   call fr_add
   leaq reg_fw_6166622d6e616d65(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_622
+  jmp .Lfranc_623
   ret
 fw_616f742d656d69742d6669656c64:
   leaq reg_fw_6165662d70(%rip), %rdi
   call fr_reg_set
-.Lfranc_624:
+.Lfranc_625:
   leaq reg_fw_6165662d70(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
@@ -12775,9 +12789,9 @@ fw_616f742d656d69742d6669656c64:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_625
+  jnz .Lfranc_626
   ret
-.Lfranc_625:
+.Lfranc_626:
   leaq reg_fw_6165662d6368(%rip), %rdi
   call fr_reg_get
   call fr_emit
@@ -12789,11 +12803,11 @@ fw_616f742d656d69742d6669656c64:
   call fr_add
   leaq reg_fw_6165662d70(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_624
+  jmp .Lfranc_625
   ret
 fw_616f742d6d6574612d6e616d652d6c6162656c:
 .section .rodata
-.Laot_string_626:
+.Laot_string_627:
   .byte 46
   .byte 76
   .byte 97
@@ -12812,7 +12826,7 @@ fw_616f742d6d6574612d6e616d652d6c6162656c:
   .byte 95
   .byte 0
 .section .text
-  leaq .Laot_string_626(%rip), %rdi
+  leaq .Laot_string_627(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -12822,7 +12836,7 @@ fw_616f742d6d6574612d6e616d652d6c6162656c:
   ret
 fw_616f742d6d6574612d656e7472792d6c6162656c:
 .section .rodata
-.Laot_string_627:
+.Laot_string_628:
   .byte 46
   .byte 76
   .byte 97
@@ -12842,7 +12856,7 @@ fw_616f742d6d6574612d656e7472792d6c6162656c:
   .byte 95
   .byte 0
 .section .text
-  leaq .Laot_string_627(%rip), %rdi
+  leaq .Laot_string_628(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -12858,7 +12872,7 @@ fw_616f742d6d6574612d726566:
   leaq reg_fw_616d722d6e616d65(%rip), %rdi
   call fr_reg_set
 .section .rodata
-.Laot_string_628:
+.Laot_string_629:
   .byte 46
   .byte 115
   .byte 101
@@ -12877,18 +12891,18 @@ fw_616f742d6d6574612d726566:
   .byte 97
   .byte 0
 .section .text
-  leaq .Laot_string_628(%rip), %rdi
+  leaq .Laot_string_629(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
   call fw_616f742d6d6574612d6e616d652d6c6162656c
 .section .rodata
-.Laot_string_629:
+.Laot_string_630:
   .byte 58
   .byte 0
 .section .text
-  leaq .Laot_string_629(%rip), %rdi
+  leaq .Laot_string_630(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -12901,12 +12915,12 @@ fw_616f742d6d6574612d726566:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_630
+  jnz .Lfranc_631
   movabsq $58, %rdi
   movabsq $1, %rsi
   call fr_push
   call fw_616f742d646174612d62797465
-.Lfranc_630:
+.Lfranc_631:
   leaq reg_fw_616d722d6b696e64(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -12915,18 +12929,18 @@ fw_616f742d6d6574612d726566:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_631
+  jnz .Lfranc_632
   leaq reg_fw_616d722d6e616d65(%rip), %rdi
   call fr_reg_get
   call fw_616f742d656d69742d6669656c642d6279746573
-  jmp .Lfranc_632
-.Lfranc_631:
+  jmp .Lfranc_633
+.Lfranc_632:
   leaq reg_fw_616d722d6e616d65(%rip), %rdi
   call fr_reg_get
   call fw_616f742d656d69742d6e616d652d6279746573
-.Lfranc_632:
+.Lfranc_633:
 .section .rodata
-.Laot_string_633:
+.Laot_string_634:
   .byte 46
   .byte 115
   .byte 101
@@ -12943,24 +12957,24 @@ fw_616f742d6d6574612d726566:
   .byte 97
   .byte 0
 .section .text
-  leaq .Laot_string_633(%rip), %rdi
+  leaq .Laot_string_634(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
   call fw_616f742d6d6574612d656e7472792d6c6162656c
 .section .rodata
-.Laot_string_634:
+.Laot_string_635:
   .byte 58
   .byte 0
 .section .text
-  leaq .Laot_string_634(%rip), %rdi
+  leaq .Laot_string_635(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
 .section .rodata
-.Laot_string_635:
+.Laot_string_636:
   .byte 32
   .byte 32
   .byte 46
@@ -12971,7 +12985,7 @@ fw_616f742d6d6574612d726566:
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_635(%rip), %rdi
+  leaq .Laot_string_636(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -12979,18 +12993,18 @@ fw_616f742d6d6574612d726566:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_636
+  jnz .Lfranc_637
 .section .rodata
-.Laot_string_637:
+.Laot_string_638:
   .byte 48
   .byte 0
 .section .text
-  leaq .Laot_string_637(%rip), %rdi
+  leaq .Laot_string_638(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
-  jmp .Lfranc_638
-.Lfranc_636:
+  jmp .Lfranc_639
+.Lfranc_637:
   leaq reg_fw_616f742d6d6574612d636f756e74(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -13008,25 +13022,7 @@ fw_616f742d6d6574612d726566:
   call fr_add
   leaq reg_fw_616f742d6d6574612d636f756e74(%rip), %rdi
   call fr_reg_set
-.Lfranc_638:
-  call fr_cr
-.section .rodata
-.Laot_string_639:
-  .byte 32
-  .byte 32
-  .byte 46
-  .byte 113
-  .byte 117
-  .byte 97
-  .byte 100
-  .byte 32
-  .byte 0
-.section .text
-  leaq .Laot_string_639(%rip), %rdi
-  movq $1, %rsi
-  call fr_push
-  call fr_type
-  call fw_616f742d6d6574612d6e616d652d6c6162656c
+.Lfranc_639:
   call fr_cr
 .section .rodata
 .Laot_string_640:
@@ -13044,16 +13040,34 @@ fw_616f742d6d6574612d726566:
   movq $1, %rsi
   call fr_push
   call fr_type
+  call fw_616f742d6d6574612d6e616d652d6c6162656c
+  call fr_cr
+.section .rodata
+.Laot_string_641:
+  .byte 32
+  .byte 32
+  .byte 46
+  .byte 113
+  .byte 117
+  .byte 97
+  .byte 100
+  .byte 32
+  .byte 0
+.section .text
+  leaq .Laot_string_641(%rip), %rdi
+  movq $1, %rsi
+  call fr_push
+  call fr_type
   leaq reg_fw_616d722d6b696e64(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_641
+  jnz .Lfranc_642
   leaq reg_fw_616d722d6e616d65(%rip), %rdi
   call fr_reg_get
   call fw_616f742d6e616d65
-  jmp .Lfranc_642
-.Lfranc_641:
+  jmp .Lfranc_643
+.Lfranc_642:
   leaq reg_fw_616d722d6b696e64(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -13062,12 +13076,12 @@ fw_616f742d6d6574612d726566:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_643
+  jnz .Lfranc_644
   leaq reg_fw_616d722d746172676574(%rip), %rdi
   call fr_reg_get
   call fw_616f742d656d69742d6669656c64
-  jmp .Lfranc_644
-.Lfranc_643:
+  jmp .Lfranc_645
+.Lfranc_644:
   leaq reg_fw_616d722d6b696e64(%rip), %rdi
   call fr_reg_get
   movabsq $2, %rdi
@@ -13076,9 +13090,9 @@ fw_616f742d6d6574612d726566:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_645
+  jnz .Lfranc_646
 .section .rodata
-.Laot_string_646:
+.Laot_string_647:
   .byte 97
   .byte 111
   .byte 116
@@ -13089,17 +13103,17 @@ fw_616f742d6d6574612d726566:
   .byte 95
   .byte 0
 .section .text
-  leaq .Laot_string_646(%rip), %rdi
+  leaq .Laot_string_647(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   leaq reg_fw_616d722d6e616d65(%rip), %rdi
   call fr_reg_get
   call fw_616f742d6e616d65
-  jmp .Lfranc_647
-.Lfranc_645:
+  jmp .Lfranc_648
+.Lfranc_646:
 .section .rodata
-.Laot_string_648:
+.Laot_string_649:
   .byte 97
   .byte 111
   .byte 116
@@ -13110,16 +13124,16 @@ fw_616f742d6d6574612d726566:
   .byte 95
   .byte 0
 .section .text
-  leaq .Laot_string_648(%rip), %rdi
+  leaq .Laot_string_649(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   leaq reg_fw_616d722d6e616d65(%rip), %rdi
   call fr_reg_get
   call fw_616f742d6e616d65
-.Lfranc_647:
-.Lfranc_644:
-.Lfranc_642:
+.Lfranc_648:
+.Lfranc_645:
+.Lfranc_643:
   call fr_cr
   leaq reg_fw_616f742d6d6574612d636f756e74(%rip), %rdi
   call fr_reg_get
@@ -13133,15 +13147,15 @@ fw_616f742d6d6574612d726566:
 fw_616f742d6d6574612d7461626c65:
   leaq reg_fw_616d742d70(%rip), %rdi
   call fr_reg_set
-.Lfranc_649:
+.Lfranc_650:
   leaq reg_fw_616d742d70(%rip), %rdi
   call fr_reg_get
   call fr_bfetch
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_650
+  jnz .Lfranc_651
   ret
-.Lfranc_650:
+.Lfranc_651:
   leaq reg_fw_616d742d70(%rip), %rdi
   call fr_reg_get
   call fw_616f742d6669656c642d656e64
@@ -13160,7 +13174,7 @@ fw_616f742d6d6574612d7461626c65:
   call fw_616f742d6669656c642d656e64
   leaq reg_fw_616d742d70(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_649
+  jmp .Lfranc_650
   ret
 fw_616f742d6d6574612d646566696e6974696f6e73:
   leaq reg_fw_616d642d736f75726365(%rip), %rdi
@@ -13169,7 +13183,7 @@ fw_616f742d6d6574612d646566696e6974696f6e73:
   call fr_reg_get
   leaq reg_fw_733270(%rip), %rdi
   call fr_reg_set
-.Lfranc_651:
+.Lfranc_652:
   call fw_616f742d6e657874
   leaq reg_fw_616d642d746f6b656e(%rip), %rdi
   call fr_reg_set
@@ -13177,25 +13191,25 @@ fw_616f742d6d6574612d646566696e6974696f6e73:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_652
+  jnz .Lfranc_653
   ret
-.Lfranc_652:
+.Lfranc_653:
   leaq reg_fw_616d642d746f6b656e(%rip), %rdi
   call fr_reg_get
 .section .rodata
-.Laot_string_653:
+.Laot_string_654:
   .byte 100
   .byte 101
   .byte 102
   .byte 0
 .section .text
-  leaq .Laot_string_653(%rip), %rdi
+  leaq .Laot_string_654(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d6571
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_654
+  jz .Lfranc_655
   call fw_616f742d6e657874
   leaq reg_fw_616d642d646566(%rip), %rdi
   call fr_reg_set
@@ -13203,9 +13217,9 @@ fw_616f742d6d6574612d646566696e6974696f6e73:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_655
+  jnz .Lfranc_656
   ret
-.Lfranc_655:
+.Lfranc_656:
   leaq reg_fw_616d642d646566(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_616d642d646566(%rip), %rdi
@@ -13214,14 +13228,14 @@ fw_616f742d6d6574612d646566696e6974696f6e73:
   movabsq $1, %rsi
   call fr_push
   call fw_616f742d6d6574612d726566
-.Lfranc_654:
-  jmp .Lfranc_651
+.Lfranc_655:
+  jmp .Lfranc_652
   ret
 fw_616f742d6d6574612d7265672d7374756273:
   leaq reg_fw_616d732d726567(%rip), %rdi
   call fr_reg_set
 .section .rodata
-.Laot_string_656:
+.Laot_string_657:
   .byte 46
   .byte 115
   .byte 101
@@ -13238,13 +13252,13 @@ fw_616f742d6d6574612d7265672d7374756273:
   .byte 116
   .byte 0
 .section .text
-  leaq .Laot_string_656(%rip), %rdi
+  leaq .Laot_string_657(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
 .section .rodata
-.Laot_string_657:
+.Laot_string_658:
   .byte 97
   .byte 111
   .byte 116
@@ -13255,7 +13269,7 @@ fw_616f742d6d6574612d7265672d7374756273:
   .byte 95
   .byte 0
 .section .text
-  leaq .Laot_string_657(%rip), %rdi
+  leaq .Laot_string_658(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -13263,36 +13277,8 @@ fw_616f742d6d6574612d7265672d7374756273:
   call fr_reg_get
   call fw_616f742d6e616d65
 .section .rodata
-.Laot_string_658:
-  .byte 58
-  .byte 0
-.section .text
-  leaq .Laot_string_658(%rip), %rdi
-  movq $1, %rsi
-  call fr_push
-  call fr_type
-  call fr_cr
-  leaq reg_fw_616d732d726567(%rip), %rdi
-  call fr_reg_get
-  call fw_616f742d7265672d61646472
-.section .rodata
 .Laot_string_659:
-  .byte 32
-  .byte 32
-  .byte 106
-  .byte 109
-  .byte 112
-  .byte 32
-  .byte 102
-  .byte 114
-  .byte 95
-  .byte 114
-  .byte 101
-  .byte 103
-  .byte 95
-  .byte 103
-  .byte 101
-  .byte 116
+  .byte 58
   .byte 0
 .section .text
   leaq .Laot_string_659(%rip), %rdi
@@ -13300,8 +13286,36 @@ fw_616f742d6d6574612d7265672d7374756273:
   call fr_push
   call fr_type
   call fr_cr
+  leaq reg_fw_616d732d726567(%rip), %rdi
+  call fr_reg_get
+  call fw_616f742d7265672d61646472
 .section .rodata
 .Laot_string_660:
+  .byte 32
+  .byte 32
+  .byte 106
+  .byte 109
+  .byte 112
+  .byte 32
+  .byte 102
+  .byte 114
+  .byte 95
+  .byte 114
+  .byte 101
+  .byte 103
+  .byte 95
+  .byte 103
+  .byte 101
+  .byte 116
+  .byte 0
+.section .text
+  leaq .Laot_string_660(%rip), %rdi
+  movq $1, %rsi
+  call fr_push
+  call fr_type
+  call fr_cr
+.section .rodata
+.Laot_string_661:
   .byte 97
   .byte 111
   .byte 116
@@ -13312,7 +13326,7 @@ fw_616f742d6d6574612d7265672d7374756273:
   .byte 95
   .byte 0
 .section .text
-  leaq .Laot_string_660(%rip), %rdi
+  leaq .Laot_string_661(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -13320,11 +13334,11 @@ fw_616f742d6d6574612d7265672d7374756273:
   call fr_reg_get
   call fw_616f742d6e616d65
 .section .rodata
-.Laot_string_661:
+.Laot_string_662:
   .byte 58
   .byte 0
 .section .text
-  leaq .Laot_string_661(%rip), %rdi
+  leaq .Laot_string_662(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -13333,7 +13347,7 @@ fw_616f742d6d6574612d7265672d7374756273:
   call fr_reg_get
   call fw_616f742d7265672d61646472
 .section .rodata
-.Laot_string_662:
+.Laot_string_663:
   .byte 32
   .byte 32
   .byte 106
@@ -13352,7 +13366,7 @@ fw_616f742d6d6574612d7265672d7374756273:
   .byte 116
   .byte 0
 .section .text
-  leaq .Laot_string_662(%rip), %rdi
+  leaq .Laot_string_663(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -13364,7 +13378,7 @@ fw_616f742d6d6574612d726567697374657273:
   call fr_push
   leaq reg_fw_616d672d706f73(%rip), %rdi
   call fr_reg_set
-.Lfranc_663:
+.Lfranc_664:
   leaq reg_fw_616d672d706f73(%rip), %rdi
   call fr_reg_get
   leaq reg_fw_616f742d7265672d75736564(%rip), %rdi
@@ -13372,9 +13386,9 @@ fw_616f742d6d6574612d726567697374657273:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_664
+  jnz .Lfranc_665
   ret
-.Lfranc_664:
+.Lfranc_665:
   call fr_s2_line_buffer
   leaq reg_fw_616d672d706f73(%rip), %rdi
   call fr_reg_get
@@ -13405,7 +13419,7 @@ fw_616f742d6d6574612d726567697374657273:
   call fw_616f742d7265672d656e64
   leaq reg_fw_616d672d706f73(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_663
+  jmp .Lfranc_664
   ret
 fw_616f742d656d69742d6b65726e656c2d6d65746164617461:
   leaq reg_fw_616b6d2d736f75726365(%rip), %rdi
@@ -13426,7 +13440,7 @@ fw_616f742d656d69742d6b65726e656c2d6d65746164617461:
   call fw_616f742d6d6574612d646566696e6974696f6e73
   call fw_616f742d6d6574612d726567697374657273
 .section .rodata
-.Laot_string_665:
+.Laot_string_666:
   .byte 46
   .byte 115
   .byte 101
@@ -13443,13 +13457,13 @@ fw_616f742d656d69742d6b65726e656c2d6d65746164617461:
   .byte 97
   .byte 0
 .section .text
-  leaq .Laot_string_665(%rip), %rdi
+  leaq .Laot_string_666(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
 .section .rodata
-.Laot_string_666:
+.Laot_string_667:
   .byte 46
   .byte 103
   .byte 108
@@ -13478,13 +13492,13 @@ fw_616f742d656d69742d6b65726e656c2d6d65746164617461:
   .byte 108
   .byte 0
 .section .text
-  leaq .Laot_string_666(%rip), %rdi
+  leaq .Laot_string_667(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
 .section .rodata
-.Laot_string_667:
+.Laot_string_668:
   .byte 102
   .byte 114
   .byte 97
@@ -13506,13 +13520,13 @@ fw_616f742d656d69742d6b65726e656c2d6d65746164617461:
   .byte 58
   .byte 0
 .section .text
-  leaq .Laot_string_667(%rip), %rdi
+  leaq .Laot_string_668(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
 .section .rodata
-.Laot_string_668:
+.Laot_string_669:
   .byte 32
   .byte 32
   .byte 46
@@ -13523,7 +13537,7 @@ fw_616f742d656d69742d6b65726e656c2d6d65746164617461:
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_668(%rip), %rdi
+  leaq .Laot_string_669(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -13531,18 +13545,18 @@ fw_616f742d656d69742d6b65726e656c2d6d65746164617461:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_669
+  jnz .Lfranc_670
 .section .rodata
-.Laot_string_670:
+.Laot_string_671:
   .byte 48
   .byte 0
 .section .text
-  leaq .Laot_string_670(%rip), %rdi
+  leaq .Laot_string_671(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
-  jmp .Lfranc_671
-.Lfranc_669:
+  jmp .Lfranc_672
+.Lfranc_670:
   leaq reg_fw_616f742d6d6574612d636f756e74(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -13560,10 +13574,10 @@ fw_616f742d656d69742d6b65726e656c2d6d65746164617461:
   call fr_add
   leaq reg_fw_616f742d6d6574612d636f756e74(%rip), %rdi
   call fr_reg_set
-.Lfranc_671:
+.Lfranc_672:
   call fr_cr
 .section .rodata
-.Laot_string_672:
+.Laot_string_673:
   .byte 46
   .byte 115
   .byte 101
@@ -13582,13 +13596,13 @@ fw_616f742d656d69742d6b65726e656c2d6d65746164617461:
   .byte 97
   .byte 0
 .section .text
-  leaq .Laot_string_672(%rip), %rdi
+  leaq .Laot_string_673(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
 .section .rodata
-.Laot_string_673:
+.Laot_string_674:
   .byte 46
   .byte 103
   .byte 108
@@ -13618,13 +13632,13 @@ fw_616f742d656d69742d6b65726e656c2d6d65746164617461:
   .byte 101
   .byte 0
 .section .text
-  leaq .Laot_string_673(%rip), %rdi
+  leaq .Laot_string_674(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
 .section .rodata
-.Laot_string_674:
+.Laot_string_675:
   .byte 102
   .byte 114
   .byte 97
@@ -13647,13 +13661,13 @@ fw_616f742d656d69742d6b65726e656c2d6d65746164617461:
   .byte 58
   .byte 0
 .section .text
-  leaq .Laot_string_674(%rip), %rdi
+  leaq .Laot_string_675(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
 .section .rodata
-.Laot_string_675:
+.Laot_string_676:
   .byte 32
   .byte 32
   .byte 46
@@ -13688,13 +13702,13 @@ fw_616f742d656d69742d6b65726e656c2d6d65746164617461:
   .byte 34
   .byte 0
 .section .text
-  leaq .Laot_string_675(%rip), %rdi
+  leaq .Laot_string_676(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
 .section .rodata
-.Laot_string_676:
+.Laot_string_677:
   .byte 32
   .byte 32
   .byte 46
@@ -13706,7 +13720,7 @@ fw_616f742d656d69742d6b65726e656c2d6d65746164617461:
   .byte 48
   .byte 0
 .section .text
-  leaq .Laot_string_676(%rip), %rdi
+  leaq .Laot_string_677(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -13719,33 +13733,17 @@ fw_62756e646c652d736f75726365:
   call fw_6174612d726561642d736563746f72
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_677
-  movabsq $0, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  ret
-.Lfranc_677:
-  movabsq $0, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  call fr_sector_bfetch
-  movabsq $70, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  call fr_sub
-  call fr_condition
-  testq %rax, %rax
-  jz .Lfranc_678
+  jnz .Lfranc_678
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
 .Lfranc_678:
-  movabsq $1, %rdi
+  movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sector_bfetch
-  movabsq $82, %rdi
+  movabsq $70, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
@@ -13757,11 +13755,11 @@ fw_62756e646c652d736f75726365:
   call fr_push
   ret
 .Lfranc_679:
-  movabsq $2, %rdi
+  movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sector_bfetch
-  movabsq $65, %rdi
+  movabsq $82, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
@@ -13773,11 +13771,11 @@ fw_62756e646c652d736f75726365:
   call fr_push
   ret
 .Lfranc_680:
-  movabsq $3, %rdi
+  movabsq $2, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sector_bfetch
-  movabsq $78, %rdi
+  movabsq $65, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
@@ -13789,11 +13787,11 @@ fw_62756e646c652d736f75726365:
   call fr_push
   ret
 .Lfranc_681:
-  movabsq $4, %rdi
+  movabsq $3, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sector_bfetch
-  movabsq $67, %rdi
+  movabsq $78, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
@@ -13805,11 +13803,11 @@ fw_62756e646c652d736f75726365:
   call fr_push
   ret
 .Lfranc_682:
-  movabsq $5, %rdi
+  movabsq $4, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sector_bfetch
-  movabsq $83, %rdi
+  movabsq $67, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
@@ -13821,11 +13819,11 @@ fw_62756e646c652d736f75726365:
   call fr_push
   ret
 .Lfranc_683:
-  movabsq $6, %rdi
+  movabsq $5, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sector_bfetch
-  movabsq $82, %rdi
+  movabsq $83, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
@@ -13837,11 +13835,11 @@ fw_62756e646c652d736f75726365:
   call fr_push
   ret
 .Lfranc_684:
-  movabsq $7, %rdi
+  movabsq $6, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sector_bfetch
-  movabsq $67, %rdi
+  movabsq $82, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
@@ -13853,6 +13851,22 @@ fw_62756e646c652d736f75726365:
   call fr_push
   ret
 .Lfranc_685:
+  movabsq $7, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  call fr_sector_bfetch
+  movabsq $67, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  call fr_sub
+  call fr_condition
+  testq %rax, %rax
+  jz .Lfranc_686
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  ret
+.Lfranc_686:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -13863,7 +13877,7 @@ fw_62756e646c652d736f75726365:
   call fr_push
   leaq reg_fw_62732d6c6261(%rip), %rdi
   call fr_reg_set
-.Lfranc_686:
+.Lfranc_687:
   leaq reg_fw_62732d6c6261(%rip), %rdi
   call fr_reg_get
   movabsq $769, %rdi
@@ -13872,24 +13886,24 @@ fw_62756e646c652d736f75726365:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_687
+  jns .Lfranc_688
   leaq reg_fw_62732d6c6261(%rip), %rdi
   call fr_reg_get
   call fw_6174612d726561642d736563746f72
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_688
+  jnz .Lfranc_689
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_688:
+.Lfranc_689:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   leaq reg_fw_62732d696e646578(%rip), %rdi
   call fr_reg_set
-.Lfranc_689:
+.Lfranc_690:
   leaq reg_fw_62732d696e646578(%rip), %rdi
   call fr_reg_get
   movabsq $512, %rdi
@@ -13898,7 +13912,7 @@ fw_62756e646c652d736f75726365:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_690
+  jns .Lfranc_691
   leaq reg_fw_62732d636f756e74(%rip), %rdi
   call fr_reg_get
   movabsq $131071, %rdi
@@ -13907,12 +13921,12 @@ fw_62756e646c652d736f75726365:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_691
+  jnz .Lfranc_692
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_691:
+.Lfranc_692:
   leaq reg_fw_62732d696e646578(%rip), %rdi
   call fr_reg_get
   call fr_sector_bfetch
@@ -13929,10 +13943,10 @@ fw_62756e646c652d736f75726365:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_692
+  jnz .Lfranc_693
   call fr_aot_bundle_area
   ret
-.Lfranc_692:
+.Lfranc_693:
   leaq reg_fw_62732d636f756e74(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -13949,8 +13963,8 @@ fw_62756e646c652d736f75726365:
   call fr_add
   leaq reg_fw_62732d696e646578(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_689
-.Lfranc_690:
+  jmp .Lfranc_690
+.Lfranc_691:
   leaq reg_fw_62732d6c6261(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -13959,8 +13973,8 @@ fw_62756e646c652d736f75726365:
   call fr_add
   leaq reg_fw_62732d6c6261(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_686
-.Lfranc_687:
+  jmp .Lfranc_687
+.Lfranc_688:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -13973,40 +13987,7 @@ fw_62756e646c652d64656d6f:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_693
-.section .rodata
-.Laot_string_694:
-  .byte 70
-  .byte 82
-  .byte 65
-  .byte 78
-  .byte 67
-  .byte 45
-  .byte 83
-  .byte 79
-  .byte 85
-  .byte 82
-  .byte 67
-  .byte 69
-  .byte 45
-  .byte 69
-  .byte 82
-  .byte 82
-  .byte 79
-  .byte 82
-  .byte 0
-.section .text
-  leaq .Laot_string_694(%rip), %rdi
-  movq $1, %rsi
-  call fr_push
-  call fr_type
-  call fr_cr
-  ret
-.Lfranc_693:
-  leaq reg_fw_62642d736f75726365(%rip), %rdi
-  call fr_reg_get
-  call fw_616f742d70726f6772616d
-  call fr_drop
+  jnz .Lfranc_694
 .section .rodata
 .Laot_string_695:
   .byte 70
@@ -14023,11 +14004,44 @@ fw_62756e646c652d64656d6f:
   .byte 69
   .byte 45
   .byte 69
+  .byte 82
+  .byte 82
+  .byte 79
+  .byte 82
+  .byte 0
+.section .text
+  leaq .Laot_string_695(%rip), %rdi
+  movq $1, %rsi
+  call fr_push
+  call fr_type
+  call fr_cr
+  ret
+.Lfranc_694:
+  leaq reg_fw_62642d736f75726365(%rip), %rdi
+  call fr_reg_get
+  call fw_616f742d70726f6772616d
+  call fr_drop
+.section .rodata
+.Laot_string_696:
+  .byte 70
+  .byte 82
+  .byte 65
+  .byte 78
+  .byte 67
+  .byte 45
+  .byte 83
+  .byte 79
+  .byte 85
+  .byte 82
+  .byte 67
+  .byte 69
+  .byte 45
+  .byte 69
   .byte 78
   .byte 68
   .byte 0
 .section .text
-  leaq .Laot_string_695(%rip), %rdi
+  leaq .Laot_string_696(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -14041,9 +14055,9 @@ fw_62756e646c652d6b65726e656c:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_696
+  jnz .Lfranc_697
 .section .rodata
-.Laot_string_697:
+.Laot_string_698:
   .byte 70
   .byte 82
   .byte 65
@@ -14071,19 +14085,19 @@ fw_62756e646c652d6b65726e656c:
   .byte 82
   .byte 0
 .section .text
-  leaq .Laot_string_697(%rip), %rdi
+  leaq .Laot_string_698(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
   ret
-.Lfranc_696:
+.Lfranc_697:
   leaq reg_fw_626b2d736f75726365(%rip), %rdi
   call fr_reg_get
   call fw_616f742d6b65726e656c2d66726f6d2d736f75726365
   call fr_drop
 .section .rodata
-.Laot_string_698:
+.Laot_string_699:
   .byte 70
   .byte 82
   .byte 65
@@ -14102,7 +14116,7 @@ fw_62756e646c652d6b65726e656c:
   .byte 68
   .byte 0
 .section .text
-  leaq .Laot_string_698(%rip), %rdi
+  leaq .Laot_string_699(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -14115,33 +14129,17 @@ fw_62756e646c652d6170702d736f75726365:
   call fw_6174612d726561642d736563746f72
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_699
-  movabsq $0, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  ret
-.Lfranc_699:
-  movabsq $0, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  call fr_sector_bfetch
-  movabsq $70, %rdi
-  movabsq $1, %rsi
-  call fr_push
-  call fr_sub
-  call fr_condition
-  testq %rax, %rax
-  jz .Lfranc_700
+  jnz .Lfranc_700
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
 .Lfranc_700:
-  movabsq $1, %rdi
+  movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sector_bfetch
-  movabsq $82, %rdi
+  movabsq $70, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
@@ -14153,11 +14151,11 @@ fw_62756e646c652d6170702d736f75726365:
   call fr_push
   ret
 .Lfranc_701:
-  movabsq $2, %rdi
+  movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sector_bfetch
-  movabsq $65, %rdi
+  movabsq $82, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
@@ -14169,11 +14167,11 @@ fw_62756e646c652d6170702d736f75726365:
   call fr_push
   ret
 .Lfranc_702:
-  movabsq $3, %rdi
+  movabsq $2, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sector_bfetch
-  movabsq $78, %rdi
+  movabsq $65, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
@@ -14185,11 +14183,11 @@ fw_62756e646c652d6170702d736f75726365:
   call fr_push
   ret
 .Lfranc_703:
-  movabsq $4, %rdi
+  movabsq $3, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sector_bfetch
-  movabsq $67, %rdi
+  movabsq $78, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
@@ -14201,11 +14199,11 @@ fw_62756e646c652d6170702d736f75726365:
   call fr_push
   ret
 .Lfranc_704:
-  movabsq $5, %rdi
+  movabsq $4, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sector_bfetch
-  movabsq $83, %rdi
+  movabsq $67, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
@@ -14217,11 +14215,11 @@ fw_62756e646c652d6170702d736f75726365:
   call fr_push
   ret
 .Lfranc_705:
-  movabsq $6, %rdi
+  movabsq $5, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sector_bfetch
-  movabsq $82, %rdi
+  movabsq $83, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
@@ -14233,11 +14231,11 @@ fw_62756e646c652d6170702d736f75726365:
   call fr_push
   ret
 .Lfranc_706:
-  movabsq $7, %rdi
+  movabsq $6, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sector_bfetch
-  movabsq $67, %rdi
+  movabsq $82, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sub
@@ -14249,6 +14247,22 @@ fw_62756e646c652d6170702d736f75726365:
   call fr_push
   ret
 .Lfranc_707:
+  movabsq $7, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  call fr_sector_bfetch
+  movabsq $67, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  call fr_sub
+  call fr_condition
+  testq %rax, %rax
+  jz .Lfranc_708
+  movabsq $0, %rdi
+  movabsq $1, %rsi
+  call fr_push
+  ret
+.Lfranc_708:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -14259,7 +14273,7 @@ fw_62756e646c652d6170702d736f75726365:
   call fr_push
   leaq reg_fw_62732d6c6261(%rip), %rdi
   call fr_reg_set
-.Lfranc_708:
+.Lfranc_709:
   leaq reg_fw_62732d6c6261(%rip), %rdi
   call fr_reg_get
   movabsq $1281, %rdi
@@ -14268,24 +14282,24 @@ fw_62756e646c652d6170702d736f75726365:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_709
+  jns .Lfranc_710
   leaq reg_fw_62732d6c6261(%rip), %rdi
   call fr_reg_get
   call fw_6174612d726561642d736563746f72
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_710
+  jnz .Lfranc_711
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_710:
+.Lfranc_711:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   leaq reg_fw_62732d696e646578(%rip), %rdi
   call fr_reg_set
-.Lfranc_711:
+.Lfranc_712:
   leaq reg_fw_62732d696e646578(%rip), %rdi
   call fr_reg_get
   movabsq $512, %rdi
@@ -14294,7 +14308,7 @@ fw_62756e646c652d6170702d736f75726365:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_712
+  jns .Lfranc_713
   leaq reg_fw_62732d636f756e74(%rip), %rdi
   call fr_reg_get
   movabsq $131071, %rdi
@@ -14303,12 +14317,12 @@ fw_62756e646c652d6170702d736f75726365:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_713
+  jnz .Lfranc_714
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   ret
-.Lfranc_713:
+.Lfranc_714:
   leaq reg_fw_62732d696e646578(%rip), %rdi
   call fr_reg_get
   call fr_sector_bfetch
@@ -14325,10 +14339,10 @@ fw_62756e646c652d6170702d736f75726365:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_714
+  jnz .Lfranc_715
   call fr_aot_bundle_area
   ret
-.Lfranc_714:
+.Lfranc_715:
   leaq reg_fw_62732d636f756e74(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -14345,8 +14359,8 @@ fw_62756e646c652d6170702d736f75726365:
   call fr_add
   leaq reg_fw_62732d696e646578(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_711
-.Lfranc_712:
+  jmp .Lfranc_712
+.Lfranc_713:
   leaq reg_fw_62732d6c6261(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -14355,8 +14369,8 @@ fw_62756e646c652d6170702d736f75726365:
   call fr_add
   leaq reg_fw_62732d6c6261(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_708
-.Lfranc_709:
+  jmp .Lfranc_709
+.Lfranc_710:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -14373,9 +14387,9 @@ fw_617070732d72756e:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_715
+  jnz .Lfranc_716
 .section .rodata
-.Laot_string_716:
+.Laot_string_717:
   .byte 65
   .byte 80
   .byte 80
@@ -14392,13 +14406,13 @@ fw_617070732d72756e:
   .byte 68
   .byte 0
 .section .text
-  leaq .Laot_string_716(%rip), %rdi
+  leaq .Laot_string_717(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
   ret
-.Lfranc_715:
+.Lfranc_716:
   leaq reg_fw_61722d636f6465(%rip), %rdi
   call fr_reg_get
   call fr_s2_run
@@ -14408,9 +14422,9 @@ fw_617070732d6c6f6164:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_717
+  jz .Lfranc_718
 .section .rodata
-.Laot_string_718:
+.Laot_string_719:
   .byte 65
   .byte 80
   .byte 80
@@ -14425,7 +14439,7 @@ fw_617070732d6c6f6164:
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_718(%rip), %rdi
+  leaq .Laot_string_719(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -14433,7 +14447,7 @@ fw_617070732d6c6f6164:
   call fr_reg_get
   call fr_dot
 .section .rodata
-.Laot_string_719:
+.Laot_string_720:
   .byte 65
   .byte 80
   .byte 80
@@ -14446,13 +14460,13 @@ fw_617070732d6c6f6164:
   .byte 89
   .byte 0
 .section .text
-  leaq .Laot_string_719(%rip), %rdi
+  leaq .Laot_string_720(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
   ret
-.Lfranc_717:
+.Lfranc_718:
   call fw_62756e646c652d6170702d736f75726365
   leaq reg_fw_616c2d736f75726365(%rip), %rdi
   call fr_reg_set
@@ -14460,9 +14474,9 @@ fw_617070732d6c6f6164:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_720
+  jnz .Lfranc_721
 .section .rodata
-.Laot_string_721:
+.Laot_string_722:
   .byte 65
   .byte 80
   .byte 80
@@ -14484,20 +14498,20 @@ fw_617070732d6c6f6164:
   .byte 71
   .byte 0
 .section .text
-  leaq .Laot_string_721(%rip), %rdi
+  leaq .Laot_string_722(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
   ret
-.Lfranc_720:
+.Lfranc_721:
   leaq reg_fw_616c2d736f75726365(%rip), %rdi
   call fr_reg_get
   call fw_73322d736f75726365
   leaq reg_fw_616c2d636f756e74(%rip), %rdi
   call fr_reg_set
 .section .rodata
-.Laot_string_722:
+.Laot_string_723:
   .byte 65
   .byte 80
   .byte 80
@@ -14512,7 +14526,7 @@ fw_617070732d6c6f6164:
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_722(%rip), %rdi
+  leaq .Laot_string_723(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -14520,7 +14534,7 @@ fw_617070732d6c6f6164:
   call fr_reg_get
   call fr_dot
 .section .rodata
-.Laot_string_723:
+.Laot_string_724:
   .byte 97
   .byte 112
   .byte 112
@@ -14532,7 +14546,7 @@ fw_617070732d6c6f6164:
   .byte 116
   .byte 0
 .section .text
-  leaq .Laot_string_723(%rip), %rdi
+  leaq .Laot_string_724(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d66696e64
@@ -14542,9 +14556,9 @@ fw_617070732d6c6f6164:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_724
+  jnz .Lfranc_725
 .section .rodata
-.Laot_string_725:
+.Laot_string_726:
   .byte 65
   .byte 80
   .byte 80
@@ -14564,13 +14578,13 @@ fw_617070732d6c6f6164:
   .byte 71
   .byte 0
 .section .text
-  leaq .Laot_string_725(%rip), %rdi
+  leaq .Laot_string_726(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
   ret
-.Lfranc_724:
+.Lfranc_725:
   leaq reg_fw_616c2d696e6974(%rip), %rdi
   call fr_reg_get
   call fr_s2_run
@@ -14579,7 +14593,7 @@ fw_617070732d6c6f6164:
   leaq reg_fw_617070732d6c6f61646564(%rip), %rdi
   call fr_reg_set
 .section .rodata
-.Laot_string_726:
+.Laot_string_727:
   .byte 65
   .byte 80
   .byte 80
@@ -14592,7 +14606,7 @@ fw_617070732d6c6f6164:
   .byte 89
   .byte 0
 .section .text
-  leaq .Laot_string_726(%rip), %rdi
+  leaq .Laot_string_727(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -14609,9 +14623,9 @@ fw_617070732d6d656e75:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_727
+  jnz .Lfranc_728
 .section .rodata
-.Laot_string_728:
+.Laot_string_729:
   .byte 99
   .byte 97
   .byte 108
@@ -14623,12 +14637,12 @@ fw_617070732d6d656e75:
   .byte 110
   .byte 0
 .section .text
-  leaq .Laot_string_728(%rip), %rdi
+  leaq .Laot_string_729(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_617070732d72756e
   ret
-.Lfranc_727:
+.Lfranc_728:
   leaq reg_fw_616d2d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $50, %rdi
@@ -14637,9 +14651,9 @@ fw_617070732d6d656e75:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_729
+  jnz .Lfranc_730
 .section .rodata
-.Laot_string_730:
+.Laot_string_731:
   .byte 97
   .byte 112
   .byte 112
@@ -14650,12 +14664,12 @@ fw_617070732d6d656e75:
   .byte 116
   .byte 0
 .section .text
-  leaq .Laot_string_730(%rip), %rdi
+  leaq .Laot_string_731(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_617070732d72756e
   ret
-.Lfranc_729:
+.Lfranc_730:
   leaq reg_fw_616d2d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $51, %rdi
@@ -14664,9 +14678,9 @@ fw_617070732d6d656e75:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_731
+  jnz .Lfranc_732
 .section .rodata
-.Laot_string_732:
+.Laot_string_733:
   .byte 119
   .byte 97
   .byte 108
@@ -14678,12 +14692,12 @@ fw_617070732d6d656e75:
   .byte 110
   .byte 0
 .section .text
-  leaq .Laot_string_732(%rip), %rdi
+  leaq .Laot_string_733(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_617070732d72756e
   ret
-.Lfranc_731:
+.Lfranc_732:
   leaq reg_fw_616d2d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $52, %rdi
@@ -14692,9 +14706,9 @@ fw_617070732d6d656e75:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_733
+  jnz .Lfranc_734
 .section .rodata
-.Laot_string_734:
+.Laot_string_735:
   .byte 97
   .byte 112
   .byte 112
@@ -14710,12 +14724,12 @@ fw_617070732d6d656e75:
   .byte 111
   .byte 0
 .section .text
-  leaq .Laot_string_734(%rip), %rdi
+  leaq .Laot_string_735(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_617070732d72756e
   ret
-.Lfranc_733:
+.Lfranc_734:
   leaq reg_fw_616d2d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $53, %rdi
@@ -14724,9 +14738,9 @@ fw_617070732d6d656e75:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_735
+  jnz .Lfranc_736
 .section .rodata
-.Laot_string_736:
+.Laot_string_737:
   .byte 97
   .byte 112
   .byte 112
@@ -14742,12 +14756,12 @@ fw_617070732d6d656e75:
   .byte 111
   .byte 0
 .section .text
-  leaq .Laot_string_736(%rip), %rdi
+  leaq .Laot_string_737(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_617070732d72756e
   ret
-.Lfranc_735:
+.Lfranc_736:
   leaq reg_fw_616d2d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $54, %rdi
@@ -14756,9 +14770,9 @@ fw_617070732d6d656e75:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_737
+  jnz .Lfranc_738
 .section .rodata
-.Laot_string_738:
+.Laot_string_739:
   .byte 97
   .byte 112
   .byte 112
@@ -14775,12 +14789,12 @@ fw_617070732d6d656e75:
   .byte 111
   .byte 0
 .section .text
-  leaq .Laot_string_738(%rip), %rdi
+  leaq .Laot_string_739(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_617070732d72756e
   ret
-.Lfranc_737:
+.Lfranc_738:
   leaq reg_fw_616d2d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $55, %rdi
@@ -14789,9 +14803,9 @@ fw_617070732d6d656e75:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_739
+  jnz .Lfranc_740
 .section .rodata
-.Laot_string_740:
+.Laot_string_741:
   .byte 109
   .byte 97
   .byte 116
@@ -14803,12 +14817,12 @@ fw_617070732d6d656e75:
   .byte 111
   .byte 0
 .section .text
-  leaq .Laot_string_740(%rip), %rdi
+  leaq .Laot_string_741(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_617070732d72756e
   ret
-.Lfranc_739:
+.Lfranc_740:
   leaq reg_fw_616d2d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $56, %rdi
@@ -14817,9 +14831,9 @@ fw_617070732d6d656e75:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_741
+  jnz .Lfranc_742
 .section .rodata
-.Laot_string_742:
+.Laot_string_743:
   .byte 97
   .byte 112
   .byte 112
@@ -14830,12 +14844,12 @@ fw_617070732d6d656e75:
   .byte 111
   .byte 0
 .section .text
-  leaq .Laot_string_742(%rip), %rdi
+  leaq .Laot_string_743(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_617070732d72756e
   ret
-.Lfranc_741:
+.Lfranc_742:
   leaq reg_fw_616d2d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $57, %rdi
@@ -14844,9 +14858,9 @@ fw_617070732d6d656e75:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_743
+  jnz .Lfranc_744
 .section .rodata
-.Laot_string_744:
+.Laot_string_745:
   .byte 105
   .byte 100
   .byte 101
@@ -14857,18 +14871,18 @@ fw_617070732d6d656e75:
   .byte 110
   .byte 0
 .section .text
-  leaq .Laot_string_744(%rip), %rdi
+  leaq .Laot_string_745(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_617070732d72756e
   ret
-.Lfranc_743:
+.Lfranc_744:
 .section .rodata
-.Laot_string_745:
+.Laot_string_746:
   .byte 63
   .byte 0
 .section .text
-  leaq .Laot_string_745(%rip), %rdi
+  leaq .Laot_string_746(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -16653,7 +16667,7 @@ fw_6170702d72656769737465722d73656564:
   ret
 fw_62616e6e6572:
 .section .rodata
-.Laot_string_746:
+.Laot_string_747:
   .byte 70
   .byte 114
   .byte 97
@@ -16691,7 +16705,7 @@ fw_62616e6e6572:
   .byte 101
   .byte 0
 .section .text
-  leaq .Laot_string_746(%rip), %rdi
+  leaq .Laot_string_747(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -16717,9 +16731,9 @@ fw_6272616e63682d74657374:
   call fr_push
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_747
+  jnz .Lfranc_748
 .section .rodata
-.Laot_string_748:
+.Laot_string_749:
   .byte 66
   .byte 82
   .byte 65
@@ -16731,15 +16745,15 @@ fw_6272616e63682d74657374:
   .byte 75
   .byte 0
 .section .text
-  leaq .Laot_string_748(%rip), %rdi
+  leaq .Laot_string_749(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
-  jmp .Lfranc_749
-.Lfranc_747:
+  jmp .Lfranc_750
+.Lfranc_748:
 .section .rodata
-.Laot_string_750:
+.Laot_string_751:
   .byte 66
   .byte 82
   .byte 65
@@ -16755,12 +16769,12 @@ fw_6272616e63682d74657374:
   .byte 68
   .byte 0
 .section .text
-  leaq .Laot_string_750(%rip), %rdi
+  leaq .Laot_string_751(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
-.Lfranc_749:
+.Lfranc_750:
   ret
 fw_6c6f6f702d74657374:
   movabsq $0, %rdi
@@ -16768,7 +16782,7 @@ fw_6c6f6f702d74657374:
   call fr_push
   leaq reg_fw_636f756e74(%rip), %rdi
   call fr_reg_set
-.Lfranc_751:
+.Lfranc_752:
   leaq reg_fw_636f756e74(%rip), %rdi
   call fr_reg_get
   movabsq $3, %rdi
@@ -16777,7 +16791,7 @@ fw_6c6f6f702d74657374:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_752
+  jns .Lfranc_753
   leaq reg_fw_636f756e74(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -16786,8 +16800,8 @@ fw_6c6f6f702d74657374:
   call fr_add
   leaq reg_fw_636f756e74(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_751
-.Lfranc_752:
+  jmp .Lfranc_752
+.Lfranc_753:
   leaq reg_fw_636f756e74(%rip), %rdi
   call fr_reg_get
   call fr_dot
@@ -16864,9 +16878,9 @@ fw_6174612d636865636b:
   call fw_6174612d726561642d736563746f72
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_753
+  jnz .Lfranc_754
 .section .rodata
-.Laot_string_754:
+.Laot_string_755:
   .byte 65
   .byte 84
   .byte 65
@@ -16884,20 +16898,20 @@ fw_6174612d636865636b:
   .byte 68
   .byte 0
 .section .text
-  leaq .Laot_string_754(%rip), %rdi
+  leaq .Laot_string_755(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
   ret
-.Lfranc_753:
+.Lfranc_754:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   call fr_sector_bfetch
   call fr_dot
 .section .rodata
-.Laot_string_755:
+.Laot_string_756:
   .byte 65
   .byte 84
   .byte 65
@@ -16911,7 +16925,7 @@ fw_6174612d636865636b:
   .byte 75
   .byte 0
 .section .text
-  leaq .Laot_string_755(%rip), %rdi
+  leaq .Laot_string_756(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -16921,9 +16935,9 @@ fw_73746f726167652d636865636b:
   call fw_66732d72656164793f
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_756
+  jnz .Lfranc_757
 .section .rodata
-.Laot_string_757:
+.Laot_string_758:
   .byte 78
   .byte 79
   .byte 84
@@ -16944,13 +16958,13 @@ fw_73746f726167652d636865636b:
   .byte 75
   .byte 0
 .section .text
-  leaq .Laot_string_757(%rip), %rdi
+  leaq .Laot_string_758(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
   ret
-.Lfranc_756:
+.Lfranc_757:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
@@ -16981,7 +16995,7 @@ fw_73746f726167652d636865636b:
   call fr_sector_bfetch
   call fr_dot
 .section .rodata
-.Laot_string_758:
+.Laot_string_759:
   .byte 65
   .byte 84
   .byte 65
@@ -17007,13 +17021,13 @@ fw_73746f726167652d636865636b:
   .byte 69
   .byte 0
 .section .text
-  leaq .Laot_string_758(%rip), %rdi
+  leaq .Laot_string_759(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
   call fr_cr
 .section .rodata
-.Laot_string_759:
+.Laot_string_760:
   .byte 112
   .byte 114
   .byte 111
@@ -17026,11 +17040,11 @@ fw_73746f726167652d636865636b:
   .byte 99
   .byte 0
 .section .text
-  leaq .Laot_string_759(%rip), %rdi
+  leaq .Laot_string_760(%rip), %rdi
   movq $1, %rsi
   call fr_push
 .section .rodata
-.Laot_string_760:
+.Laot_string_761:
   .byte 100
   .byte 101
   .byte 102
@@ -17047,13 +17061,13 @@ fw_73746f726167652d636865636b:
   .byte 59
   .byte 0
 .section .text
-  leaq .Laot_string_760(%rip), %rdi
+  leaq .Laot_string_761(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_66732d73617665
   call fr_dot
 .section .rodata
-.Laot_string_761:
+.Laot_string_762:
   .byte 112
   .byte 114
   .byte 111
@@ -17066,7 +17080,7 @@ fw_73746f726167652d636865636b:
   .byte 99
   .byte 0
 .section .text
-  leaq .Laot_string_761(%rip), %rdi
+  leaq .Laot_string_762(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_66732d736f75726365
@@ -17076,9 +17090,9 @@ fw_73746f726167652d636865636b:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_762
+  jnz .Lfranc_763
 .section .rodata
-.Laot_string_763:
+.Laot_string_764:
   .byte 83
   .byte 84
   .byte 79
@@ -17100,19 +17114,19 @@ fw_73746f726167652d636865636b:
   .byte 68
   .byte 0
 .section .text
-  leaq .Laot_string_763(%rip), %rdi
+  leaq .Laot_string_764(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
-  jmp .Lfranc_764
-.Lfranc_762:
+  jmp .Lfranc_765
+.Lfranc_763:
   leaq reg_fw_73632d707472(%rip), %rdi
   call fr_reg_get
   call fr_type
   call fr_cr
 .section .rodata
-.Laot_string_765:
+.Laot_string_766:
   .byte 83
   .byte 84
   .byte 79
@@ -17125,12 +17139,12 @@ fw_73746f726167652d636865636b:
   .byte 75
   .byte 0
 .section .text
-  leaq .Laot_string_765(%rip), %rdi
+  leaq .Laot_string_766(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
-.Lfranc_764:
+.Lfranc_765:
   ret
 fw_686f6d652d6974656d:
   leaq reg_fw_686f6d652d63617074696f6e(%rip), %rdi
@@ -17144,30 +17158,30 @@ fw_686f6d652d6974656d:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_766
+  jnz .Lfranc_767
 .section .rodata
-.Laot_string_767:
+.Laot_string_768:
   .byte 62
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_767(%rip), %rdi
+  leaq .Laot_string_768(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
-  jmp .Lfranc_768
-.Lfranc_766:
+  jmp .Lfranc_769
+.Lfranc_767:
 .section .rodata
-.Laot_string_769:
+.Laot_string_770:
   .byte 32
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_769(%rip), %rdi
+  leaq .Laot_string_770(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
-.Lfranc_768:
+.Lfranc_769:
   leaq reg_fw_686f6d652d63617074696f6e(%rip), %rdi
   call fr_reg_get
   call fw_76632d74797065
@@ -17180,7 +17194,7 @@ fw_686f6d652d64726177:
   call fw_76632d636c656172
   call fw_76632d686f6d65
 .section .rodata
-.Laot_string_770:
+.Laot_string_771:
   .byte 70
   .byte 114
   .byte 97
@@ -17209,13 +17223,13 @@ fw_686f6d652d64726177:
   .byte 114
   .byte 0
 .section .text
-  leaq .Laot_string_770(%rip), %rdi
+  leaq .Laot_string_771(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
 .section .rodata
-.Laot_string_771:
+.Laot_string_772:
   .byte 85
   .byte 112
   .byte 47
@@ -17247,7 +17261,7 @@ fw_686f6d652d64726177:
   .byte 104
   .byte 0
 .section .text
-  leaq .Laot_string_771(%rip), %rdi
+  leaq .Laot_string_772(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
@@ -17256,7 +17270,7 @@ fw_686f6d652d64726177:
   movabsq $1, %rsi
   call fr_push
 .section .rodata
-.Laot_string_772:
+.Laot_string_773:
   .byte 49
   .byte 32
   .byte 32
@@ -17272,7 +17286,7 @@ fw_686f6d652d64726177:
   .byte 114
   .byte 0
 .section .text
-  leaq .Laot_string_772(%rip), %rdi
+  leaq .Laot_string_773(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_686f6d652d6974656d
@@ -17280,7 +17294,7 @@ fw_686f6d652d64726177:
   movabsq $1, %rsi
   call fr_push
 .section .rodata
-.Laot_string_773:
+.Laot_string_774:
   .byte 50
   .byte 32
   .byte 32
@@ -17291,7 +17305,7 @@ fw_686f6d652d64726177:
   .byte 115
   .byte 0
 .section .text
-  leaq .Laot_string_773(%rip), %rdi
+  leaq .Laot_string_774(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_686f6d652d6974656d
@@ -17299,7 +17313,7 @@ fw_686f6d652d64726177:
   movabsq $1, %rsi
   call fr_push
 .section .rodata
-.Laot_string_774:
+.Laot_string_775:
   .byte 51
   .byte 32
   .byte 32
@@ -17317,7 +17331,7 @@ fw_686f6d652d64726177:
   .byte 116
   .byte 0
 .section .text
-  leaq .Laot_string_774(%rip), %rdi
+  leaq .Laot_string_775(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_686f6d652d6974656d
@@ -17325,7 +17339,7 @@ fw_686f6d652d64726177:
   movabsq $1, %rsi
   call fr_push
 .section .rodata
-.Laot_string_775:
+.Laot_string_776:
   .byte 52
   .byte 32
   .byte 32
@@ -17340,7 +17354,7 @@ fw_686f6d652d64726177:
   .byte 114
   .byte 0
 .section .text
-  leaq .Laot_string_775(%rip), %rdi
+  leaq .Laot_string_776(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_686f6d652d6974656d
@@ -17348,7 +17362,7 @@ fw_686f6d652d64726177:
   movabsq $1, %rsi
   call fr_push
 .section .rodata
-.Laot_string_776:
+.Laot_string_777:
   .byte 53
   .byte 32
   .byte 32
@@ -17366,7 +17380,7 @@ fw_686f6d652d64726177:
   .byte 115
   .byte 0
 .section .text
-  leaq .Laot_string_776(%rip), %rdi
+  leaq .Laot_string_777(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_686f6d652d6974656d
@@ -17374,7 +17388,7 @@ fw_686f6d652d64726177:
   movabsq $1, %rsi
   call fr_push
 .section .rodata
-.Laot_string_777:
+.Laot_string_778:
   .byte 54
   .byte 32
   .byte 32
@@ -17390,7 +17404,7 @@ fw_686f6d652d64726177:
   .byte 104
   .byte 0
 .section .text
-  leaq .Laot_string_777(%rip), %rdi
+  leaq .Laot_string_778(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_686f6d652d6974656d
@@ -17398,7 +17412,7 @@ fw_686f6d652d64726177:
   movabsq $1, %rsi
   call fr_push
 .section .rodata
-.Laot_string_778:
+.Laot_string_779:
   .byte 55
   .byte 32
   .byte 32
@@ -17408,7 +17422,7 @@ fw_686f6d652d64726177:
   .byte 104
   .byte 0
 .section .text
-  leaq .Laot_string_778(%rip), %rdi
+  leaq .Laot_string_779(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_686f6d652d6974656d
@@ -17416,7 +17430,7 @@ fw_686f6d652d64726177:
   movabsq $1, %rsi
   call fr_push
 .section .rodata
-.Laot_string_779:
+.Laot_string_780:
   .byte 56
   .byte 32
   .byte 32
@@ -17426,7 +17440,7 @@ fw_686f6d652d64726177:
   .byte 111
   .byte 0
 .section .text
-  leaq .Laot_string_779(%rip), %rdi
+  leaq .Laot_string_780(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_686f6d652d6974656d
@@ -17434,7 +17448,7 @@ fw_686f6d652d64726177:
   movabsq $1, %rsi
   call fr_push
 .section .rodata
-.Laot_string_780:
+.Laot_string_781:
   .byte 57
   .byte 32
   .byte 32
@@ -17450,12 +17464,12 @@ fw_686f6d652d64726177:
   .byte 69
   .byte 0
 .section .text
-  leaq .Laot_string_780(%rip), %rdi
+  leaq .Laot_string_781(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_686f6d652d6974656d
 .section .rodata
-.Laot_string_781:
+.Laot_string_782:
   .byte 45
   .byte 45
   .byte 45
@@ -17497,13 +17511,13 @@ fw_686f6d652d64726177:
   .byte 45
   .byte 0
 .section .text
-  leaq .Laot_string_781(%rip), %rdi
+  leaq .Laot_string_782(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
 .section .rodata
-.Laot_string_782:
+.Laot_string_783:
   .byte 122
   .byte 32
   .byte 70
@@ -17541,13 +17555,13 @@ fw_686f6d652d64726177:
   .byte 76
   .byte 0
 .section .text
-  leaq .Laot_string_782(%rip), %rdi
+  leaq .Laot_string_783(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
 .section .rodata
-.Laot_string_783:
+.Laot_string_784:
   .byte 117
   .byte 32
   .byte 72
@@ -17586,13 +17600,13 @@ fw_686f6d652d64726177:
   .byte 112
   .byte 0
 .section .text
-  leaq .Laot_string_783(%rip), %rdi
+  leaq .Laot_string_784(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
 .section .rodata
-.Laot_string_784:
+.Laot_string_785:
   .byte 69
   .byte 115
   .byte 99
@@ -17626,7 +17640,7 @@ fw_686f6d652d64726177:
   .byte 108
   .byte 0
 .section .text
-  leaq .Laot_string_784(%rip), %rdi
+  leaq .Laot_string_785(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
@@ -17641,14 +17655,14 @@ fw_686f6d652d6e657874:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_785
+  jnz .Lfranc_786
   movabsq $1, %rdi
   movabsq $1, %rsi
   call fr_push
   leaq reg_fw_686f6d652d73656c6563746564(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_786
-.Lfranc_785:
+  jmp .Lfranc_787
+.Lfranc_786:
   leaq reg_fw_686f6d652d73656c6563746564(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -17657,7 +17671,7 @@ fw_686f6d652d6e657874:
   call fr_add
   leaq reg_fw_686f6d652d73656c6563746564(%rip), %rdi
   call fr_reg_set
-.Lfranc_786:
+.Lfranc_787:
   ret
 fw_686f6d652d70726576:
   leaq reg_fw_686f6d652d73656c6563746564(%rip), %rdi
@@ -17668,14 +17682,14 @@ fw_686f6d652d70726576:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_787
+  jnz .Lfranc_788
   movabsq $9, %rdi
   movabsq $1, %rsi
   call fr_push
   leaq reg_fw_686f6d652d73656c6563746564(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_788
-.Lfranc_787:
+  jmp .Lfranc_789
+.Lfranc_788:
   leaq reg_fw_686f6d652d73656c6563746564(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -17684,7 +17698,7 @@ fw_686f6d652d70726576:
   call fr_sub
   leaq reg_fw_686f6d652d73656c6563746564(%rip), %rdi
   call fr_reg_set
-.Lfranc_788:
+.Lfranc_789:
   ret
 fw_686f6d652d617070:
   leaq reg_fw_686f6d652d6170702d6b6579(%rip), %rdi
@@ -17693,16 +17707,16 @@ fw_686f6d652d617070:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_789
+  jnz .Lfranc_790
   call fw_617070732d6c6f6164
-.Lfranc_789:
+.Lfranc_790:
   leaq reg_fw_617070732d6c6f61646564(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_790
+  jnz .Lfranc_791
 .section .rodata
-.Laot_string_791:
+.Laot_string_792:
   .byte 65
   .byte 80
   .byte 80
@@ -17721,13 +17735,13 @@ fw_686f6d652d617070:
   .byte 69
   .byte 0
 .section .text
-  leaq .Laot_string_791(%rip), %rdi
+  leaq .Laot_string_792(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
   ret
-.Lfranc_790:
+.Lfranc_791:
   leaq reg_fw_686f6d652d6170702d6b6579(%rip), %rdi
   call fr_reg_get
   call fw_617070732d6d656e75
@@ -17739,7 +17753,7 @@ fw_686f6d652d66696c652d6c697374:
   call fw_76632d636c656172
   call fw_76632d686f6d65
 .section .rodata
-.Laot_string_792:
+.Laot_string_793:
   .byte 70
   .byte 114
   .byte 97
@@ -17774,13 +17788,13 @@ fw_686f6d652d66696c652d6c697374:
   .byte 66
   .byte 0
 .section .text
-  leaq .Laot_string_792(%rip), %rdi
+  leaq .Laot_string_793(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
 .section .rodata
-.Laot_string_793:
+.Laot_string_794:
   .byte 111
   .byte 32
   .byte 79
@@ -17816,13 +17830,13 @@ fw_686f6d652d66696c652d6c697374:
   .byte 101
   .byte 0
 .section .text
-  leaq .Laot_string_793(%rip), %rdi
+  leaq .Laot_string_794(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
 .section .rodata
-.Laot_string_794:
+.Laot_string_795:
   .byte 105
   .byte 32
   .byte 73
@@ -17841,7 +17855,7 @@ fw_686f6d652d66696c652d6c697374:
   .byte 107
   .byte 0
 .section .text
-  leaq .Laot_string_794(%rip), %rdi
+  leaq .Laot_string_795(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
@@ -17849,9 +17863,9 @@ fw_686f6d652d66696c652d6c697374:
   call fw_66732d72656164793f
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_795
+  jnz .Lfranc_796
 .section .rodata
-.Laot_string_796:
+.Laot_string_797:
   .byte 68
   .byte 73
   .byte 83
@@ -17868,22 +17882,22 @@ fw_686f6d652d66696c652d6c697374:
   .byte 89
   .byte 0
 .section .text
-  leaq .Laot_string_796(%rip), %rdi
+  leaq .Laot_string_797(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
   ret
-.Lfranc_795:
+.Lfranc_796:
   movabsq $129, %rdi
   movabsq $1, %rsi
   call fr_push
   call fw_6174612d726561642d736563746f72
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_797
+  jnz .Lfranc_798
 .section .rodata
-.Laot_string_798:
+.Laot_string_799:
   .byte 68
   .byte 73
   .byte 82
@@ -17906,19 +17920,19 @@ fw_686f6d652d66696c652d6c697374:
   .byte 82
   .byte 0
 .section .text
-  leaq .Laot_string_798(%rip), %rdi
+  leaq .Laot_string_799(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
   ret
-.Lfranc_797:
+.Lfranc_798:
   movabsq $0, %rdi
   movabsq $1, %rsi
   call fr_push
   leaq reg_fw_686f6d652d66696c652d69(%rip), %rdi
   call fr_reg_set
-.Lfranc_799:
+.Lfranc_800:
   leaq reg_fw_686f6d652d66696c652d69(%rip), %rdi
   call fr_reg_get
   movabsq $12, %rdi
@@ -17927,7 +17941,7 @@ fw_686f6d652d66696c652d6c697374:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_800
+  jns .Lfranc_801
   leaq reg_fw_686f6d652d66696c652d69(%rip), %rdi
   call fr_reg_get
   movabsq $32, %rdi
@@ -17937,7 +17951,7 @@ fw_686f6d652d66696c652d6c697374:
   call fr_sector_bfetch
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_801
+  jz .Lfranc_802
   call fr_sector_buf
   leaq reg_fw_686f6d652d66696c652d69(%rip), %rdi
   call fr_reg_get
@@ -17948,7 +17962,7 @@ fw_686f6d652d66696c652d6c697374:
   call fr_add
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
-.Lfranc_801:
+.Lfranc_802:
   leaq reg_fw_686f6d652d66696c652d69(%rip), %rdi
   call fr_reg_get
   movabsq $1, %rdi
@@ -17957,12 +17971,12 @@ fw_686f6d652d66696c652d6c697374:
   call fr_add
   leaq reg_fw_686f6d652d66696c652d69(%rip), %rdi
   call fr_reg_set
-  jmp .Lfranc_799
-.Lfranc_800:
+  jmp .Lfranc_800
+.Lfranc_801:
   ret
 fw_686f6d652d66696c652d6f70656e:
 .section .rodata
-.Laot_string_802:
+.Laot_string_803:
   .byte 79
   .byte 112
   .byte 101
@@ -17976,14 +17990,14 @@ fw_686f6d652d66696c652d6f70656e:
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_802(%rip), %rdi
+  leaq .Laot_string_803(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_726c2d72656164
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_803
+  jnz .Lfranc_804
   call fr_repl_buffer
   call fw_66732d736f75726365
   leaq reg_fw_686f6d652d66696c65707472(%rip), %rdi
@@ -17992,9 +18006,9 @@ fw_686f6d652d66696c652d6f70656e:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_804
+  jnz .Lfranc_805
 .section .rodata
-.Laot_string_805:
+.Laot_string_806:
   .byte 70
   .byte 73
   .byte 76
@@ -18011,15 +18025,15 @@ fw_686f6d652d66696c652d6f70656e:
   .byte 68
   .byte 0
 .section .text
-  leaq .Laot_string_805(%rip), %rdi
+  leaq .Laot_string_806(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
-  jmp .Lfranc_806
-.Lfranc_804:
+  jmp .Lfranc_807
+.Lfranc_805:
 .section .rodata
-.Laot_string_807:
+.Laot_string_808:
   .byte 45
   .byte 45
   .byte 45
@@ -18038,7 +18052,7 @@ fw_686f6d652d66696c652d6f70656e:
   .byte 45
   .byte 0
 .section .text
-  leaq .Laot_string_807(%rip), %rdi
+  leaq .Laot_string_808(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
@@ -18048,7 +18062,7 @@ fw_686f6d652d66696c652d6f70656e:
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
 .section .rodata
-.Laot_string_808:
+.Laot_string_809:
   .byte 45
   .byte 45
   .byte 45
@@ -18066,17 +18080,17 @@ fw_686f6d652d66696c652d6f70656e:
   .byte 45
   .byte 0
 .section .text
-  leaq .Laot_string_808(%rip), %rdi
+  leaq .Laot_string_809(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
-.Lfranc_806:
-.Lfranc_803:
+.Lfranc_807:
+.Lfranc_804:
   ret
 fw_686f6d652d66696c652d6e6577:
 .section .rodata
-.Laot_string_809:
+.Laot_string_810:
   .byte 78
   .byte 101
   .byte 119
@@ -18093,22 +18107,22 @@ fw_686f6d652d66696c652d6e6577:
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_809(%rip), %rdi
+  leaq .Laot_string_810(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_726c2d72656164
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_810
+  jz .Lfranc_811
   ret
-.Lfranc_810:
+.Lfranc_811:
   call fr_repl_buffer
   call fr_s2_intern
   leaq reg_fw_686f6d652d66696c656e616d65(%rip), %rdi
   call fr_reg_set
 .section .rodata
-.Laot_string_811:
+.Laot_string_812:
   .byte 83
   .byte 111
   .byte 117
@@ -18124,25 +18138,25 @@ fw_686f6d652d66696c652d6e6577:
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_811(%rip), %rdi
+  leaq .Laot_string_812(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_726c2d72656164
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_812
+  jz .Lfranc_813
   ret
-.Lfranc_812:
+.Lfranc_813:
   leaq reg_fw_686f6d652d66696c656e616d65(%rip), %rdi
   call fr_reg_get
   call fr_repl_buffer
   call fw_66732d73617665
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_813
+  jz .Lfranc_814
 .section .rodata
-.Laot_string_814:
+.Laot_string_815:
   .byte 67
   .byte 82
   .byte 69
@@ -18152,15 +18166,15 @@ fw_686f6d652d66696c652d6e6577:
   .byte 68
   .byte 0
 .section .text
-  leaq .Laot_string_814(%rip), %rdi
+  leaq .Laot_string_815(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
-  jmp .Lfranc_815
-.Lfranc_813:
+  jmp .Lfranc_816
+.Lfranc_814:
 .section .rodata
-.Laot_string_816:
+.Laot_string_817:
   .byte 67
   .byte 82
   .byte 69
@@ -18197,16 +18211,16 @@ fw_686f6d652d66696c652d6e6577:
   .byte 41
   .byte 0
 .section .text
-  leaq .Laot_string_816(%rip), %rdi
+  leaq .Laot_string_817(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
-.Lfranc_815:
+.Lfranc_816:
   ret
 fw_686f6d652d66696c652d72656e616d65:
 .section .rodata
-.Laot_string_817:
+.Laot_string_818:
   .byte 82
   .byte 101
   .byte 110
@@ -18221,22 +18235,22 @@ fw_686f6d652d66696c652d72656e616d65:
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_817(%rip), %rdi
+  leaq .Laot_string_818(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_726c2d72656164
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_818
+  jz .Lfranc_819
   ret
-.Lfranc_818:
+.Lfranc_819:
   call fr_repl_buffer
   call fr_s2_intern
   leaq reg_fw_686f6d652d6f6c646e616d65(%rip), %rdi
   call fr_reg_set
 .section .rodata
-.Laot_string_819:
+.Laot_string_820:
   .byte 82
   .byte 101
   .byte 110
@@ -18251,25 +18265,25 @@ fw_686f6d652d66696c652d72656e616d65:
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_819(%rip), %rdi
+  leaq .Laot_string_820(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_726c2d72656164
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_820
+  jz .Lfranc_821
   ret
-.Lfranc_820:
+.Lfranc_821:
   leaq reg_fw_686f6d652d6f6c646e616d65(%rip), %rdi
   call fr_reg_get
   call fr_repl_buffer
   call fw_66732d72656e616d65
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_821
+  jz .Lfranc_822
 .section .rodata
-.Laot_string_822:
+.Laot_string_823:
   .byte 82
   .byte 69
   .byte 78
@@ -18279,15 +18293,15 @@ fw_686f6d652d66696c652d72656e616d65:
   .byte 68
   .byte 0
 .section .text
-  leaq .Laot_string_822(%rip), %rdi
+  leaq .Laot_string_823(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
-  jmp .Lfranc_823
-.Lfranc_821:
+  jmp .Lfranc_824
+.Lfranc_822:
 .section .rodata
-.Laot_string_824:
+.Laot_string_825:
   .byte 82
   .byte 69
   .byte 78
@@ -18323,16 +18337,16 @@ fw_686f6d652d66696c652d72656e616d65:
   .byte 41
   .byte 0
 .section .text
-  leaq .Laot_string_824(%rip), %rdi
+  leaq .Laot_string_825(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
-.Lfranc_823:
+.Lfranc_824:
   ret
 fw_686f6d652d66696c652d64656c657465:
 .section .rodata
-.Laot_string_825:
+.Laot_string_826:
   .byte 68
   .byte 101
   .byte 108
@@ -18348,23 +18362,23 @@ fw_686f6d652d66696c652d64656c657465:
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_825(%rip), %rdi
+  leaq .Laot_string_826(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_726c2d72656164
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_826
+  jz .Lfranc_827
   ret
-.Lfranc_826:
+.Lfranc_827:
   call fr_repl_buffer
   call fw_66732d64656c657465
   call fr_condition
   testq %rax, %rax
-  jz .Lfranc_827
+  jz .Lfranc_828
 .section .rodata
-.Laot_string_828:
+.Laot_string_829:
   .byte 68
   .byte 69
   .byte 76
@@ -18374,15 +18388,15 @@ fw_686f6d652d66696c652d64656c657465:
   .byte 68
   .byte 0
 .section .text
-  leaq .Laot_string_828(%rip), %rdi
+  leaq .Laot_string_829(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
-  jmp .Lfranc_829
-.Lfranc_827:
+  jmp .Lfranc_830
+.Lfranc_828:
 .section .rodata
-.Laot_string_830:
+.Laot_string_831:
   .byte 68
   .byte 69
   .byte 76
@@ -18398,18 +18412,18 @@ fw_686f6d652d66696c652d64656c657465:
   .byte 68
   .byte 0
 .section .text
-  leaq .Laot_string_830(%rip), %rdi
+  leaq .Laot_string_831(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
-.Lfranc_829:
+.Lfranc_830:
   ret
 fw_686f6d652d66696c6573:
   call fw_686f6d652d66696c652d6c697374
-.Lfranc_831:
+.Lfranc_832:
 .section .rodata
-.Laot_string_832:
+.Laot_string_833:
   .byte 102
   .byte 105
   .byte 108
@@ -18419,7 +18433,7 @@ fw_686f6d652d66696c6573:
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_832(%rip), %rdi
+  leaq .Laot_string_833(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
@@ -18434,10 +18448,10 @@ fw_686f6d652d66696c6573:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_833
+  jnz .Lfranc_834
   call fw_76632d6e65776c696e65
   ret
-.Lfranc_833:
+.Lfranc_834:
   leaq reg_fw_686f6d652d66696c652d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $111, %rdi
@@ -18446,10 +18460,10 @@ fw_686f6d652d66696c6573:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_834
+  jnz .Lfranc_835
   call fw_686f6d652d66696c652d6f70656e
-  jmp .Lfranc_835
-.Lfranc_834:
+  jmp .Lfranc_836
+.Lfranc_835:
   leaq reg_fw_686f6d652d66696c652d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $110, %rdi
@@ -18458,10 +18472,10 @@ fw_686f6d652d66696c6573:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_836
+  jnz .Lfranc_837
   call fw_686f6d652d66696c652d6e6577
-  jmp .Lfranc_837
-.Lfranc_836:
+  jmp .Lfranc_838
+.Lfranc_837:
   leaq reg_fw_686f6d652d66696c652d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $114, %rdi
@@ -18470,10 +18484,10 @@ fw_686f6d652d66696c6573:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_838
+  jnz .Lfranc_839
   call fw_686f6d652d66696c652d72656e616d65
-  jmp .Lfranc_839
-.Lfranc_838:
+  jmp .Lfranc_840
+.Lfranc_839:
   leaq reg_fw_686f6d652d66696c652d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $100, %rdi
@@ -18482,10 +18496,10 @@ fw_686f6d652d66696c6573:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_840
+  jnz .Lfranc_841
   call fw_686f6d652d66696c652d64656c657465
-  jmp .Lfranc_841
-.Lfranc_840:
+  jmp .Lfranc_842
+.Lfranc_841:
   leaq reg_fw_686f6d652d66696c652d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $105, %rdi
@@ -18494,15 +18508,15 @@ fw_686f6d652d66696c6573:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_842
+  jnz .Lfranc_843
   movabsq $57, %rdi
   movabsq $1, %rsi
   call fr_push
   call fw_686f6d652d617070
-  jmp .Lfranc_843
-.Lfranc_842:
+  jmp .Lfranc_844
+.Lfranc_843:
 .section .rodata
-.Laot_string_844:
+.Laot_string_845:
   .byte 111
   .byte 32
   .byte 110
@@ -18520,34 +18534,34 @@ fw_686f6d652d66696c6573:
   .byte 99
   .byte 0
 .section .text
-  leaq .Laot_string_844(%rip), %rdi
+  leaq .Laot_string_845(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
-.Lfranc_843:
-.Lfranc_841:
-.Lfranc_839:
-.Lfranc_837:
-.Lfranc_835:
+.Lfranc_844:
+.Lfranc_842:
+.Lfranc_840:
+.Lfranc_838:
+.Lfranc_836:
   call fw_686f6d652d66696c652d6c697374
-  jmp .Lfranc_831
+  jmp .Lfranc_832
   ret
 fw_686f6d652d7061636b61676573:
   leaq reg_fw_617070732d6c6f61646564(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_845
+  jnz .Lfranc_846
   call fw_617070732d6c6f6164
-.Lfranc_845:
+.Lfranc_846:
   leaq reg_fw_617070732d6c6f61646564(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_846
+  jnz .Lfranc_847
 .section .rodata
-.Laot_string_847:
+.Laot_string_848:
   .byte 80
   .byte 65
   .byte 67
@@ -18570,15 +18584,15 @@ fw_686f6d652d7061636b61676573:
   .byte 69
   .byte 0
 .section .text
-  leaq .Laot_string_847(%rip), %rdi
+  leaq .Laot_string_848(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
   ret
-.Lfranc_846:
+.Lfranc_847:
 .section .rodata
-.Laot_string_848:
+.Laot_string_849:
   .byte 112
   .byte 107
   .byte 103
@@ -18587,7 +18601,7 @@ fw_686f6d652d7061636b61676573:
   .byte 105
   .byte 0
 .section .text
-  leaq .Laot_string_848(%rip), %rdi
+  leaq .Laot_string_849(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_617070732d72756e
@@ -18597,16 +18611,16 @@ fw_686f6d652d6275696c64:
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_849
+  jnz .Lfranc_850
   call fw_617070732d6c6f6164
-.Lfranc_849:
+.Lfranc_850:
   leaq reg_fw_617070732d6c6f61646564(%rip), %rdi
   call fr_reg_get
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_850
+  jnz .Lfranc_851
 .section .rodata
-.Laot_string_851:
+.Laot_string_852:
   .byte 66
   .byte 85
   .byte 73
@@ -18626,15 +18640,15 @@ fw_686f6d652d6275696c64:
   .byte 69
   .byte 0
 .section .text
-  leaq .Laot_string_851(%rip), %rdi
+  leaq .Laot_string_852(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
   ret
-.Lfranc_850:
+.Lfranc_851:
 .section .rodata
-.Laot_string_852:
+.Laot_string_853:
   .byte 116
   .byte 99
   .byte 45
@@ -18645,14 +18659,14 @@ fw_686f6d652d6275696c64:
   .byte 100
   .byte 0
 .section .text
-  leaq .Laot_string_852(%rip), %rdi
+  leaq .Laot_string_853(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_617070732d72756e
   ret
 fw_636f6e736f6c652d68656c70:
 .section .rodata
-.Laot_string_853:
+.Laot_string_854:
   .byte 70
   .byte 114
   .byte 97
@@ -18902,7 +18916,7 @@ fw_636f6e736f6c652d68656c70:
   .byte 46
   .byte 0
 .section .text
-  leaq .Laot_string_853(%rip), %rdi
+  leaq .Laot_string_854(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
@@ -18910,7 +18924,7 @@ fw_636f6e736f6c652d68656c70:
   ret
 fw_636f6e736f6c652d6d61696e:
 .section .rodata
-.Laot_string_854:
+.Laot_string_855:
   .byte 70
   .byte 82
   .byte 65
@@ -18936,7 +18950,7 @@ fw_636f6e736f6c652d6d61696e:
   .byte 89
   .byte 0
 .section .text
-  leaq .Laot_string_854(%rip), %rdi
+  leaq .Laot_string_855(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
@@ -18947,9 +18961,9 @@ fw_636f6e736f6c652d6d61696e:
   leaq reg_fw_686f6d652d73656c6563746564(%rip), %rdi
   call fr_reg_set
   call fw_686f6d652d64726177
-.Lfranc_855:
+.Lfranc_856:
 .section .rodata
-.Laot_string_856:
+.Laot_string_857:
   .byte 70
   .byte 114
   .byte 97
@@ -18959,7 +18973,7 @@ fw_636f6e736f6c652d6d61696e:
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_856(%rip), %rdi
+  leaq .Laot_string_857(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
@@ -18974,9 +18988,9 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_857
+  jnz .Lfranc_858
 .section .rodata
-.Laot_string_858:
+.Laot_string_859:
   .byte 69
   .byte 88
   .byte 73
@@ -18991,13 +19005,13 @@ fw_636f6e736f6c652d6d61696e:
   .byte 69
   .byte 0
 .section .text
-  leaq .Laot_string_858(%rip), %rdi
+  leaq .Laot_string_859(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
   ret
-.Lfranc_857:
+.Lfranc_858:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $1001, %rdi
@@ -19006,11 +19020,11 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_859
+  jnz .Lfranc_860
   call fw_686f6d652d70726576
   call fw_686f6d652d64726177
-  jmp .Lfranc_860
-.Lfranc_859:
+  jmp .Lfranc_861
+.Lfranc_860:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $1002, %rdi
@@ -19019,11 +19033,11 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_861
+  jnz .Lfranc_862
   call fw_686f6d652d6e657874
   call fw_686f6d652d64726177
-  jmp .Lfranc_862
-.Lfranc_861:
+  jmp .Lfranc_863
+.Lfranc_862:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $10, %rdi
@@ -19032,7 +19046,7 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_863
+  jnz .Lfranc_864
   leaq reg_fw_686f6d652d73656c6563746564(%rip), %rdi
   call fr_reg_get
   movabsq $48, %rdi
@@ -19041,8 +19055,8 @@ fw_636f6e736f6c652d6d61696e:
   call fr_add
   call fw_686f6d652d617070
   call fw_686f6d652d64726177
-  jmp .Lfranc_864
-.Lfranc_863:
+  jmp .Lfranc_865
+.Lfranc_864:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $117, %rdi
@@ -19051,10 +19065,10 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_865
+  jnz .Lfranc_866
   call fw_686f6d652d64726177
-  jmp .Lfranc_866
-.Lfranc_865:
+  jmp .Lfranc_867
+.Lfranc_866:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $122, %rdi
@@ -19063,11 +19077,11 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_867
+  jnz .Lfranc_868
   call fw_686f6d652d66696c6573
   call fw_686f6d652d64726177
-  jmp .Lfranc_868
-.Lfranc_867:
+  jmp .Lfranc_869
+.Lfranc_868:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $109, %rdi
@@ -19076,11 +19090,11 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_869
+  jnz .Lfranc_870
   call fw_686f6d652d7061636b61676573
   call fw_686f6d652d64726177
-  jmp .Lfranc_870
-.Lfranc_869:
+  jmp .Lfranc_871
+.Lfranc_870:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $119, %rdi
@@ -19089,10 +19103,10 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_871
+  jnz .Lfranc_872
   call fw_686f6d652d6275696c64
-  jmp .Lfranc_872
-.Lfranc_871:
+  jmp .Lfranc_873
+.Lfranc_872:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $107, %rdi
@@ -19101,10 +19115,10 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_873
+  jnz .Lfranc_874
   call fw_62756e646c652d6b65726e656c
-  jmp .Lfranc_874
-.Lfranc_873:
+  jmp .Lfranc_875
+.Lfranc_874:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $102, %rdi
@@ -19113,10 +19127,10 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_875
+  jnz .Lfranc_876
   call fw_62756e646c652d64656d6f
-  jmp .Lfranc_876
-.Lfranc_875:
+  jmp .Lfranc_877
+.Lfranc_876:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $101, %rdi
@@ -19125,10 +19139,10 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_877
+  jnz .Lfranc_878
   call fw_616f742d737472696e672d7265672d64656d6f
-  jmp .Lfranc_878
-.Lfranc_877:
+  jmp .Lfranc_879
+.Lfranc_878:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $100, %rdi
@@ -19137,10 +19151,10 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_879
+  jnz .Lfranc_880
   call fw_616f742d636f6e74726f6c2d64656d6f
-  jmp .Lfranc_880
-.Lfranc_879:
+  jmp .Lfranc_881
+.Lfranc_880:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $99, %rdi
@@ -19149,10 +19163,10 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_881
+  jnz .Lfranc_882
   call fw_616f742d70726f6772616d2d64656d6f
-  jmp .Lfranc_882
-.Lfranc_881:
+  jmp .Lfranc_883
+.Lfranc_882:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $97, %rdi
@@ -19161,10 +19175,10 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_883
+  jnz .Lfranc_884
   call fw_616f742d64656d6f
-  jmp .Lfranc_884
-.Lfranc_883:
+  jmp .Lfranc_885
+.Lfranc_884:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $98, %rdi
@@ -19173,10 +19187,10 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_885
+  jnz .Lfranc_886
   call fw_636f6d70696c65722d626f6f747374726170
-  jmp .Lfranc_886
-.Lfranc_885:
+  jmp .Lfranc_887
+.Lfranc_886:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $114, %rdi
@@ -19185,11 +19199,11 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_887
+  jnz .Lfranc_888
   call fw_726c2d6d61696e
   call fw_686f6d652d64726177
-  jmp .Lfranc_888
-.Lfranc_887:
+  jmp .Lfranc_889
+.Lfranc_888:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $104, %rdi
@@ -19198,10 +19212,10 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_889
+  jnz .Lfranc_890
   call fw_636f6e736f6c652d68656c70
-  jmp .Lfranc_890
-.Lfranc_889:
+  jmp .Lfranc_891
+.Lfranc_890:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $112, %rdi
@@ -19210,7 +19224,7 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_891
+  jnz .Lfranc_892
   movabsq $1, %rdi
   movabsq $3, %rsi
   call fr_push
@@ -19219,8 +19233,8 @@ fw_636f6e736f6c652d6d61696e:
   call fr_push
   call fr_add
   call fr_dot
-  jmp .Lfranc_892
-.Lfranc_891:
+  jmp .Lfranc_893
+.Lfranc_892:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $115, %rdi
@@ -19229,10 +19243,10 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_893
+  jnz .Lfranc_894
   call fw_73746f726167652d636865636b
-  jmp .Lfranc_894
-.Lfranc_893:
+  jmp .Lfranc_895
+.Lfranc_894:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $103, %rdi
@@ -19241,9 +19255,9 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_895
+  jnz .Lfranc_896
 .section .rodata
-.Laot_string_896:
+.Laot_string_897:
   .byte 71
   .byte 82
   .byte 65
@@ -19263,7 +19277,7 @@ fw_636f6e736f6c652d6d61696e:
   .byte 67
   .byte 0
 .section .text
-  leaq .Laot_string_896(%rip), %rdi
+  leaq .Laot_string_897(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
@@ -19278,8 +19292,8 @@ fw_636f6e736f6c652d6d61696e:
   movabsq $1, %rsi
   call fr_push
   call fw_76632d706978656c
-  jmp .Lfranc_897
-.Lfranc_895:
+  jmp .Lfranc_898
+.Lfranc_896:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $108, %rdi
@@ -19288,11 +19302,11 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jnz .Lfranc_898
+  jnz .Lfranc_899
   call fw_617070732d6c6f6164
   call fw_686f6d652d64726177
-  jmp .Lfranc_899
-.Lfranc_898:
+  jmp .Lfranc_900
+.Lfranc_899:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $49, %rdi
@@ -19301,9 +19315,9 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_900
+  jns .Lfranc_901
 .section .rodata
-.Laot_string_901:
+.Laot_string_902:
   .byte 85
   .byte 78
   .byte 75
@@ -19326,13 +19340,13 @@ fw_636f6e736f6c652d6d61696e:
   .byte 41
   .byte 0
 .section .text
-  leaq .Laot_string_901(%rip), %rdi
+  leaq .Laot_string_902(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
-  jmp .Lfranc_902
-.Lfranc_900:
+  jmp .Lfranc_903
+.Lfranc_901:
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   movabsq $58, %rdi
@@ -19341,15 +19355,15 @@ fw_636f6e736f6c652d6d61696e:
   call fr_sub
   call fr_condition
   testq %rax, %rax
-  jns .Lfranc_903
+  jns .Lfranc_904
   leaq reg_fw_63632d6b6579(%rip), %rdi
   call fr_reg_get
   call fw_686f6d652d617070
   call fw_686f6d652d64726177
-  jmp .Lfranc_904
-.Lfranc_903:
+  jmp .Lfranc_905
+.Lfranc_904:
 .section .rodata
-.Laot_string_905:
+.Laot_string_906:
   .byte 85
   .byte 78
   .byte 75
@@ -19372,38 +19386,38 @@ fw_636f6e736f6c652d6d61696e:
   .byte 41
   .byte 0
 .section .text
-  leaq .Laot_string_905(%rip), %rdi
+  leaq .Laot_string_906(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
   call fw_76632d6e65776c696e65
-.Lfranc_904:
-.Lfranc_902:
-.Lfranc_899:
-.Lfranc_897:
-.Lfranc_894:
-.Lfranc_892:
-.Lfranc_890:
-.Lfranc_888:
-.Lfranc_886:
-.Lfranc_884:
-.Lfranc_882:
-.Lfranc_880:
-.Lfranc_878:
-.Lfranc_876:
-.Lfranc_874:
-.Lfranc_872:
-.Lfranc_870:
-.Lfranc_868:
-.Lfranc_866:
-.Lfranc_864:
-.Lfranc_862:
-.Lfranc_860:
-  jmp .Lfranc_855
+.Lfranc_905:
+.Lfranc_903:
+.Lfranc_900:
+.Lfranc_898:
+.Lfranc_895:
+.Lfranc_893:
+.Lfranc_891:
+.Lfranc_889:
+.Lfranc_887:
+.Lfranc_885:
+.Lfranc_883:
+.Lfranc_881:
+.Lfranc_879:
+.Lfranc_877:
+.Lfranc_875:
+.Lfranc_873:
+.Lfranc_871:
+.Lfranc_869:
+.Lfranc_867:
+.Lfranc_865:
+.Lfranc_863:
+.Lfranc_861:
+  jmp .Lfranc_856
   ret
 fw_636f6d70696c65722d626f6f747374726170:
 .section .rodata
-.Laot_string_906:
+.Laot_string_907:
   .byte 83
   .byte 69
   .byte 76
@@ -19420,36 +19434,18 @@ fw_636f6d70696c65722d626f6f747374726170:
   .byte 84
   .byte 0
 .section .text
-  leaq .Laot_string_906(%rip), %rdi
-  movq $1, %rsi
-  call fr_push
-  call fr_type
-  call fr_cr
-.section .rodata
-.Laot_string_907:
-  .byte 71
-  .byte 69
-  .byte 78
-  .byte 32
-  .byte 50
-  .byte 58
-  .byte 32
-  .byte 0
-.section .text
   leaq .Laot_string_907(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
-  call fr_s2_self_source
-  call fw_73322d736f75726365
-  call fr_dot
+  call fr_cr
 .section .rodata
 .Laot_string_908:
   .byte 71
   .byte 69
   .byte 78
   .byte 32
-  .byte 51
+  .byte 50
   .byte 58
   .byte 32
   .byte 0
@@ -19463,6 +19459,24 @@ fw_636f6d70696c65722d626f6f747374726170:
   call fr_dot
 .section .rodata
 .Laot_string_909:
+  .byte 71
+  .byte 69
+  .byte 78
+  .byte 32
+  .byte 51
+  .byte 58
+  .byte 32
+  .byte 0
+.section .text
+  leaq .Laot_string_909(%rip), %rdi
+  movq $1, %rsi
+  call fr_push
+  call fr_type
+  call fr_s2_self_source
+  call fw_73322d736f75726365
+  call fr_dot
+.section .rodata
+.Laot_string_910:
   .byte 54
   .byte 32
   .byte 55
@@ -19470,14 +19484,14 @@ fw_636f6d70696c65722d626f6f747374726170:
   .byte 42
   .byte 0
 .section .text
-  leaq .Laot_string_909(%rip), %rdi
+  leaq .Laot_string_910(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d636f6d70696c65
   call fr_s2_run
   call fr_dot
 .section .rodata
-.Laot_string_910:
+.Laot_string_911:
   .byte 83
   .byte 69
   .byte 76
@@ -19491,7 +19505,7 @@ fw_636f6d70696c65722d626f6f747374726170:
   .byte 75
   .byte 0
 .section .text
-  leaq .Laot_string_910(%rip), %rdi
+  leaq .Laot_string_911(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
@@ -19499,7 +19513,7 @@ fw_636f6d70696c65722d626f6f747374726170:
   ret
 fw_636f6d70696c65722d70726f6265:
 .section .rodata
-.Laot_string_911:
+.Laot_string_912:
   .byte 74
   .byte 73
   .byte 84
@@ -19510,12 +19524,12 @@ fw_636f6d70696c65722d70726f6265:
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_911(%rip), %rdi
+  leaq .Laot_string_912(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
 .section .rodata
-.Laot_string_912:
+.Laot_string_913:
   .byte 50
   .byte 32
   .byte 51
@@ -19523,14 +19537,14 @@ fw_636f6d70696c65722d70726f6265:
   .byte 43
   .byte 0
 .section .text
-  leaq .Laot_string_912(%rip), %rdi
+  leaq .Laot_string_913(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d636f6d70696c65
   call fr_s2_run
   call fr_dot
 .section .rodata
-.Laot_string_913:
+.Laot_string_914:
   .byte 74
   .byte 73
   .byte 84
@@ -19541,12 +19555,12 @@ fw_636f6d70696c65722d70726f6265:
   .byte 32
   .byte 0
 .section .text
-  leaq .Laot_string_913(%rip), %rdi
+  leaq .Laot_string_914(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fr_type
 .section .rodata
-.Laot_string_914:
+.Laot_string_915:
   .byte 100
   .byte 101
   .byte 102
@@ -19570,13 +19584,13 @@ fw_636f6d70696c65722d70726f6265:
   .byte 59
   .byte 0
 .section .text
-  leaq .Laot_string_914(%rip), %rdi
+  leaq .Laot_string_915(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d636f6d70696c65
   call fr_drop
 .section .rodata
-.Laot_string_915:
+.Laot_string_916:
   .byte 54
   .byte 32
   .byte 103
@@ -19590,7 +19604,7 @@ fw_636f6d70696c65722d70726f6265:
   .byte 100
   .byte 0
 .section .text
-  leaq .Laot_string_915(%rip), %rdi
+  leaq .Laot_string_916(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_73322d636f6d70696c65
@@ -19612,7 +19626,7 @@ fw_626f6f74:
   call fw_646b2d696e6974
   call fw_76632d696e6974
 .section .rodata
-.Laot_string_916:
+.Laot_string_917:
   .byte 70
   .byte 82
   .byte 65
@@ -19638,7 +19652,7 @@ fw_626f6f74:
   .byte 89
   .byte 0
 .section .text
-  leaq .Laot_string_916(%rip), %rdi
+  leaq .Laot_string_917(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065
@@ -19658,7 +19672,7 @@ fw_626f6f74:
   call fw_757067726164652d6c6f6164
   call fr_drop
 .section .rodata
-.Laot_string_917:
+.Laot_string_918:
   .byte 65
   .byte 79
   .byte 84
@@ -19672,7 +19686,7 @@ fw_626f6f74:
   .byte 75
   .byte 0
 .section .text
-  leaq .Laot_string_917(%rip), %rdi
+  leaq .Laot_string_918(%rip), %rdi
   movq $1, %rsi
   call fr_push
   call fw_76632d74797065

@@ -95,7 +95,9 @@ with tempfile.TemporaryDirectory(prefix='franc-native-apps-') as temp:
         send_line('0 sin .',b'0\nFrac> ',timeout=140)
         print('PASS: native source editor/save/load, dd, intervals, continued fractions and trigonometry',flush=True)
         send_key(b'\x1b',b'Franc> ',timeout=45)
-        send_key(b'4',b'Franc> ',timeout=150)
+        # The picture stays up until a key is pressed, then the prompt returns.
+        send_key(b'4',b'')
+        send_key(b'u',b'Franc> ',timeout=150)
         print('PASS: original crosshair program renders with Franc-native line primitive',flush=True)
         # Execute Ford and spirograph library code, not just load their names.
         # Small deterministic scenes bound the time of this software-QEMU gate.

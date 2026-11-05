@@ -11,6 +11,15 @@ seed **compiler/bootstrap_seed.S**, and the kernel module set into
 **build/out/francos-bios.img**. The live native path uses **Franc and
 assembly**, not C or Python to compile the kernel.
 
+To prove FrancOS rebuilds itself with every host compiler, assembler and linker blocked:
+
+```sh
+make os
+bash tests/selfhost/run.sh build/out/francos-bios.img
+```
+
+On a running system, `w` on the Home screen does the same rebuild onto a blank second disk.
+
 To prove native self-hosting, including booted Franc generation 2 and 3:
 
     make os-proof

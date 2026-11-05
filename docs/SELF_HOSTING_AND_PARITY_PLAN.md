@@ -1,6 +1,6 @@
 # Plan: make the self-hosting, exactness and isolation claims literally true
 
-**Status:** started 2026-11-04 from `main` at `47ea545`. Phases 0 and 1 are merged (#22) and passed CI. Phase 2 is merged (#23) and passed CI. Phase 3 steps 1 and 2 are merged (#24) and passed CI. Step 3 is merged (#25) and passed CI. Step 4 is merged (#26) and passed CI. Step 5 is in #27. Step 6 passes locally. The rest of Phase 3 and Phase 4 have not started.
+**Status:** started 2026-11-04 from `main` at `47ea545`. Phases 0 and 1 are merged (#22) and passed CI. Phase 2 is merged (#23) and passed CI. Phase 3 steps 1 and 2 are merged (#24) and passed CI. Step 3 is merged (#25) and passed CI. Step 4 is merged (#26) and passed CI. Step 5 is merged (#27) and passed CI. Step 6 is in #28. Step 7 passes locally and its CI job runs in the next PR. Phase 4 has not started.
 
 **Direction:** close documentation gaps by making the code more capable, and remove dependencies on other languages wherever possible. FrancOS's own runtime is the implementation that matters. Correct behaviour is defined by a language-neutral data table, not by another implementation.
 
@@ -77,7 +77,7 @@ Goal: FrancOS builds a complete bootable image with no host assembler or linker.
 4. **Full assembler.** About 130 mnemonics, 3 macros, `.include`, `.incbin`, `.ifc`, `.irp`, and 16/32-bit code. Every object is compared byte for byte with GNU `as`. **Result:** `compiler/toolchain/assembler.frac` and its table `x86.table` assemble the boot sector, runtime, font and seed in the guest in about 80 seconds under QEMU TCG, and every section matches GNU `as`. `tests/asm_speed/forms.S` covers forms the kernel does not use, and 13 bad files are refused with a clear message. It covers the syntax FrancOS uses, not all of GNU `as`: `.align` inside text works only in 16-bit code, up to 8 bytes; 16-bit addressing takes one base register and no index; and sections other than the five kernel ones are refused. JIT string literals over 255 characters silently become a null pointer, which is why the table is a file.
 5. **Built-in linker.** Output a flat binary directly, compared with `ld` plus `objcopy`. **Result:** `compiler/toolchain/linker.frac` links the boot sector and the 183,458-byte kernel in the guest, and both match the GNU build exactly, in about 90 seconds under QEMU TCG including assembly. The common-symbol risk was settled by the fixed-order route: the compiler now emits variable cells into `.bss` once each, in first-seen order, so nothing depends on `ld`'s hash order. That cost one seed re-pin. The linker follows `kernel.ld` in its own code rather than reading linker scripts. It refuses undefined and duplicate symbols, common symbols and out-of-range references.
 6. **Image writer.** A Home action builds a complete bootable image on a second disk, with sources stored on the image itself. The running disk is never modified. **Result:** the `w` key on Home compiles the kernel from the archive, assembles and links it, and writes the image in about 130 seconds under QEMU TCG. `tests/image/run.sh` shows that the image equals the GNU build, boots, and rebuilds itself exactly. The action refuses a missing second disk, a second disk that is neither blank nor FrancOS, and a damaged archive, and it reads back every sector. The kernel, boot sector, seed, apps and archive sources are rebuilt or checked. The source revision and `system.franctxt` are copied from the running disk, and the app bundle is copied as source. A fault during the disk write would leave the OS pointed at the second drive.
-7. **Final proof.** CI blocks `as`, `ld` and `objcopy` during the rebuild. The OS builds generation N and boots it; N+1 must match N and the binutils build. This includes the boot sector.
+7. **Final proof.** CI blocks `as`, `ld` and `objcopy` during the rebuild. The OS builds generation N and boots it; N+1 must match N and the binutils build. This includes the boot sector. **Result:** `tests/selfhost/run.sh` runs the rebuild with host compilers, assemblers, linkers, Python and make blocked, and the `self-host` CI job first deletes them from the machine. GNU tools build only the reference image that the guest has to reproduce.
 
 **Risks:** New language primitives must also be added to `compiler.py`, or Phase 0 fails.
 
@@ -124,7 +124,7 @@ Goal: FrancOS builds a complete bootable image with no host assembler or linker.
 | C: `frac.c`, `gfx.c` | Hosted interpreter | Retire once native covers its tests |
 | Python: `franctxt/`, QEMU drivers, `tools/` | Host-side verification | Move to shell, then to in-guest checks |
 | Python: `stage4/compiler.py` | Phase 0 check only | Replace with another independent path |
-| GNU binutils | Build | Removed by Phase 3, except the first seed |
+| GNU binutils | First image, and the reference build | The OS rebuilds itself without it. A first seed still needs it once |
 
 ## Working rules
 

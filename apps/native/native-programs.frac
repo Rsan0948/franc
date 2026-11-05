@@ -6,6 +6,7 @@ def app-edit "notes.frac" edit-line ;
 def sq dup * ;
 def app-factorial dup 1 - if drop 1 else dup 1 - app-factorial * then ;
 def app-demo 1/7 . -1/6 . 50 100 / . 5 sq . 5 app-factorial . ;
-def app-font-demo crosshair ;
-def app-spiro-demo spiro-demo ;
-def app-ford-demo 20 fordland ;
+\ Home redraws as soon as an app returns, so a picture stays up until a key is pressed.
+def app-font-demo crosshair key drop ;
+def app-spiro-demo spiro-demo key drop ;
+def app-ford-demo 20 fordland key drop ;

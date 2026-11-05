@@ -1,6 +1,7 @@
 \ Builds a complete bootable FrancOS image on the second disk from the sources in the
 \ toolchain archive: compiles the kernel to assembly, assembles and links it, and lays
-\ it out as build/pack_image.sh does. The running disk is only read.
+\ it out as build/pack_image.sh does. The running disk is only read. Messages use the
+\ console words, because plain type reaches only the serial port on BIOS VGA.
 
 \ JIT source must assign a variable before it reads one.
 def im-declare 0 :im-left 0 :im-done 0 :im-total ;
@@ -11,14 +12,14 @@ def im-disk $4A00000 ;
 def im-digests $4D00000 ;
 def im-sector 512 * im-disk + ;
 
-def im-fail "BUILD FAILED: " type type cr 0 ;
+def im-fail "BUILD FAILED: " vc-type vc-type vc-newline 0 ;
 def im-find :im-fn :im-fs :im-fe :im-fb begin im-fb im-fe - while im-fb im-fs im-fn as-same-text ifnz im-fb exit then im-fb 1 + :im-fb repeat 0 ;
 def im-keep :im-ks :im-kp im-digests im-ks 64 * + im-kp 64 ld-copy ;
 def im-kept 64 * im-digests + ;
 
 \ The second disk must be blank or already hold FrancOS. Anything else is someone's data.
 def im-blank? 0 :im-i begin im-i 512 - while im-i sector-byte@ ifnz 0 exit then im-i 1 + :im-i repeat 1 ;
-def im-target-check 0 ata-read-sector if0 "BUILD REFUSED: NO SECOND DISK" type cr 0 exit then im-blank? ifnz 1 exit then 128 ata-read-sector if0 "BUILD REFUSED: NO SECOND DISK" type cr 0 exit then fs-magic? ifnz 1 exit then "BUILD REFUSED: SECOND DISK IN USE" type cr 0 ;
+def im-target-check 0 ata-read-sector if0 "BUILD REFUSED: NO SECOND DISK" vc-type vc-newline 0 exit then im-blank? ifnz 1 exit then 128 ata-read-sector if0 "BUILD REFUSED: NO SECOND DISK" vc-type vc-newline 0 exit then fs-magic? ifnz 1 exit then "BUILD REFUSED: SECOND DISK IN USE" vc-type vc-newline 0 ;
 def im-target-ok 1 ata-drive! im-target-check :im-t 0 ata-drive! im-t ;
 
 \ The compiler writes to the console, so its output is captured to memory.
@@ -45,4 +46,4 @@ def im-write-all 0 :im-w begin im-w im-total - while im-w im-sector :im-wp 0 :im
 def im-verify 0 :im-w begin im-w im-total - while im-w ata-read-sector if0 "DISK READ BACK" im-fail exit then im-w im-sector :im-wp 0 :im-i begin im-i 512 - while im-i sector-byte@ im-wp im-i + byte@ - ifnz "DISK READ BACK" im-fail exit then im-i 1 + :im-i repeat im-w 1 + :im-w repeat 1 ;
 def im-to-disk 1 ata-drive! 0 im-total ata-write-region im-write-all :im-ok im-ok ifnz im-verify :im-ok then 0 0 ata-write-region 0 ata-drive! im-ok ;
 
-def im-build "BUILD START" type cr im-target-ok if0 exit then tc-bytes 512 / floor 2048 + :im-total im-total 512 * im-zero "BUILD COMPILE" type cr im-compile if0 exit then "BUILD LINK" type cr im-link if0 exit then im-files if0 exit then im-apps if0 exit then 2048 im-sector tc-base tc-bytes ld-copy im-manifest if0 exit then "BUILD WRITE" type cr im-to-disk if0 exit then "IMAGE SHA " type im-disk im-total 512 * sha256-long type cr "IMAGE READY" type cr ;
+def im-build "BUILD START" vc-type vc-newline im-target-ok if0 exit then tc-bytes 512 / floor 2048 + :im-total im-total 512 * im-zero "BUILD COMPILE" vc-type vc-newline im-compile if0 exit then "BUILD LINK" vc-type vc-newline im-link if0 exit then im-files if0 exit then im-apps if0 exit then 2048 im-sector tc-base tc-bytes ld-copy im-manifest if0 exit then "BUILD WRITE" vc-type vc-newline im-to-disk if0 exit then "IMAGE SHA " vc-type im-disk im-total 512 * sha256-long vc-type vc-newline "IMAGE READY" vc-type vc-newline ;
