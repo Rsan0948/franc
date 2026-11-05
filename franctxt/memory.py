@@ -27,6 +27,7 @@ ANCHORS = {
     "lite": ("lib/litetofrac.frac", "def lite-put"),
     "toolchain": ("lib/toolchain.frac", "def tc-base"),
     "assembler": ("compiler/toolchain/assembler.frac", "def as-src"),
+    "linker": ("compiler/toolchain/linker.frac", "def ld-sections"),
 }
 MAX_RAM = 128 * 1024 * 1024
 

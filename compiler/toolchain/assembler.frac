@@ -127,7 +127,7 @@ def as-ops 0 :as-nops 0 :oa-k 0 :ob-k 0 :oc-k begin as-skip as-p byte@ :as-c as-
 def as-size-ok as-sz ifnz exit then as-nops 1 - if0 oa-k 1 - if0 oa-s :as-sz then exit then ob-k 1 - if0 ob-c if0 ob-s :as-sz exit then then oa-k 1 - if0 oa-c if0 oa-s :as-sz then then ;
 
 \ Fixups. Record, 32 bytes: offset 3, section 1, fragment count 3, size 1, pc-relative 1,
-\ tail 1, symbol 3, subtracted symbol 3, addend 4.
+\ tail 1, symbol 3, subtracted symbol 3, addend 4, resolved 1, final offset 3.
 def as-fix-rec 32 * as-fixes + ;
 def as-fix-add :as-fp :as-fz :as-fv :as-fu :as-fy as-nf 65535 - if0 "fixups" as-limit exit then as-nf as-fix-rec :as-fa as-fa as-o as-base - as-p3 as-fa 3 + as-sec ! as-fa 4 + as-nj as-p3 as-fa 7 + as-fz ! as-fa 8 + as-fp ! as-fa 9 + as-tail ! as-fa 10 + as-fy as-p3 as-fa 13 + as-fu as-p3 as-fa 16 + as-fv as-p4 as-nf 1 + :as-nf 0 as-fz as-n ;
 \ A value of n bytes, from an expression that may still need the linker.
@@ -199,10 +199,11 @@ def as-escape :as-ec as-ec 110 - if0 10 exit then as-ec 116 - if0 9 exit then as
 def as-string :as-z as-skip as-p 1 + :as-p begin as-p byte@ :as-c as-c 34 - ifnz as-c 92 - if0 as-p 1 + :as-p as-p byte@ as-escape :as-c then as-c as-b as-p 1 + :as-p 1 else 0 then neg while repeat as-p 1 + :as-p as-z ifnz 0 as-b then ;
 def as-skip-dir as-expr as-ev :as-sn 0 :as-fillv as-skip as-p byte@ 44 - if0 as-p 1 + :as-p as-expr as-ev :as-fillv then as-sec 4 - if0 as-o as-sn + :as-o exit then begin as-sn neg while as-fillv as-b as-sn 1 - :as-sn repeat ;
 def as-relaxing? as-sec 1 - if0 1 exit then as-sec 5 - if0 1 exit then 0 ;
-def as-align as-expr as-ev :as-al as-rest as-relaxing? ifnz as-mode 16 - ifnz as-bad exit then as-al 8 - neg if as-bad exit then as-al 32 as-frag-add exit then as-al as-o as-base - as-al % - as-al % :as-pad as-sec 4 - if0 as-o as-pad + :as-o exit then begin as-pad neg while 0 as-b as-pad 1 - :as-pad repeat ;
+def as-sec-align as-labels 128 + ;
+def as-align as-expr as-ev :as-al as-rest as-sec-align as-sec 3 * + :as-aa as-aa as-g3 as-al - if as-aa as-al as-p3 then as-relaxing? ifnz as-mode 16 - ifnz as-bad exit then as-al 8 - neg if as-bad exit then as-al 32 as-frag-add exit then as-al as-o as-base - as-al % - as-al % :as-pad as-sec 4 - if0 as-o as-pad + :as-o exit then begin as-pad neg while 0 as-b as-pad 1 - :as-pad repeat ;
 def as-org as-expr as-ev 33 as-frag-add ;
 def as-saved as-labels 64 + ;
-def as-saved-reset 1 :as-i begin as-i 6 - while as-saved as-i 4 * + as-i as-sec-base as-p4 as-i 1 + :as-i repeat ;
+def as-saved-reset 1 :as-i begin as-i 6 - while as-saved as-i 4 * + as-i as-sec-base as-p4 as-labels 128 + as-i 3 * + 1 as-p3 as-i 1 + :as-i repeat ;
 def as-sec-limit as-o as-base - 1048576 - neg if "section bytes" as-limit then ;
 def as-switch :as-to2 as-saved as-sec 4 * + as-o as-p4 as-to2 :as-sec as-saved as-sec 4 * + as-g4 :as-o as-sec as-sec-base :as-base ;
 def as-is :as-wn :as-ws as-tl as-wn - ifnz 0 exit then as-ts as-ws as-wn as-same-text ;
@@ -240,7 +241,9 @@ def as-relax as-pre :as-pold as-pre 196608 + :as-pnew 0 :as-i begin as-i as-nj 1
 def as-copy :as-ce begin as-cs as-ce - while as-co as-rawbase as-cs + byte@ ! as-co 1 + :as-co as-cs 1 + :as-cs repeat ;
 def as-put :as-pb as-co as-pb ! as-co 1 + :as-co ;
 def as-fill :as-fn begin as-fn neg while as-co as-fb ! as-co 1 + :as-co as-fn 1 - :as-fn repeat ;
-def as-long-rel :as-rn as-js as-reach? ifnz as-co as-js as-final as-co as-rn + as-outbase - - as-rn as-put-n then as-co as-rn + :as-co ;
+\ A long jump the linker must finish becomes a fixup, placed by this fragment's table entry.
+def as-jump-fix :as-jn as-nf 65535 - if0 "fixups" as-limit exit then as-nf as-fix-rec :as-fa as-fa as-ja as-g3 as-k 16 - if0 1 else 2 then + as-p3 as-fa 3 + as-fsec ! as-fa 4 + as-i as-p3 as-fa 7 + as-jn ! as-fa 8 + 1 ! as-fa 9 + 0 ! as-fa 10 + as-js as-p3 as-fa 13 + 0 as-p3 as-fa 16 + 0 as-p4 as-nf 1 + :as-nf ;
+def as-long-rel :as-rn as-js as-reach? ifnz as-co as-js as-final as-co as-rn + as-outbase - - as-rn as-put-n else as-rn as-jump-fix then as-co as-rn + :as-co ;
 def as-zero-out :as-fn2 0 :as-fb as-fn2 as-fill ;
 def as-emit-jump as-ja 7 + byte@ :as-m as-ja 6 + byte@ :as-k as-ja 3 + as-g3 :as-js as-ja 8 + byte@ if0 as-k 16 - if0 $EB as-put else $70 as-k + as-put then as-js as-final as-co 1 + as-outbase - - 256 % as-put else as-k 16 - if0 $E9 as-put else $0F as-put $80 as-k + as-put then as-m 16 - if0 2 else 4 then :as-rn2 as-rn2 as-zero-out as-co as-rn2 - :as-co as-rn2 as-long-rel then as-cs 2 + :as-cs ;
 \ GNU as pads 16-bit code with these no-ops. Only 16-bit code aligns inside text here.
@@ -253,7 +256,7 @@ def as-emit-section :as-fsec as-fsec as-sec-base :as-rawbase as-fsec 5 - if0 as-
 
 def as-fix-pos :as-fa2 as-fa2 as-g3 as-fa2 3 + byte@ :as-rs as-rs 1 - if0 1 else as-rs 5 - if0 1 else 0 then then ifnz as-pold as-rs as-slot + as-fa2 4 + as-g3 3 * + as-g3 + then ;
 def as-fix-out :as-rs as-rs 1 - if0 as-out-text exit then as-rs 5 - if0 as-out-entry exit then as-rs as-sec-base ;
-def as-apply as-i as-fix-rec :as-fa as-fa 3 + byte@ :as-fsec as-fa as-fix-pos :as-fp2 as-fa 7 + byte@ :as-fz2 as-fa 10 + as-g3 :as-fy2 as-fa 13 + as-g3 :as-fu2 as-fa 16 + as-g4 :as-fv2 as-fsec as-fix-out as-fp2 + :as-fw as-fu2 ifnz as-fy2 as-rec 4 + byte@ as-fu2 as-rec 4 + byte@ - if0 as-fw as-fy2 as-final as-fu2 as-final - as-fv2 + as-fz2 as-put-n then exit then as-fy2 as-rec 4 + byte@ 6 - if0 as-fw as-fy2 as-rec 12 + as-g4 as-fv2 + as-fz2 as-put-n exit then as-fa 8 + byte@ ifnz as-fy2 as-reach? ifnz as-fy2 as-rec 11 + byte@ 1 band if0 as-fy2 as-final as-fv2 + as-fp2 as-fz2 + as-fa 9 + byte@ + - :as-fd as-fz2 1 - if0 as-fd as-fit8 if0 "AS-BAD-LINE loop target out of range" type cr 1 :as-failed then then as-fw as-fd as-fz2 as-put-n then then then ;
+def as-apply as-i as-fix-rec :as-fa as-fa 3 + byte@ :as-fsec as-fa as-fix-pos :as-fp2 as-fa 7 + byte@ :as-fz2 as-fa 10 + as-g3 :as-fy2 as-fa 13 + as-g3 :as-fu2 as-fa 16 + as-g4 :as-fv2 as-fsec as-fix-out as-fp2 + :as-fw as-fa 21 + as-fp2 as-p3 as-fa 20 + 0 ! as-fu2 ifnz as-fy2 as-rec 4 + byte@ as-fu2 as-rec 4 + byte@ - if0 as-fw as-fy2 as-final as-fu2 as-final - as-fv2 + as-fz2 as-put-n as-fa 20 + 1 ! then exit then as-fy2 as-rec 4 + byte@ 6 - if0 as-fa 20 + 1 ! as-fw as-fy2 as-rec 12 + as-g4 as-fv2 + as-fz2 as-put-n exit then as-fa 8 + byte@ ifnz as-fy2 as-reach? ifnz as-fy2 as-rec 11 + byte@ 1 band if0 as-fy2 as-final as-fv2 + as-fp2 as-fz2 + as-fa 9 + byte@ + - :as-fd as-fz2 1 - if0 as-fd as-fit8 if0 "AS-BAD-LINE loop target out of range" type cr 1 :as-failed then then as-fw as-fd as-fz2 as-put-n as-fa 20 + 1 ! then then then ;
 def as-fixups 0 :as-i begin as-i as-nf - while as-apply as-i 1 + :as-i repeat ;
 
 def as-hex-digit :as-x as-x 10 - if as-x 48 + emit else as-x 87 + emit then ;

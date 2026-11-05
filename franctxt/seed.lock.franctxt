@@ -1,9 +1,9 @@
 franctxt 1
 schema = "francos.seed-lock.v1"
-seed.aot-sha256 = "sha256:a74e25b1e00f7f611e5f484e83178bf57b711d38ccbb05de680937c3cb16dee7"
-seed.assembly-sha256 = "sha256:39d39c5d4bbfdc1319716156c123087ab9046daff26de5f5680d1a8c7e9397dc"
+seed.aot-sha256 = "sha256:9ed6704c2704e9c17c202856a21d625d1126adbef4a660de49e58b09eb1b1acc"
+seed.assembly-sha256 = "sha256:23348bfdf9dea7ebd2ae13d6b57c6d2648466d699467f9be4a28f0588ee5b330"
 seed.compiler-sha256 = "sha256:cccfc38612326b4dda4a45e97b08fd01300d698cde58d3be8fc9661dcd720464"
-seed.inputs-sha256 = "sha256:2a5a9407825825ac267120ca2ca49ef6f164caedd4054f63db6dd62fea0338f3"
+seed.inputs-sha256 = "sha256:78fa812aed0eea22fda393134463ff9ebe5a9c7d0fb28f7d080389eee786d3e9"
 seed.registry-sha256 = "sha256:53df370ce0d9b1c9a3937446e861d6ebad5ad2156393d4103c63aca2aff90bf3"
 seed.source-count = 11
 seed.source-list-sha256 = "sha256:8e651ac0623740a2e19b260a185b46b1c602f29b2602549c3f39a5131a897b24"

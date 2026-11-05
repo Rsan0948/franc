@@ -34,7 +34,7 @@ def aot-call :ac-name "  call " type ac-name aot-name 10 emit ;
 def aot-prog-token :apt-token apt-token byte@ 34 - if0 apt-token aot-string exit then apt-token byte@ 58 - if0 apt-token 1 + aot-reg-set exit then apt-token aot-operator ifnz 1 exit then apt-token s2-number :apt-valid :apt-den :apt-num apt-valid ifnz apt-num apt-den aot-literal exit then apt-token aot-reg-get ifnz 1 exit then apt-token aot-call 1 ;
 \ A true relocatable multi-definition unit. Static calls use symbolic function
 \ names and do not depend on addresses of the live kernel's JIT dictionary.
-def aot-program :ap-input ap-input :s2p "FRANC-PROGRAM-BEGIN" type cr ".text" type cr ".global franc_aot_entry" type cr "franc_aot_entry:" type cr aot-kernel-mode ifnz ".global franc_entry" type cr "franc_entry:" type cr then aot-kernel-mode ifnz "boot" else "main" then aot-call "  ret" type cr 0 :ap-in-def 0 :s2sp 0 :ac-next-id s2p aot-reg-scan ap-input :s2p begin aot-next :ap-token ap-token if0 ap-in-def ifnz "FRANC-PROGRAM-ERROR" type cr 0 exit then aot-kernel-mode ifnz ap-input aot-emit-kernel-metadata then "FRANC-PROGRAM-END" type cr 1 exit then ap-token "def" s2-eq ifnz ap-in-def ifnz "FRANC-PROGRAM-ERROR" type cr 0 exit then aot-next :ap-name ap-name if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then ap-name aot-name ":" type cr 1 :ap-in-def else ap-token ";" s2-eq ifnz ap-in-def if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then s2sp ifnz "FRANC-PROGRAM-ERROR" type cr 0 exit then "  ret" type cr 0 :ap-in-def else ap-in-def if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then ap-token aot-program-word if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then then then again ;
+def aot-program :ap-input ap-input :s2p "FRANC-PROGRAM-BEGIN" type cr ".text" type cr ".global franc_aot_entry" type cr "franc_aot_entry:" type cr aot-kernel-mode ifnz ".global franc_entry" type cr "franc_entry:" type cr then aot-kernel-mode ifnz "boot" else "main" then aot-call "  ret" type cr 0 :ap-in-def 0 :s2sp 0 :ac-next-id s2p aot-reg-scan ap-input :s2p begin aot-next :ap-token ap-token if0 ap-in-def ifnz "FRANC-PROGRAM-ERROR" type cr 0 exit then aot-kernel-mode ifnz ap-input aot-emit-kernel-metadata then aot-emit-cells "FRANC-PROGRAM-END" type cr 1 exit then ap-token "def" s2-eq ifnz ap-in-def ifnz "FRANC-PROGRAM-ERROR" type cr 0 exit then aot-next :ap-name ap-name if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then ap-name aot-name ":" type cr 1 :ap-in-def else ap-token ";" s2-eq ifnz ap-in-def if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then s2sp ifnz "FRANC-PROGRAM-ERROR" type cr 0 exit then "  ret" type cr 0 :ap-in-def else ap-in-def if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then ap-token aot-program-word if0 "FRANC-PROGRAM-ERROR" type cr 0 exit then then then again ;
 def aot-program-demo "def square dup * ;\ndef main 7 square . ;" aot-program drop ;
 
 
@@ -57,7 +57,8 @@ def aot-control-demo "def choose dup 0 - if drop 11 else drop 22 then ;\ndef mai
 
 
 \ String literals and named registers for relocatable AOT compilation.
-\ String bytes are emitted as .rodata; register cells use COMMON symbols.
+\ String bytes are emitted as .rodata; register cells go in .bss, in first-seen order,
+\ so the link does not depend on how a linker orders COMMON symbols.
 \ The prepass collects declared registers so reads can precede stores.
 def aot-data-byte :adb-n "  .byte " type adb-n aot-dec cr ;
 def aot-str-label :asl-id ".Laot_string_" type asl-id aot-dec ;
@@ -69,7 +70,8 @@ def aot-reg-remember :arr-name arr-name aot-reg-find ifnz exit then aot-reg-used
 def aot-reg-scan :ars-source 0 :aot-reg-used ars-source :s2p begin aot-next :ars-token ars-token if0 exit then ars-token byte@ 58 - if0 ars-token 1 + aot-reg-remember then again ;
 def aot-reg-label :arl-name "reg_" type arl-name aot-name ;
 def aot-reg-addr :ara-name "  leaq " type ara-name aot-reg-label "(%rip), %rdi" type cr ;
-def aot-reg-set :ars-name ".comm " type ars-name aot-reg-label ",16,16" type cr ars-name aot-reg-addr "  call fr_reg_set" type cr 1 ;
+def aot-reg-set :ars-name ars-name aot-reg-addr "  call fr_reg_set" type cr 1 ;
+def aot-emit-cells ".section .bss" type cr ".balign 16" type cr 0 :aec-pos begin aec-pos aot-reg-used - if0 exit then s2-line-buffer aec-pos + aot-reg-label ":" type cr "  .skip 16" type cr aec-pos aot-reg-end :aec-pos again ;
 def aot-reg-get :arg-name arg-name aot-reg-find if0 0 exit then arg-name aot-reg-addr "  call fr_reg_get" type cr 1 ;
 def aot-string-reg-demo "def main 10 :saved \"Franc AOT\" type 10 emit saved . ;" aot-program drop "FRANC-STRING-END" type cr ;
 

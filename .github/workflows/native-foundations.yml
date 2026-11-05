@@ -11,6 +11,7 @@ on:
       - 'tests/foundations/**'
       - 'tests/asm_speed/**'
       - 'tests/toolchain/**'
+      - 'tests/link/**'
       - 'lib/toolchain.frac'
       - 'build/toolchain*'
       - 'franctxt/**'
@@ -24,6 +25,7 @@ on:
       - 'tests/foundations/**'
       - 'tests/asm_speed/**'
       - 'tests/toolchain/**'
+      - 'tests/link/**'
       - 'lib/toolchain.frac'
       - 'build/toolchain*'
       - 'franctxt/**'
@@ -62,3 +64,5 @@ jobs:
         run: bash tests/toolchain/run.sh build/out/francos-bios.img
       - name: The Franc assembler matches GNU as on every kernel input
         run: bash tests/asm_speed/run.sh build/out/francos-bios.img
+      - name: The Franc linker matches GNU ld and objcopy
+        run: bash tests/link/run.sh build/out/francos-bios.img build/out/boot.bin build/out/kernel.bin
