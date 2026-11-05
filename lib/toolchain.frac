@@ -19,3 +19,5 @@ def tc-load tc-reset 2048 tc-base 1 tc-read if0 "TOOLCHAIN READ FAILED" tc-fail 
 def tc-match :tm-name :tm-r 0 :tm-i begin tm-name tm-i + byte@ :tm-c tm-c ifnz tm-i 44 - if0 0 exit then tm-r tm-i + byte@ tm-c - ifnz 0 exit then tm-i 1 + :tm-i else tm-i 44 - if0 1 exit then tm-r tm-i + byte@ 32 - if0 1 exit then 0 exit then again ;
 def tc-find :tx-name 1 :tx-i begin tx-i tc-count 1 + - while tx-i tc-record tx-name tc-match ifnz tx-i tc-record exit then tx-i 1 + :tx-i repeat 0 ;
 def tc-compile tc-find :tp-r tp-r if0 0 exit then tp-r tc-addr s2-source ;
+def tc-tools "compiler/toolchain/assembler.frac" tc-compile if0 0 exit then "compiler/toolchain/linker.frac" tc-compile if0 0 exit then "compiler/toolchain/image.frac" tc-compile if0 0 exit then 1 ;
+def tc-build "im-build" s2-find :tb-word tb-word if0 tc-load if0 "BUILD FAILED: TOOLCHAIN" type cr exit then tc-tools if0 "BUILD FAILED: TOOLS" type cr exit then "im-build" s2-find :tb-word then tb-word s2-run ;

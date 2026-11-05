@@ -28,6 +28,7 @@ ANCHORS = {
     "toolchain": ("lib/toolchain.frac", "def tc-base"),
     "assembler": ("compiler/toolchain/assembler.frac", "def as-src"),
     "linker": ("compiler/toolchain/linker.frac", "def ld-sections"),
+    "image": ("compiler/toolchain/image.frac", "def im-seed"),
 }
 MAX_RAM = 128 * 1024 * 1024
 

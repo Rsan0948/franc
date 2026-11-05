@@ -38,7 +38,9 @@ def ld-rel 20 * ld-rels + ;
 def ld-external? :ld-er ld-er 11 + byte@ 1 band ifnz 1 exit then ld-er 4 + byte@ if0 1 exit then 0 ;
 def ld-reloc :ld-f ld-f 13 + as-g3 ifnz "LD-CROSS-SECTION" type cr 1 :ld-failed exit then ld-nr 209714 - if0 "relocations" as-limit 1 :ld-failed exit then ld-nr ld-rel :ld-t ld-t ld-f 3 + byte@ ! ld-t 1 + ld-f 21 + as-g3 as-p3 ld-t 4 + ld-f 7 + byte@ ! ld-t 5 + ld-f 8 + byte@ ! ld-t 6 + ld-f 9 + byte@ ! ld-t 16 + ld-nobj ! ld-t 12 + ld-f 16 + as-g4 as-p4 ld-f 10 + as-g3 :ld-y ld-y as-rec :ld-r ld-r ld-external? ifnz ld-t 7 + 1 ! ld-t 9 + ld-r as-g3 as-src + ld-r 3 + byte@ ld-find as-p3 else ld-t 7 + 0 ! ld-t 8 + ld-r 4 + byte@ ! ld-t 9 + ld-y as-final as-p3 then ld-nr 1 + :ld-nr ;
 def ld-relocs 0 :ld-i2 begin ld-i2 as-nf - while ld-i2 as-fix-rec :ld-fx ld-fx 20 + byte@ if0 ld-fx ld-reloc then ld-i2 1 + :ld-i2 repeat ;
-def ld-add :ld-file ld-file as-assemble if0 1 :ld-failed exit then 1 as-out-text as-text-end as-out-text - ld-keep 5 as-out-entry as-entry-end as-out-entry - ld-keep 2 as-ro as-saved 8 + as-g4 as-ro - ld-keep 3 as-data as-saved 12 + as-g4 as-data - ld-keep 4 0 as-saved 16 + as-g4 as-bss-base - ld-keep ld-exports ld-relocs ld-nobj 1 + :ld-nobj ;
+def ld-collect :ld-ok ld-ok if0 1 :ld-failed exit then 1 as-out-text as-text-end as-out-text - ld-keep 5 as-out-entry as-entry-end as-out-entry - ld-keep 2 as-ro as-saved 8 + as-g4 as-ro - ld-keep 3 as-data as-saved 12 + as-g4 as-data - ld-keep 4 0 as-saved 16 + as-g4 as-bss-base - ld-keep ld-exports ld-relocs ld-nobj 1 + :ld-nobj ;
+def ld-add as-assemble ld-collect ;
+def ld-add-text as-assemble-text ld-collect ;
 
 def ld-max-align :ld-ms 1 :ld-m 0 :ld-o begin ld-o ld-nobj - while ld-o ld-ms ld-sec 7 + as-g3 :ld-v ld-m ld-v - if ld-v :ld-m then ld-o 1 + :ld-o repeat ld-m ;
 def ld-place :ld-ps 0 :ld-o begin ld-o ld-nobj - while ld-o ld-ps ld-sec :ld-kr ld-a ld-kr 7 + as-g3 ld-up :ld-a ld-kr 10 + ld-a as-p4 ld-a ld-kr 4 + as-g3 + :ld-a ld-o 1 + :ld-o repeat ;
@@ -54,4 +56,6 @@ def ld-finish :ld-b0 ld-failed ifnz 0 exit then ld-b0 ld-layout ld-flat-end ld-b
 def ld-report :ld-rn "LD-SIZE " type ld-rn . ld-rn ifnz "LD-SHA " type ld-image ld-rn sha256-long type cr then ;
 def ld-dump :ld-dn "LD-IMAGE" type cr ld-image ld-image ld-dn + as-dump "LD-IMAGE-END" type cr ;
 def ld-boot ld-reset "boot/bios/boot.S" ld-add $7C00 ld-finish ;
-def ld-kernel :ld-seed ld-reset "runtime/abi.S" ld-add "drivers/video/font.S" ld-add ld-seed ld-add $10000 ld-finish ;
+def ld-kernel-start ld-reset "runtime/abi.S" ld-add "drivers/video/font.S" ld-add ;
+def ld-kernel ld-kernel-start ld-add $10000 ld-finish ;
+def ld-kernel-text ld-kernel-start ld-add-text $10000 ld-finish ;
