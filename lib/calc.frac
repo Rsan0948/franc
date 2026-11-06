@@ -11,11 +11,17 @@ def calc-ins :calc-char calc-len 127 - if calc-buffer calc-len + calc-char b! ca
 def calc-backspace calc-len ifnz calc-len 1 - :calc-len calc-buffer calc-len + 0 b! 8 emit 32 emit 8 emit then ;
 \ One history record per 128-byte slot, 16 slots, modulo circular indexing.
 def calc-save calc-saved 16 % 128 * history-buffer + :calc-ptr 0 :calc-i begin calc-i calc-len - while calc-buffer calc-i + b@ calc-ptr calc-i + swap b! calc-i 1 + :calc-i repeat calc-ptr calc-i + 0 b! calc-saved 1 + :calc-saved ;
-def calc-recall calc-saved if0 exit then calc-prev calc-saved - if calc-saved calc-prev - 1 - 16 % 128 * history-buffer + :calc-ptr 0 :calc-len begin calc-len 127 - while calc-ptr calc-len + b@ :calc-char calc-char if0 exit then calc-buffer calc-len + calc-char b! calc-len 1 + :calc-len repeat calc-buffer calc-len + 0 b! then ;
+def calc-recall calc-saved if0 exit then calc-prev if0 exit then calc-saved calc-prev - if exit then 16 calc-prev - if exit then calc-saved calc-prev - 16 % 128 * history-buffer + :calc-ptr 0 :calc-len begin calc-len 127 - while calc-ptr calc-len + b@ :calc-char calc-char if0 calc-buffer calc-len + 0 b! exit then calc-buffer calc-len + calc-char b! calc-len 1 + :calc-len repeat calc-buffer calc-len + 0 b! ;
 def calc-redraw 13 emit 0 :calc-i begin calc-i 39 - while 32 emit calc-i 1 + :calc-i repeat 13 emit "> " type calc-buffer type ;
+\ Preserve the draft while traversing history; scratch stays inside the
+\ existing calculator page, separate from its 16 history records.
+def calc-draft-save 0 :calc-i begin calc-i 128 - while calc-buffer calc-i + b@ :calc-char calc-buffer 128 + calc-i + calc-char b! calc-char if0 exit then calc-i 1 + :calc-i repeat ;
+def calc-draft-load 0 :calc-len begin calc-len 127 - while calc-buffer 128 + calc-len + b@ :calc-char calc-buffer calc-len + calc-char b! calc-char if0 exit then calc-len 1 + :calc-len repeat calc-buffer calc-len + 0 b! ;
+def calc-history-up calc-prev 16 - if calc-prev calc-saved - if calc-prev if0 calc-draft-save then calc-prev 1 + :calc-prev calc-recall calc-redraw then then ;
+def calc-history-down calc-prev ifnz calc-prev 1 - :calc-prev calc-prev if0 calc-draft-load else calc-recall then calc-redraw then ;
 \ Read a line using key events: ASCII, 1001=up arrow, Esc=27.
 \ Returns 1 for Esc, 0 for Enter. Backspace and history are handled here.
-def calc-read 0 :calc-len 0 :calc-prev calc-buffer 0 b! begin key :calc-key calc-key 27 - if0 1 exit then calc-key 10 - if0 10 emit 0 exit then calc-key 13 - if0 10 emit 0 exit then calc-key 8 - if0 calc-backspace else calc-key 127 - if0 calc-backspace else calc-key 1001 - if0 calc-prev 1 + :calc-prev calc-recall calc-redraw else 31 calc-key - if calc-key 127 - if calc-key calc-ins then then then then then again ;
+def calc-read 0 :calc-len 0 :calc-prev calc-buffer 0 b! begin key :calc-key calc-key 27 - if0 1 exit then calc-key 10 - if0 10 emit 0 exit then calc-key 13 - if0 10 emit 0 exit then calc-key 8 - if0 calc-backspace else calc-key 127 - if0 calc-backspace else calc-key 1001 - if0 calc-history-up else calc-key 1002 - if0 calc-history-down else 31 calc-key - if calc-key 127 - if calc-key calc-ins then then then then then then again ;
 def calc-calculate calc-len if0 exit then calc-save depth :calc-start calc-buffer eval depth calc-start - ifnz :calc-ans then ;
 def ans calc-ans ;
-def calc-main 1 key-mode "FracCalc | Enter: eval | Up: history | Esc: exit" type 10 emit begin "ans: " type calc-ans . "> " type calc-read ifnz 0 key-mode exit then calc-calculate again ;
+def calc-main 1 key-mode "FracCalc | Enter: eval | Up/Down: history | Esc: exit" type 10 emit begin "ans: " type calc-ans . "> " type calc-read ifnz 0 key-mode exit then calc-calculate again ;

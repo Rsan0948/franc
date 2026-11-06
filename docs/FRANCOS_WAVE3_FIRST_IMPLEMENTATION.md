@@ -1,5 +1,8 @@
 # FrancOS v1 — Wave 3 completed, verified and merged
 
+> Development record: Wave 3 acceptance. For the current system,
+> start with the [project overview](../README.md) and [build guide](BUILD_AND_TEST.md).
+
 **Accepted:** November 3, 2026, by [Wave 3 PR #14](https://github.com/Rsan0948/franc/pull/14). Native Franc-source CPL3 execution and the offline package lifecycle passed **17/17 CI workflow suites** on exact Wave 3 head `ac493c4e448bdc90631bb34314fbc11fa862477b`; merged into `main` via `6da6812bc55a369d5eb8cd55fabbb272e737e539`.
 
 **Binding finish line:** [FRANCOS_V1_DUAL_TRACK_ROADMAP.md](FRANCOS_V1_DUAL_TRACK_ROADMAP.md). Wave 3 passes its *paired* F3 + U3 acceptance but FrancOS v1 is NOT released yet. Wave 4 integration and the single contiguous end-to-end demo remain release gates.

@@ -17,6 +17,14 @@ def run(source, graphics=False):
     return proc.returncode,proc.stdout,proc.stderr,data
 
 cases=[
+    ('history arrows restore typed draft',
+     'calc-main\n7\n123456\n99\x1b[A\x1b[A\x1b[B\x1b[B\n\x1b',
+     ('ans: 99\n',)),
+
+    ('history recall terminates shorter expression',
+     'calc-main\n7\n123456\n\x1b[A\x1b[A\n\x1b',
+     ('> 7\nans: 7\n> Frac>',)),
+
     ('dynamic evaluation and dictionary mutation',
      '"1/3 1/6 +" eval .\n"def twice dup + ;" eval\n7 twice .\n',
      ('Frac> 1/2\n','Frac> 14\n')),

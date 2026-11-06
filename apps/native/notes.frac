@@ -1,0 +1,19 @@
+\ Notes library: persistent .txt notes and the legacy notes.frac file.
+\ Directory names use spare bytes 2200..2583 of the existing IDE page;
+\ the current note name uses 2700..2723. Numeric capture begins at 3072.
+def notes-map 32 * ide-buffer 2200 + + ;
+def notes-name ide-buffer 2700 + ;
+def notes-copy-name :notes-to :notes-from 0 :notes-j begin notes-j 24 - while notes-from notes-j + b@ :notes-char notes-to notes-j + notes-char b! notes-char if0 exit then notes-j 1 + :notes-j repeat ;
+def notes-is? dup "notes.frac" s2-eq ifnz drop 1 exit then dup fs-len :notes-len notes-len 4 - if drop 0 exit then notes-len 4 - + ".txt" s2-eq ;
+def notes-scan 0 :notes-count fs-ready? if0 0 exit then 129 ata-read-sector if0 0 exit then 0 :notes-i begin notes-i 12 - while notes-i 32 * sector-byte@ ifnz sector-buffer notes-i 32 * + dup notes-is? ifnz notes-count notes-map notes-copy-name notes-count 1 + :notes-count else drop then then notes-i 1 + :notes-i repeat 1 ;
+def notes-row :notes-ptr :notes-index notes-selected notes-index - if0 "> " vc-type else "  " vc-type then notes-ptr vc-type vc-newline ;
+def notes-list "Notes | saved notes" ui-frame "Up/Down select | Enter open" ui-help "N New note | Esc Home" ui-help 0 "New note" notes-row 0 :notes-i begin notes-i notes-count - while notes-i 1 + notes-i notes-map notes-row notes-i 1 + :notes-i repeat notes-count if0 "No saved notes yet." ui-status then ;
+def notes-save ide-save ifnz "Saved" ui-ok 1 else "Save failed | text retained" ui-error "Press a key to continue" ui-help key drop 0 then ;
+def notes-can-leave ide-buffer 2050 + b@ if0 1 exit then "Unsaved changes" ui-status "S Save | D Discard | Esc Stay" ui-help key :notes-key notes-key 115 - if0 notes-save exit then notes-key 19 - if0 notes-save exit then notes-key 100 - if0 1 exit then 0 ;
+def notes-edit 1 :ide-kind ide-edit 0 :ide-kind ;
+def notes-view-screen "Notes | read" ui-frame ide-file vc-type vc-newline ide-buffer 2050 + b@ ifnz "UNSAVED" ui-status else "SAVED" ui-status then "E Edit | S Save | Esc Notes list" ui-help ui-rule ide-buffer vc-type vc-newline ;
+def notes-view begin notes-view-screen key :notes-key notes-key 27 - if0 notes-can-leave ifnz exit then else notes-key 101 - if0 notes-edit else notes-key 115 - if0 notes-save drop else notes-key 19 - if0 notes-save drop then then then then again ;
+def notes-open notes-selected 1 - notes-map ide-load if0 "Note could not be read" ui-error key drop exit then notes-selected 1 - notes-map ide-set-name drop notes-view ;
+def notes-new "Notes | new note" ui-frame "Title (1-19 chars, without .txt)" ui-help "Enter continues | Esc cancels" ui-help "> " vc-type rl-read ifnz exit then repl-buffer fs-len :notes-len notes-len if0 "A title is required" ui-error key drop exit then notes-len 20 - if0 "Title too long (19 max)" ui-error key drop exit then notes-len 20 - if 0 :notes-j else "Title too long (19 max)" ui-error key drop exit then repl-buffer notes-name notes-copy-name 0 :notes-j begin notes-j 5 - while notes-name notes-len + notes-j + ".txt" notes-j + b@ b! notes-j 1 + :notes-j repeat notes-name fs-source ifnz "A note with that title exists" ui-error key drop exit then ide-reset ide-buffer 2050 + 1 b! notes-name ide-set-name drop notes-edit notes-view ;
+def notes-main 0 :notes-selected begin notes-scan if0 "Notes | disk unavailable" ui-frame "Press a key for Home" ui-help key drop exit then notes-selected notes-count - if 0 :notes-i else notes-selected notes-count - ifnz 0 :notes-selected then then notes-list key :notes-key notes-key 27 - if0 exit then notes-key 1001 - if0 notes-selected if0 notes-count :notes-selected else notes-selected 1 - :notes-selected then else notes-key 1002 - if0 notes-selected notes-count - if0 0 :notes-selected else notes-selected 1 + :notes-selected then else notes-key 110 - if0 notes-new else notes-key 10 - if0 notes-selected if0 notes-new else notes-open then then then then then again ;
+def app-edit notes-main ;

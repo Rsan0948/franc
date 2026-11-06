@@ -1,5 +1,8 @@
 # FrancOS engineering roadmap — Stage 4+
 
+> Development record: the November 3 engineering backlog. For the current system,
+> start with the [project overview](../README.md) and [build guide](BUILD_AND_TEST.md).
+
 **Integration authority:** `main` (Wave 1–3 accepted); Wave 4 development in `francos-v1-wave4-services-ui`  
 **Updated:** 2026-11-03  
 **Rule:** kernel, runtime and compiler use Franc + assembly, never a C/Python runtime. The separate UEFI firmware adapter may use C; CI and build-validation scripts may use Python, shell and binutils.

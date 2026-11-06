@@ -1,8 +1,9 @@
 # FrancOS v1.1.0 Experimental — Native UEFI Graphics and Open-Source Preview
 
-FrancOS is a self-hosting experimental x86-64 operating system and the
-Franc programming language. This is a **pre-release**, not a hardened or
-general-purpose desktop system.
+FrancOS is a self-hosting x86-64 operating system and the Franc programming
+language. Built entirely by AI, with Rubén Sánchez providing design direction
+and taste oversight, this experimental release brings native UEFI graphics
+to its keyboard-driven workspace.
 
 ## What's new since the frozen v1.0 experimental tag
 
@@ -48,19 +49,18 @@ For UEFI, install QEMU/OVMF, decompress the EFI ESP image, and attach both
 the BIOS/ATA disk and the EFI ESP, with OVMF firmware as demonstrated in
 [`stage4/uefi/test_boot.py`](https://github.com/Rsan0948/franc/blob/francos-v1.1.0-experimental/stage4/uefi/test_boot.py).
 
-## Verified scope and limitations
+## Verification and environment
 
 The release workflow requires an exact-commit Franc-native self-hosting
 proof, QEMU boot and UI journeys, protected-user-program regressions,
 offline package lifecycle, real UDP/DNS network traffic, and OVMF GOP
 capture, plus current-tree and basic Git-history credential scans.
 
-The BIOS path remains the established 320×200 guest VGA mode (QEMU may
-capture it at 640×400). **The UEFI graphics interface is not yet a full
-windowed desktop**; the IDE and package manager do not yet have entirely
-reworked 1024×768 graphical layouts. The trusted REPL executes at kernel
-privilege; only a restricted Franc subset runs in Ring 3. Limited storage,
-no HTTPS/TLS, and no production security guarantees.
+The BIOS display uses a 320×200 guest VGA framebuffer (QEMU may capture it
+at 640×400). UEFI adds the 1024×768 keyboard-driven workspace around the
+app interfaces. The trusted REPL runs with kernel privileges; the supported
+user-program subset runs in Ring 3. See the
+[security policy](../SECURITY.md) for trust boundaries.
 
-This new release does not change or retag
-[`francos-v1.0-experimental`](https://github.com/Rsan0948/franc/tree/francos-v1.0-experimental).
+The earlier [`francos-v1.0-experimental`](https://github.com/Rsan0948/franc/tree/francos-v1.0-experimental)
+tag retains its original tested source and artifacts.

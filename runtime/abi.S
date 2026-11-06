@@ -855,6 +855,14 @@ fr_pixel:
     imulq $320,%r10,%r10
     addq %rax,%r10
     movb %r11b,0xa0000(%r10)
+    movq %rax,%rdi
+    movq %r10,%rax
+    xorq %rdx,%rdx
+    movq $320,%rcx
+    divq %rcx
+    movq %rax,%rsi
+    movzbl %r11b,%edx
+    call fr_gop_pixel
 .pixelend:
     ret
 .global fr_clear
@@ -865,6 +873,7 @@ fr_clear:
     movl $64000,%ecx
     movb %dl,%al
     rep stosb
+    call fr_gop_clear
     ret
 
 .global fr_bfetch
@@ -898,6 +907,7 @@ fr_outb:
     movw %ax,%dx
     movb %r10b,%al
     outb %al,%dx
+    call fr_gop_palette_out
     ret
 .global fr_keyq
 fr_keyq:
@@ -1102,7 +1112,13 @@ PUSH_ADDRESS fr_s2_lit_addr,fr_push
 PUSH_ADDRESS fr_s2_reg_get_addr,fr_reg_get
 PUSH_ADDRESS fr_s2_reg_set_addr,fr_reg_set
 PUSH_ADDRESS fr_s2_sign_addr,fr_condition
-PUSH_ADDRESS fr_s2_string_addr,fr_push
+/* JIT string literals supply only RDI. RSI is caller-saved and may hold
+ * coordinates or scratch values after a drawing primitive. */
+.global fr_push_string
+fr_push_string:
+    movq $1,%rsi
+    jmp fr_push
+PUSH_ADDRESS fr_s2_string_addr,fr_push_string
 PUSH_ADDRESS fr_s2_self_source,franc_stage2_source
 PUSH_ADDRESS fr_repl_buffer,repl_input
 .global fr_aot_bundle_area

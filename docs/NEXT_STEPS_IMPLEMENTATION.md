@@ -1,5 +1,8 @@
 # `next steps`: implementation record (pre-Stage 3)
 
+> Development record: the pre-Stage 3 implementation. For the current system,
+> start with the [project overview](../README.md) and [build guide](BUILD_AND_TEST.md).
+
 This document tracks the private GitHub file named `next steps` and distinguishes
 implemented code from design sketches. The original is preserved in the root.
 

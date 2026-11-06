@@ -11,6 +11,7 @@ on:
       - 'franctxt/memory.franctxt'
       - 'franctxt/install_native.sh'
       - 'stage4/pack_native.sh'
+      - 'tests/qemu_ide_output.py'
       - '.github/workflows/uefi.yml'
   pull_request:
     paths:
@@ -21,6 +22,7 @@ on:
       - 'franctxt/build.py'
       - 'franctxt/memory.franctxt'
       - 'franctxt/install_native.sh'
+      - 'tests/qemu_ide_output.py'
       - '.github/workflows/uefi.yml'
 permissions:
   contents: read
@@ -50,6 +52,28 @@ jobs:
         env:
           FRANC_UEFI_CAPTURE_DIR: stage4/uefi/screenshots
         run: python3 stage4/uefi/test_boot.py
+      - name: Build and boot canonical UEFI artifact paths
+        run: |
+          make os-uefi
+          FRANC_BIOS_IMAGE=build/out/francos-bios.img \
+          FRANC_UEFI_ESP=build/out/francos-uefi-esp.img \
+          FRANC_UEFI_CAPTURE_DIR=build/out/uefi-captures \
+            python3 stage4/uefi/test_boot.py
+      - name: Verify physical keyboard and application pixels in GOP
+        run: |
+          python3 tests/qemu_native_integration.py build/out/francos-bios.img \
+            build/out/francos-uefi-esp.img \
+            /usr/share/OVMF/OVMF_CODE_4M.fd /usr/share/OVMF/OVMF_VARS_4M.fd
+      - name: Check Notes library and familiar app flows in GOP
+        run: |
+          python3 tests/qemu_app_qol.py build/out/francos-bios.img \
+            build/out/francos-uefi-esp.img \
+            /usr/share/OVMF/OVMF_CODE_4M.fd /usr/share/OVMF/OVMF_VARS_4M.fd
+      - name: Check IDE output, shell prompt and Escape navigation in GOP
+        run: |
+          python3 tests/qemu_ide_output.py build/out/francos-bios.img \
+            build/out/francos-uefi-esp.img \
+            /usr/share/OVMF/OVMF_CODE_4M.fd /usr/share/OVMF/OVMF_VARS_4M.fd
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -1,17 +1,25 @@
 # Security policy
 
-FrancOS is an experimental x86-64 QEMU-focused operating system. It is not
-suitable for untrusted workloads or protection of sensitive data. The native
-trusted Franc REPL runs with kernel privilege. Only a restricted, audited Franc
-user-program subset is executed as protected Ring 3 code. Storage is not
-journaled; packages verify local content hashes but not publisher signatures;
-the networking implementation does not support HTTPS/TLS.
+FrancOS is developed and tested as an experimental operating system in QEMU.
+Use a disposable guest for exploration and trusted source for the native REPL
+and apps, which execute with kernel privileges. The supported user-program
+subset runs as protected Ring 3 code with tested preemption and fault isolation.
 
-Please **do not publish exploit details or secrets in public issues**. Once
-the repository is public, use GitHub's private vulnerability reporting or
-contact the maintainers through a private channel they designate. There is
-currently no promised security support or patch response SLA.
+## Trust boundaries
 
-No release should claim secure boot, hardened process isolation, broad device
-support or signed online software distribution without separately verified
-implementation and independent review.
+`FRANCFS1` uses a small, non-journaled persistent directory. Offline packages
+verify content hashes against their manifest; publisher signatures are outside
+the current package format. Networking supports Ethernet/IP/ICMP/UDP/DNS;
+HTTPS/TLS is outside the current network stack. These boundaries make QEMU
+with non-sensitive data the appropriate environment for trying FrancOS.
+
+## Report a vulnerability
+
+Keep exploit details, credentials, and private data out of public issues.
+Use GitHub's private vulnerability reporting when available, or contact the
+maintainer through a designated private channel. Security reports are handled
+on a best-effort basis.
+
+Describe the affected commit, reproduction steps, and observed impact.
+Security and hardware support statements should identify the implementation
+and tests that establish them.

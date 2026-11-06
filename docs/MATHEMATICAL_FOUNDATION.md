@@ -1,7 +1,7 @@
 # The Franc Mathematics Bible
 ## An implementation-grounded reference to rational arithmetic, exceptional values, and numerical libraries
 
-**Scope:** Franc / Frac and FrancOS, including the historical hosted runtime and the experimental C-free native kernel. This is an engineering and mathematical reference, **not** a claim of a new theorem, a formal proof of wheel axioms, or unlimited precision.
+**Scope:** Franc / Frac and FrancOS, covering the hosted interpreter, native Franc/assembly runtime, numerical representation, algorithms, and tested behavior.
 
 ## 1. The thesis: ratios before approximations
 
@@ -13,7 +13,7 @@ A Franc numeric value is represented primarily as a **rational pair (numerator, 
 
 Why it matters: many programming languages encourage programmers to treat approximations as if they were exact numeric values. Fractions are exact **within the representable range**. In Franc, a number does not quietly turn into a binary approximation just because it is expressed as a ratio.
 
-In the hosted implementation, the core representation is a 16-byte pair of signed 64-bit integers. The native operating system uses the same pair shape but has a separate assembly runtime, and it does **not** necessarily implement every hosted syntax feature. Exactness **is not** unlimited size.
+In the hosted implementation, the core representation is a 16-byte pair of signed 64-bit integers. The native operating system uses the same pair shape through a separate assembly runtime. The hosted interpreter and native compiler each support their own syntax set; exact results are bounded by the signed 64-bit pair representation.
 
 ## 2. Canonicalization, identity and equality
 
@@ -34,7 +34,7 @@ Mathematically, finite values behave like the field of rational numbers Q **only
 | --- | --- | --- |
 | Hosted Frac (historical frac.c) | Two signed 64-bit integers, 16 bytes | Uses signed 128-bit intermediates for basic operations; canonicalizes results; out-of-range normalized results become bottom |
 | Native FrancOS (native assembly runtime) | Same signed-64-bit pair ABI | Implements arithmetic and normalization in x86-64 assembly: a 64-bit fast path, plus an exact 128-bit path for overflow and exceptional operands. Checked inside the OS against the conformance table |
-| Optional big-number module | A separate bounded-arena, unsigned base-256 limb object | Does **not** replace the core rational ABI or automatically make every rational arbitrary precision |
+| Optional big-number module | A separate bounded-arena, unsigned base-256 limb object | Provides unsigned multi-limb arithmetic alongside the core rational ABI |
 
 ## 3. Infinity, bottom, and the wheel-inspired model
 

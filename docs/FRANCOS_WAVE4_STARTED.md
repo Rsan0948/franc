@@ -1,5 +1,8 @@
 # FrancOS v1 — Wave 4 completed (F4 + U4)
 
+> Development record: Wave 4 acceptance. For the current system,
+> start with the [project overview](../README.md) and [build guide](BUILD_AND_TEST.md).
+
 **Accepted on November 3, 2026:** [Wave 4 PR #15](https://github.com/Rsan0948/franc/pull/15), source head `a92563aca5d2b0cdc6979d53b02503c005ffb16f`. All **14/14 GitHub Actions suites passed**; merged to `main` as `1b0d101957d8736a8910696aec53194560dbe462`. This closes all four paired waves. The exact-main release tag is gated separately; see [the release record](FRANCOS_V1_RELEASE_CANDIDATE.md).
 
 ## F4: reusable native networking and persistence

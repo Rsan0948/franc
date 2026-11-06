@@ -44,7 +44,7 @@ This document records the **implemented source migration** begun after the froze
     tests/                          Hosted and QEMU regression checks
     archive/stages/stage1-4/         Unmodified stage snapshots for study
 
-## How to build the real OS now
+## Build the OS
 
 From the repository root:
 
@@ -59,8 +59,7 @@ The general hosted Frac JIT remains built with **make** and tested via
 **make test**. See [build and test guide](BUILD_AND_TEST.md).
 
 The new native Makefile names subsystem-owned sources explicitly and
-self-hosts from **build/seed_sources.list**, not a hardcoded list of stage
-directories.
+self-hosts from the ordered manifest **build/seed_sources.list**.
 
 ## Why do some stage paths still appear?
 
@@ -76,7 +75,7 @@ To avoid maintaining two editable kernels:
   and drivers/.
 - The active Stage 4 kernel, runtime, boot, video, network and app source
   files are also **symlink aliases** into their new subsystem directories.
-  There is one editable source body, not two.
+  Each alias resolves to one canonical editable source.
 - Historical Stage 1 and non-live Stage 3 files are linked to the copies
   under **archive/stages/**. Existing test scripts and Makefiles that still
   depend on old relative paths are retained as compatibility interfaces.
@@ -92,11 +91,8 @@ reference exactly those same bytes in the same bundle order. The existing
 legacy stage manifest stays pinned so older binary identity checks and
 immutable tags continue to work.
 
-**This is an implemented subsystem migration, not removal of all legacy
-compatibility paths.** Complete removal of stage* compatibility should
-follow a separately tested revision of all QEMU runners, provenance tooling,
-Franctxt build-authority constants and release workflows. No one should
-delete those aliases prematurely just to make the tree look cleaner.
+Compatibility paths can be retired as their QEMU runners, provenance tools,
+Franctxt constants, and release workflows move to the canonical build interface.
 
 ## Numeric and language core
 
@@ -106,17 +102,16 @@ states. The compiler is located at **compiler/native/compiler.frac**, and
 opt-in number theory and approximation libraries live under **lib/**.
 
 See [the mathematical foundation reference](MATHEMATICAL_FOUNDATION.md)
-for the math's behavior, examples, use cases and explicit limitations.
+for numerical behavior, examples, algorithms, and representation bounds.
 
 ## Boot and privilege boundaries
 
 BIOS boot enters the Franc/assembly freestanding kernel. UEFI has a small
 separate C firmware adapter handing off to the same C-free kernel with GOP
-information. The trusted REPL and full app bundle remain privileged; only
-a restricted Franc user-program subset runs in Ring 3. This is a
-QEMU-focused experimental OS, not a portable or hardened general-purpose
-desktop. The operating system's pre-v1.1 source and tests remain available
-through its immutable release tags.
+information. The trusted REPL and full app bundle run with kernel privileges;
+the supported user-program subset runs in Ring 3. QEMU is the development
+and validation target. See the [security policy](../SECURITY.md) for trust
+boundaries. Published release tags retain their source and tests.
 
 ## Migration acceptance
 
@@ -131,5 +126,5 @@ A migration must satisfy:
 6. The new top-level native build independently produces a bootable disk and
    verifies native generations 2 and 3.
 
-A passing **source layout check alone** is not an OS proof; use
-**make os-proof** and the actual guest tests.
+Validate source layout with **tools/verify_architecture_layout.py**, native
+reproducibility with **make os-proof**, and runtime behavior with guest tests.

@@ -25,7 +25,7 @@ CAPTURE.mkdir(parents=True, exist_ok=True)
 
 
 class Guest:
-    def __init__(self, disk, work, name):
+    def __init__(self, disk, work, name, extra_args=()):
         self.out = bytearray()
         self.monitor_path = work / f"{name}.sock"
         self.process = subprocess.Popen([
@@ -33,7 +33,7 @@ class Guest:
             "-display", "none", "-no-reboot",
             "-monitor", f"unix:{self.monitor_path},server=on,wait=off",
             "-serial", "stdio", "-drive", f"file={disk},format=raw,if=ide"
-        ], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        ] + list(extra_args), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
            stderr=subprocess.STDOUT, bufsize=0)
         self.selector = selectors.DefaultSelector()
         self.selector.register(self.process.stdout, selectors.EVENT_READ)
@@ -83,14 +83,20 @@ class Guest:
             self.monitor = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.monitor.settimeout(timeout)
             self.monitor.connect(str(self.monitor_path))
-            self.monitor.recv(8192)
+            greeting = b""
+            while not greeting.endswith(b"(qemu) ") and time.monotonic() < deadline:
+                greeting += self.monitor.recv(8192)
+            assert greeting.endswith(b"(qemu) "), greeting
         self.monitor.sendall((command + "\n").encode("ascii"))
         result = b""
         deadline = time.monotonic() + timeout
-        while b"(qemu)" not in result and time.monotonic() < deadline:
+        while not result.endswith(b"(qemu) ") and time.monotonic() < deadline:
             result += self.monitor.recv(8192)
-        assert b"(qemu)" in result, result
-        assert b"Error" not in result and b"error" not in result, result
+        assert result.endswith(b"(qemu) "), result
+        # HMP echoes the command (including screenshot filenames). Only
+        # inspect the response after that line for an actual monitor error.
+        response = result.split(b"\r\n", 1)[-1]
+        assert b"Error" not in response and b"error" not in response, response
         return result
 
     def screenshot(self, name):
@@ -142,90 +148,95 @@ class Guest:
         self.process.wait()
 
 
-with tempfile.TemporaryDirectory(prefix="franc-wave1-") as temp:
-    work = Path(temp)
-    disk = work / "wave1.img"
-    shutil.copyfile(IMAGE, disk)
-    g = Guest(disk, work, "first")
-    try:
-        g.expect(b"FrancOS HOME | single user", timeout=180)
-        g.expect(b"Franc> ", timeout=30)
-        g.screenshot("home")
+def main():
+    with tempfile.TemporaryDirectory(prefix="franc-wave1-") as temp:
+        work = Path(temp)
+        disk = work / "wave1.img"
+        shutil.copyfile(IMAGE, disk)
+        g = Guest(disk, work, "first")
+        try:
+            g.expect(b"FrancOS HOME | single user", timeout=180)
+            g.expect(b"Franc> ", timeout=30)
+            g.screenshot("home")
 
-        # HMP sendkey creates real PS/2 arrow events, not serial escape
-        # sequences that the single-byte COM1 adapter might misdecode.
-        start = len(g.out)
-        g.hmp("sendkey down")
-        g.expect(b"> 2  Notes", start, 35)
-        # UART emits before VGA glyph rasterization; finish full redraw.
-        g.expect(b"Franc> ", start, 65)
-        g.screenshot("home-selection")
-        print("PASS: PS/2 Down changes native Home focus", flush=True)
+            # HMP sendkey creates real PS/2 arrow events, not serial escape
+            # sequences that the single-byte COM1 adapter might misdecode.
+            start = len(g.out)
+            g.hmp("sendkey down")
+            g.expect(b"> 2  Notes", start, 35)
+            # UART emits before VGA glyph rasterization; finish full redraw.
+            g.expect(b"Franc> ", start, 65)
+            g.screenshot("home-selection")
+            print("PASS: PS/2 Down changes native Home focus", flush=True)
 
-        # Direct number selection must lazily load the original apps without
-        # forcing the user to memorize a REPL word or separate load command.
-        g.key(b"1", b"FracCalc | Enter:", timeout=260)
-        g.line("1/3 1/6 +", b"ans: 1/2", timeout=110)
-        g.key(b"\x1b", b"Franc> ", timeout=110)
-        print("PASS: fresh guest launched and returned from FracCalc", flush=True)
+            # Direct number selection must lazily load the original apps without
+            # forcing the user to memorize a REPL word or separate load command.
+            g.key(b"1", b"FracCalc | Enter:", timeout=260)
+            g.line("1/3 1/6 +", b"ans: 1/2", timeout=110)
+            g.key(b"\x1b", b"Franc> ", timeout=110)
+            print("PASS: fresh guest launched and returned from FracCalc", flush=True)
 
-        g.key(b"z", b"files> ")
-        g.screenshot("files")
-        g.key(b"n", b"New filename> ")
-        g.line("homefile.frac", b"Source line> ")
-        g.line("def homesum 7 8 + ;", b"CREATED", timeout=110)
-        g.expect(b"homefile.frac", len(g.out)-2000, 40)
-        g.key(b"r", b"Rename old> ")
-        g.line("homefile.frac", b"Rename new> ")
-        g.line("renamed.frac", b"RENAMED", timeout=110)
-        g.key(b"o", b"Open name> ")
-        g.line("renamed.frac", b"def homesum 7 8 + ;", timeout=110)
-        g.key(b"\x1b", b"Franc> ")
-        print("PASS: keyboard file create, rename and open from Home", flush=True)
+            g.key(b"z", b"files> ")
+            g.screenshot("files")
+            g.key(b"n", b"New filename> ")
+            g.line("homefile.frac", b"Source line> ")
+            g.line("def homesum 7 8 + ;", b"CREATED", timeout=110)
+            g.expect(b"homefile.frac", len(g.out)-2000, 40)
+            g.key(b"r", b"Rename old> ")
+            g.line("homefile.frac", b"Rename new> ")
+            g.line("renamed.frac", b"RENAMED", timeout=110)
+            g.key(b"o", b"Open name> ")
+            g.line("renamed.frac", b"def homesum 7 8 + ;", timeout=110)
+            g.key(b"\x1b", b"Franc> ")
+            print("PASS: keyboard file create, rename and open from Home", flush=True)
 
-        package_view = g.key(b"m", b"pkg> ", timeout=160)
-        if os.getenv("FRANC_TEST_WAVE4") == "1":
-            assert b"FrancOS PACKAGES | verified" in package_view, package_view[-1600:]
-            assert b"l Status | i Install/update" in package_view and b"b Rollback | u Uninstall" in package_view
-            print("PASS: shared FrancOS VGA/serial package typography and keyboard shortcuts", flush=True)
-        g.screenshot("packages")
-        g.key(b"\x1b", b"Franc> ")
-        g.key(b"9", b"ide> ", timeout=130)
-        g.key(b"e", b"FrancOS IDE", timeout=60)
-        g.screenshot("ide")
-        g.key(b"\x1b", b"ide> ", timeout=60)
-        g.key(b"q", b"Franc> ", timeout=60)
-        print("PASS: accessible native Packages and IDE with normal return paths", flush=True)
-    finally:
-        g.close()
+            package_view = g.key(b"m", b"pkg> ", timeout=160)
+            if os.getenv("FRANC_TEST_WAVE4") == "1":
+                assert b"FrancOS PACKAGES | verified" in package_view, package_view[-1600:]
+                assert b"l Status | i Install/update" in package_view and b"b Rollback | u Uninstall" in package_view
+                print("PASS: shared FrancOS VGA/serial package typography and keyboard shortcuts", flush=True)
+            g.screenshot("packages")
+            g.key(b"\x1b", b"Franc> ")
+            g.key(b"9", b"ide> ", timeout=130)
+            g.key(b"e", b"FrancOS IDE", timeout=60)
+            g.screenshot("ide")
+            g.key(b"\x1b", b"ide> ", timeout=60)
+            g.key(b"q", b"Franc> ", timeout=60)
+            print("PASS: accessible native Packages and IDE with normal return paths", flush=True)
+        finally:
+            g.close()
 
-    # Reboot the same persisted disk, not a fresh copy of the seed image.
-    g = Guest(disk, work, "second")
-    try:
-        g.expect(b"Franc> ", timeout=180)
-        g.key(b"z", b"files> ")
-        start = len(g.out) - 2000
-        assert b"renamed.frac" in g.out[start:], bytes(g.out[start:])
-        g.key(b"o", b"Open name> ")
-        g.line("renamed.frac", b"def homesum 7 8 + ;")
-        g.key(b"d", b"Delete name> ")
-        g.line("renamed.frac", b"DELETED")
-        g.key(b"\x1b", b"Franc> ")
-        print("PASS: file survived a cold reboot and was then removed", flush=True)
-    finally:
-        g.close()
+        # Reboot the same persisted disk, not a fresh copy of the seed image.
+        g = Guest(disk, work, "second")
+        try:
+            g.expect(b"Franc> ", timeout=180)
+            g.key(b"z", b"files> ")
+            start = len(g.out) - 2000
+            assert b"renamed.frac" in g.out[start:], bytes(g.out[start:])
+            g.key(b"o", b"Open name> ")
+            g.line("renamed.frac", b"def homesum 7 8 + ;")
+            g.key(b"d", b"Delete name> ")
+            g.line("renamed.frac", b"DELETED")
+            g.key(b"\x1b", b"Franc> ")
+            print("PASS: file survived a cold reboot and was then removed", flush=True)
+        finally:
+            g.close()
 
-    # Verify directory deletion persists across a second cold reboot.
-    g = Guest(disk, work, "third")
-    try:
-        g.expect(b"Franc> ", timeout=180)
-        g.key(b"z", b"files> ")
-        start = len(g.out)
-        g.key(b"o", b"Open name> ")
-        g.line("renamed.frac", b"FILE NOT FOUND")
-        g.key(b"\x1b", b"Franc> ")
-        print("PASS: deleted source does not reappear after cold reboot", flush=True)
-    finally:
-        g.close()
+        # Verify directory deletion persists across a second cold reboot.
+        g = Guest(disk, work, "third")
+        try:
+            g.expect(b"Franc> ", timeout=180)
+            g.key(b"z", b"files> ")
+            start = len(g.out)
+            g.key(b"o", b"Open name> ")
+            g.line("renamed.frac", b"FILE NOT FOUND")
+            g.key(b"\x1b", b"Franc> ")
+            print("PASS: deleted source does not reappear after cold reboot", flush=True)
+        finally:
+            g.close()
 
-print("PASS: FrancOS Wave 1 contiguous Home/files/apps QEMU acceptance", flush=True)
+    print("PASS: FrancOS Wave 1 contiguous Home/files/apps QEMU acceptance", flush=True)
+
+
+if __name__ == "__main__":
+    main()

@@ -3,7 +3,7 @@
 AS ?= as
 LD ?= ld
 OBJCOPY ?= objcopy
-APP_SOURCES := $(shell sed '/^#/d; /^[[:space:]]*$/d' stage4/app_sources.list)
+APP_SOURCES := $(shell sed '/^#/d; /^[[:space:]]*$$/d' stage4/app_sources.list)
 .PHONY: all native-seed native-proof verified-native clean-native
 all: native-proof
 

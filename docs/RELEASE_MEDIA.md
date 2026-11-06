@@ -1,9 +1,9 @@
 # FrancOS release-media gallery (draft for next approved release)
 
-This content is prepared for a **future** open-source release announcement.
-It is not a retrospective modification to `francos-v1.0-experimental`.
-Do not copy this text into that immutable release's notes as if the
-high-resolution display were already part of that tag.
+FrancOS is a self-hosting operating system built entirely by AI, with
+Rubén Sánchez providing design direction and taste oversight. This draft
+introduces its native UEFI workspace, apps, and mathematical tools. Pin
+media links to the tested release tag when preparing the announcement.
 
 ## See FrancOS running
 
@@ -25,8 +25,8 @@ These images are lossless PNG conversions of genuine QEMU/OVMF screenshots.
 Their source workflows and SHA-256 digests are recorded in
 [the screenshot provenance file](https://github.com/Rsan0948/franc/blob/main/docs/screenshots/SOURCES.md).
 
-The newer display and the older BIOS applications are shown separately;
-not all applications yet use the high-resolution UI.
+The gallery includes the 1024×768 UEFI workspace and the compact BIOS app
+interfaces, with captions identifying each display.
 
 Before release, replace references to `main` above with the exact tested
 release tag, confirm the release actually includes the graphics branch, and

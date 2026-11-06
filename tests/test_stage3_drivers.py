@@ -2,7 +2,7 @@
 from pathlib import Path
 import subprocess
 ROOT=Path(__file__).resolve().parents[1]
-source=(ROOT/'stage3/drivers.frac').read_text()
+source=(ROOT/'drivers/input/keyboard.frac').read_text()
 program=source + '\n' + '''
 2 dk-map .
 13 dk-map .
@@ -20,6 +20,12 @@ program=source + '\n' + '''
 203 dk-scancode .
 1 dk-map .
 hardware? .
+dk-init
+1 dk-scancode .
+29 dk-scancode .
+19 dk-scancode .
+157 dk-scancode .
+19 dk-scancode .
 '''
 r=subprocess.run([str(ROOT/'frac')],input=program,text=True,capture_output=True,timeout=15)
 assert r.returncode==0,(r.returncode,r.stderr)
@@ -27,6 +33,6 @@ assert not r.stderr,r.stderr
 # The REPL prefixes each result with Frac>; definitions and input are silent.
 import re
 actual=[int(n) for n in re.findall(r'Frac> (-?\d+)\n',r.stdout)]
-expected=[49,61,8,113,97,122,32,-1,65,-1,97,-1,1003,-1,0,0]
+expected=[49,61,8,113,97,122,32,-1,65,-1,97,-1,1003,-1,27,0,27,-1,18,-1,114]
 assert actual==expected,(actual,expected,r.stdout[-1100:])
 print('PASS: Franc PS/2 scan map, Shift, E0 arrows, release and inert host port I/O')

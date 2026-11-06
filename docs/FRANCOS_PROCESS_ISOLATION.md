@@ -1,5 +1,8 @@
 # FrancOS memory handoff and process fault-containment increment
 
+> Development record: the process-isolation foundation. For the current system,
+> start with the [project overview](../README.md) and [build guide](BUILD_AND_TEST.md).
+
 **Branch:** `stage4-process-isolation-foundation` (stacked on the merged Stage 4 UDP/JIT scheduler work)
 
 ## Verified baseline

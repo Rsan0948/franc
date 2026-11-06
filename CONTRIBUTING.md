@@ -1,53 +1,54 @@
 # Contributing to FrancOS
 
-FrancOS is a small experimental operating system and programming language.
-The main release baseline is `francos-v1.0-experimental`; current development
-must not rewrite that tag.
+FrancOS is a self-hosting operating system and programming language, built
+entirely by AI with Rubén Sánchez providing design direction and taste oversight.
+Contributions help improve the language, apps, system, and developer experience.
 
-## Getting started
+## Get started
 
-Required for the native BIOS build: GNU assembler, linker and objcopy,
-make, sh/bash, awk, dd and QEMU x86-64. Python 3 is used for host tests only.
-From a supported x86-64 Linux development environment:
+The native BIOS build uses GNU binutils, Make, sh/bash, awk, dd, and QEMU
+x86-64. Python 3 runs host tests and build-identity checks. From x86-64 Linux:
 
 ```sh
 python3 -m franctxt.build preflight
-make -f stage4/Makefile.native native-proof
-python3 stage4/qemu_home.py stage4/native_seed.img
+make os
+make os-proof
+python3 stage4/qemu_home.py build/out/francos-bios.img
 ```
 
-The full native proof boots and rebuilds two additional generations in QEMU.
-Do not substitute a source-level test for guest execution.
+`make os-proof` boots and rebuilds two additional generations inside QEMU,
+then compares their output. See the [build guide](docs/BUILD_AND_TEST.md)
+for graphical launch, UEFI, and focused app tests.
 
-For a focused change, run relevant unit and QEMU suites and record the exact
-commit tested. Native application sources are listed in
-`stage4/app_sources.list`. Kernel inputs are listed in
-`stage4/seed_sources.list`; changing them requires an explicit
-reproducible bootstrap seed and Franctxt lock repin.
+## Work in the active source tree
 
-## Pull requests
+The canonical directories are `boot/`, `compiler/`, `runtime/`, `kernel/`,
+`drivers/`, `system/`, `apps/native/`, and `lib/`. Edit these sources directly.
+`build/app_sources.list` orders the app bundle; `build/seed_sources.list`
+orders kernel inputs. Kernel-input changes require regenerating the bootstrap
+seed and Franctxt lock together and verifying reproducible generations.
 
-- Explain what behavior changes, what does not, and the tests performed.
-- Keep kernel, compiler, UI and repository moves in reviewable increments.
-- Preserve serial fallback and actual framebuffer tests for graphical changes.
-- Keep private data and credentials out of commits, tests and screenshots.
-- Avoid claiming production security or compatibility with untested hardware.
-- For architectural questions, see `docs/REPO_ARCHITECTURE.md` and
-  `docs/FRANCOS_V1_RELEASE_CANDIDATE.md`.
+Historical stage paths provide compatibility aliases; `archive/stages/`
+preserves the original snapshots. The [architecture guide](docs/REPO_ARCHITECTURE.md)
+explains source ownership. For structural changes, run:
 
-The project may remain private until its maintainer elects to publish it.
+```sh
+python3 tools/verify_architecture_layout.py
+make os-proof
+```
 
-## Standard-layout native development
+## Submit a pull request
 
-The active OS source directories are `boot/`, `compiler/`, `runtime/`,
-`kernel/`, `drivers/`, `system/`, `apps/native/` and `lib/`.
-Use `make os` for the active native BIOS image and `make os-proof` for the
-Franc-built generation-2/3 QEMU identity proof. The historical stage trees
-are archived under `archive/stages/`; do not change those snapshots.
-Compatibility stage paths are symlinks to canonical source files. When
-changing a native source, edit the canonical file, not an archive copy.
-Run `python3 tools/verify_architecture_layout.py` and the full native
-proof before submitting a structural change.
+- Describe the user-visible behavior, implementation, and relevant test results.
+- Keep kernel, compiler, UI, and repository changes in reviewable increments.
+- Test graphical changes with keyboard journeys and framebuffer captures.
+- Exercise affected behavior in a booted guest and record the commit tested.
+- Keep credentials and private data out of source, logs, and screenshots.
+- Describe hardware and execution support using the targets actually tested.
 
-The numeric model is explained in
-[the Franc Mathematics Bible](docs/MATHEMATICAL_FOUNDATION.md).
+Published tags preserve their tested source and artifacts. Further development
+receives a new commit and release identity.
+
+For numerical behavior, see the
+[mathematical foundation](docs/MATHEMATICAL_FOUNDATION.md). For privilege and
+trust boundaries, see the [security policy](SECURITY.md).

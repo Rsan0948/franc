@@ -19,6 +19,8 @@ cleanup() {
     rm -rf "$scratch"
 }
 trap cleanup EXIT HUP INT TERM
+cp "$image" "$scratch/source.img"
+image=$scratch/source.img
 size=$(wc -c < "$image" | tr -d ' ')
 blank() { truncate -s $((size + 1048576)) "$1"; }
 
@@ -42,7 +44,7 @@ build() {
     done
     printf w >&3
     limit=$((SECONDS + ${FRANC_IMAGE_LIMIT:-500}))
-    until grep -Eaq 'IMAGE READY|BUILD REFUSED|BUILD FAILED|FAULT' "$log"; do
+    until finished "$log"; do
         if [ "$SECONDS" -ge "$limit" ]; then echo "FAIL: build did not finish" >&2; tr -d '\r' < "$log" | grep -a -E '^(BUILD|AS-|LD-|APPS|TOOLCHAIN)' | tail -n 12 | cut -c1-120 >&2; exit 1; fi
         sleep 0.5
     done
@@ -50,6 +52,18 @@ build() {
     stop_guest
     tr -d '\r' < "$log" > "$scratch/clean.log"
 }
+
+# read executes its body only for newline-terminated records. A prefix such
+# as "BUILD FAILED: TOOLCH" is not a completed guest result.
+finished() {
+    while IFS= read -r record; do
+        case "$record" in
+            'IMAGE READY'|'BUILD REFUSED:'*|'BUILD FAILED:'*|'FAULT'*) return 0 ;;
+        esac
+    done < "$1"
+    return 1
+}
+
 status=0
 expect() {
     if grep -Fxq "$1" "$scratch/clean.log"; then
@@ -62,6 +76,7 @@ expect() {
 }
 same_prefix() { cmp -n "$size" "$1" "$2" > "$scratch/cmp" 2>&1; }
 
+if [ "${FRANC_IMAGE_BUILD_ONLY:-0}" != 1 ]; then
 # Refusals come first: they are quick and must not touch either disk.
 cp "$image" "$scratch/a.img"
 build "$scratch/a.img"
@@ -79,6 +94,14 @@ before=$(sha256sum < "$scratch/b.img")
 build "$scratch/damaged.img" "$scratch/b.img"
 expect 'BUILD FAILED: TOOLCHAIN' 'refuses a damaged toolchain archive'
 if [ "$before" = "$(sha256sum < "$scratch/b.img")" ]; then echo "PASS: nothing was written"; else echo "FAIL: a damaged archive wrote to the disk"; status=1; fi
+
+fi
+
+if [ "${FRANC_IMAGE_REFUSALS_ONLY:-0}" = 1 ]; then exit "$status"; fi
+if [ "${FRANC_IMAGE_BUILD_ONLY:-0}" = 1 ]; then
+    cp "$image" "$scratch/a.img"
+    blank "$scratch/b.img"
+fi
 
 start=$SECONDS
 before=$(sha256sum < "$scratch/a.img")

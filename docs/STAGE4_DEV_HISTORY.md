@@ -1,5 +1,8 @@
 # Stage 4: first C-free native boot (experimental AOT bridge)
 
+> Development record: the Stage 4 bootstrap sequence. For the current system,
+> start with the [project overview](../README.md) and [build guide](BUILD_AND_TEST.md).
+
 This is **not** the completed FrancOS migration. It is an independently bootable
 kernel compiled from `kernel.frac` to native x86-64 with **no C source, C
 object, libc, or C runtime** in the kernel binary or Stage 4 Makefile.
@@ -56,7 +59,7 @@ assembly seed and verifies source compilation, factorial, rational arithmetic,
 Stern-Brocot navigation and the interactive FracCalc. Native app sources are
 loaded from LBA 1024 and higher; LBA 512 remains available for the kernel's
 self-bootstrap source bundle. No C or Python is invoked to construct the native
-OS or the app bundle. See [the full native app inventory](apps/README.md)
+OS or the app bundle. See [the full native app inventory](../apps/native/README.md)
 for entries, compatibility adapters and caveats.
 
 ## Native console and keyboard migration (experimental)

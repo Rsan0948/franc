@@ -1,0 +1,5 @@
+\ Shared native app entrypoints. Libraries keep their callable/noninteractive
+\ words; launchers provide titles, help, and a deliberate return action.
+def app-calculator "Calculator" ui-frame "Postfix: 1/3 1/6 +" ui-help "Enter evaluates | Up/Down history" ui-help calc-main ;
+def app-math "Math | exact and approximate" ui-frame "1/3 rounded to 3 decimal places:" ui-help fp 3 fix-precision 1/3 fix . "Exact rounding difference:" ui-help 1/3 fix 1/3 - . "355/113 continued fraction:" ui-help 355/113 cf :ca :cx . cx . ca . :fp "MATH READY | press a key for Home" ui-help key drop ;
+def app-demo "Demo | Franc examples" ui-frame "1/7 = " vc-type 1/7 . "-1/6 = " vc-type -1/6 . "50 / 100 = " vc-type 50 100 / . "5 squared = " vc-type 5 sq . "5 factorial = " vc-type 5 app-factorial . "DEMO READY | press a key for Home" ui-help key drop ;

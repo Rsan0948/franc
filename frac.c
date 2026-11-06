@@ -971,20 +971,25 @@ static RamFile* find_ram_file(const char* name) {
     for(int i=0;i<g_ram_count;i++)if(strcmp(g_ram_files[i].name,name)==0)return &g_ram_files[i];
     return NULL;
 }
-HELPER void h_save(void) {
-    if(!need(2))return;
+static int save_source(void) {
+    if(!need(2))return 0;
     Rat src=*--g_sp,name=*--g_sp;
-    if(src.den!=1||name.den!=1||!src.num||!name.num)return;
+    if(src.den!=1||name.den!=1||!src.num||!name.num)return 0;
     const char *n=(const char*)(uintptr_t)name.num,*s=(const char*)(uintptr_t)src.num;
     size_t nn=strlen(n),sn=strlen(s);
-    if(!nn||nn>=48||sn>=MAX_RAM_SOURCE){fprintf(stderr,"save: file too large\n");return;}
+    if(!nn||nn>=48||sn>=MAX_RAM_SOURCE){fprintf(stderr,"save: file too large\n");return 0;}
     RamFile* f=find_ram_file(n);
-    if(!f){if(g_ram_count==MAX_RAM_FILES){fprintf(stderr,"save: RAM store full\n");return;}f=&g_ram_files[g_ram_count++];}
+    if(!f){if(g_ram_count==MAX_RAM_FILES){fprintf(stderr,"save: RAM store full\n");return 0;}f=&g_ram_files[g_ram_count++];}
     memcpy(f->name,n,nn+1);memcpy(f->source,s,sn+1);
     /* Only persist on a deliberately formatted/attached disk. */
-    if(franc_disk_formatted() && !franc_disk_save_source(n,s))
+    if(franc_disk_formatted() && !franc_disk_save_source(n,s)) {
         fprintf(stderr,"save: disk write failed (RAM copy retained)\n");
+        return 0;
+    }
+    return 1;
 }
+HELPER void h_save(void) { (void)save_source(); }
+HELPER void h_checked_save(void) { h_push(save_source(),1); }
 HELPER void h_load(void) {
     if(!need(1))return;
     Rat name=*--g_sp;
@@ -1075,7 +1080,7 @@ int main(void) {
     add_word("font-row",h_font_row);add_word("host-emit",h_emit);
     add_word("host-type",h_type);add_word("host-save",h_save);
     add_word("host-source",h_source);add_word("host-files",h_files);
-    add_word("eval",h_eval);add_word("save",h_save);
+    add_word("eval",h_eval);add_word("save",h_save);add_word("fs-save",h_checked_save);
     add_word("load",h_load);add_word("files",h_files);
     add_word("source",h_source);add_word("copy",h_copy);
     add_word("disk-format",h_disk_format);add_word("disk-ready?",h_disk_ready);

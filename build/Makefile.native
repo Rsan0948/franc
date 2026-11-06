@@ -5,8 +5,8 @@ AS ?= as
 LD ?= ld
 OBJCOPY ?= objcopy
 OUT := build/out
-APP_SOURCES := $(shell sed '/^#/d; /^[[:space:]]*$/d' build/app_sources.list)
-SEED_SOURCES := $(shell sed '/^#/d; /^[[:space:]]*$/d' build/seed_sources.list)
+APP_SOURCES := $(shell sed '/^#/d; /^[[:space:]]*$$/d' build/app_sources.list)
+SEED_SOURCES := $(shell sed '/^#/d; /^[[:space:]]*$$/d' build/seed_sources.list)
 
 .PHONY: all bios uefi abi os-proof check-layout clean
 all: bios

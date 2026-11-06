@@ -29,3 +29,5 @@ drivers/network/udp.frac
 lib/services.frac
 lib/pkg.frac
 kernel/scheduler/fibers.frac
+apps/native/notes.frac
+apps/native/workspace.frac

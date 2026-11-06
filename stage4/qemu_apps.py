@@ -63,9 +63,11 @@ with tempfile.TemporaryDirectory(prefix='franc-native-apps-') as temp:
         assert match and int(match.group(1))>=60,loaded[-1500:]
         print(f'PASS: Franc guest compiled {int(match.group(1))} source lines from all 12 native libraries',flush=True)
 
-        demo=send_key(b'8',b'Franc> ',timeout=120)
-        assert b'120\nFrancOS HOME' in demo, demo[-1400:]
-        assert b'25\n120\n' in demo,demo[-1000:]
+        demo=send_key(b'8',b'DEMO READY',timeout=120)
+        read_until(b'Home',len(out)-100,30)
+        send_key(b' ',b'Franc> ',timeout=50)
+        assert b'120\n' in demo, demo[-1400:]
+        assert b'5 squared = 25\n' in demo and b'5 factorial = 120\n' in demo,demo[-1000:]
         print('PASS: native example runs exact rational and recursive factorial code',flush=True)
 
         send_key(b'r',b'Frac> ',timeout=45)
@@ -84,9 +86,9 @@ with tempfile.TemporaryDirectory(prefix='franc-native-apps-') as temp:
         send_key(b'\x1b',b'Franc> ',timeout=50)
         print('PASS: interactive FracCalc evaluates rational expression in native guest',flush=True)
         # Interactive source editor is the original lib/edit.frac, not a test stub.
-        send_key(b'2',b'Edit RAM source: notes.frac',timeout=60)
-        send_line('def eight 8 ;',b'Franc> ',timeout=70)
         send_key(b'r',b'Frac> ',timeout=45)
+        send_line('"notes.frac" edit-line',b'> ',timeout=60)
+        send_line('def eight 8 ;',b'Frac> ',timeout=70)
         send_line('"notes.frac" load',b'Frac> ')
         send_line('eight .',b'8\nFrac> ')
         send_line('1/3 1/6 1/6 1/3 dd+ . .',b'1/2\n1/2\nFrac> ')
@@ -95,7 +97,8 @@ with tempfile.TemporaryDirectory(prefix='franc-native-apps-') as temp:
         send_line('0 sin .',b'0\nFrac> ',timeout=140)
         print('PASS: native source editor/save/load, dd, intervals, continued fractions and trigonometry',flush=True)
         send_key(b'\x1b',b'Franc> ',timeout=45)
-        send_key(b'4',b'Franc> ',timeout=150)
+        send_key(b'4',b'PICTURE READY',timeout=150)
+        send_key(b' ',b'Franc> ',timeout=50)
         print('PASS: original crosshair program renders with Franc-native line primitive',flush=True)
         # Execute Ford and spirograph library code, not just load their names.
         # Small deterministic scenes bound the time of this software-QEMU gate.

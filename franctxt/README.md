@@ -86,12 +86,11 @@ integer and rational lexical values. It does not compile input data,
 and the parser never executes config values. Configuration changes
 are stored but are NOT automatically applied as kernel policies.
 
-CRITICAL: Native Franc uses a freestanding x86-64 assembly SHA-256 primitive to
-recompute canonical Franctxt document identities and compare the initial
-configuration against its separate persisted manifest. This is an
-integrity consistency check only. It does NOT verify Ed25519 signatures
-inside the guest, verify the authenticity of the manifest, protect
-private keys, or implement secure boot.
+Native Franc uses a freestanding x86-64 assembly SHA-256 primitive to
+recompute canonical document identities and compare the initial configuration
+against its persisted manifest. This checks content consistency against that
+manifest. Authenticated signatures use the host-side tools and external trust
+model described below.
 
 ## Optional authenticated signatures
 
@@ -128,12 +127,11 @@ and guest boot/persistence using actual QEMU.
 
 ## Scope
 
-Franctxt v1 is a bounded interoperability baseline, not an arbitrary
-schema/expression VM, virtual memory manager, distributed consensus
-protocol, secure boot chain, encrypted secrets format, or transactional
-state journal. Standardized richer types, kernel-side cryptographic
-verification, atomic config updates, and signed release policy are
-future, separately testable increments.
+Franctxt v1 provides typed declarative documents, canonical serialization,
+semantic content identities, and host-side signature tools. Native readers
+inspect configuration and verify content consistency. Future work includes
+richer standardized types, kernel-side signature verification, atomic
+configuration updates, and signed release policy.
 
 Native commands for the current canonical disk documents:
     ft-config ft-hash type cr
