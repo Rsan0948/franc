@@ -1,6 +1,6 @@
 \ Notes library: persistent .txt notes and the legacy notes.frac file.
 \ Directory names use spare bytes 2200..2583 of the existing IDE page;
-\ the current note name uses 2700..2723. Numeric capture begins at 3072.
+\ the current note name uses 2700..2723. Numeric capture uses 2880..3007.
 def notes-map 32 * ide-buffer 2200 + + ;
 def notes-name ide-buffer 2700 + ;
 def notes-copy-name :notes-to :notes-from 0 :notes-j begin notes-j 24 - while notes-from notes-j + b@ :notes-char notes-to notes-j + notes-char b! notes-char if0 exit then notes-j 1 + :notes-j repeat ;

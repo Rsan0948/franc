@@ -100,7 +100,7 @@ Targeted input, app output, persistence, picture and IDE regressions:
       build/out/francos-uefi-esp.img /path/to/OVMF_CODE.fd /path/to/OVMF_VARS.fd
 
 The native app output bindings use the existing Franc console. Numeric
-formatting captures the original native formatter into the final 1 KiB of
+formatting captures the original native formatter into bytes 2880–3007 of
 the existing IDE scratch page before drawing it; source and IDE state stay
 within their original bounds. Drawing primitives preserve the VGA backing
 store and map pixels/palette writes to a bounded GOP viewport when present.

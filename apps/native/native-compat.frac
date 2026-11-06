@@ -13,10 +13,11 @@ def emit ide-buffer 2096 + b@ ifnz native-emit else vc-put then ;
 def native-type type ;
 def type ide-buffer 2096 + b@ ifnz native-type else vc-type then ;
 def cr 10 emit ;
-\ Capture the original numeric formatter before rebinding dot. The final
-\ 1 KiB of the existing IDE page is reserved scratch, outside source/state.
+\ Capture the original numeric formatter before rebinding dot. The
+\ formatter scratch occupies bytes 2880..3007 of the existing IDE page,
+\ below the CPL3 emitter at 3072..3327 and run output at 3360..3999.
 def native-dot . ;
-def . ide-buffer 2096 + b@ ifnz native-dot exit then ide-buffer 3072 + dup 127 + capture-start native-dot capture-stop dup if0 drop exit then 0 b! ide-buffer 3072 + vc-type ;
+def . ide-buffer 2096 + b@ ifnz native-dot exit then ide-buffer 2880 + dup 127 + capture-start native-dot capture-stop dup if0 drop exit then 0 b! ide-buffer 2880 + vc-type ;
 \ Deliberate scratch RAM reservations, outside framebuffer, bundle, and JIT.
 \ Wave 4 native app-loader dependency: the restricted CPL3 emitter needs the
 \ IDE scratch address before the full editor module is JIT-compiled. Both

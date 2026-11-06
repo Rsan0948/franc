@@ -195,10 +195,12 @@ with tempfile.TemporaryDirectory(prefix="franc-roadmap-") as tmp:
         line("ide-files", b"wave1.frac\nFrac> ")
         print("PASS: IDE cursor insertion/backspace, on-screen file list and persisted reload", flush=True)
         # Wave 3 F3 incremental boundary: native Franc source -> bounded
-        # x86 user-code bytes.  Execution in CPL3 is NOT yet claimed.
+        # x86 user-code bytes, preserved across console number formatting.
+        # Separate IRQ suites verify their execution in CPL3.
         line('"def main 100 count fault ;" user-compile .', b"36\nFrac> ")
         line("user-code-base b@ .", b"72\nFrac> ")
         line("user-code-base 1 + b@ .", b"191\nFrac> ")
+        line("1/3 . user-code-base b@ .", b"1/3\n72\nFrac> ")
         line('"def main 2 count again ;" user-compile .', b"17\nFrac> ")
         line("user-code-base 10 + b@ .", b"131\nFrac> ")
         line('"def main 0 count fault ;" user-compile .', b"0\nFrac> ")
