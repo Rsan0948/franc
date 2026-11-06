@@ -4,6 +4,8 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/francos-v1-release.yml'
+      - 'tools/release_tag_state.sh'
+      - 'tests/test_release_tag_state.py'
       - 'docs/FRANCOS_V1_RELEASE_CANDIDATE.md'
       - 'docs/FRANCOS_V1_DUAL_TRACK_ROADMAP.md'
       - 'docs/FRANCOS_WAVE4_STARTED.md'
@@ -12,7 +14,20 @@ on:
 permissions:
   contents: write
 jobs:
+  release-state:
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.tag.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test immutable release detection
+        run: python3 tests/test_release_tag_state.py
+      - name: Check whether v1.0 still needs publication
+        id: tag
+        run: sh tools/release_tag_state.sh francos-v1.0-experimental >> "$GITHUB_OUTPUT"
   tag-after-exact-main-proof:
+    needs: release-state
+    if: needs.release-state.outputs.publish == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 95
     steps:
