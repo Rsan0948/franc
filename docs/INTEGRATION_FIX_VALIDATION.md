@@ -9,7 +9,7 @@ save status to the shared Notes source. No project dependencies were added.
 
 - PS/2 Esc and Ctrl decoding, matching the serial control-character contract.
 - Shared app text/number output through the existing Franc console in BIOS
-  and UEFI; numeric capture uses the existing IDE page's spare final KiB.
+  and UEFI; numeric capture uses spare bytes in the existing IDE page.
 - Native pixel, clear and VGA DAC palette operations reach the GOP viewport,
   retaining VGA pixel readback. The viewport is bounds checked at 2x scale.
 - Native JIT string push sets denominator 1 explicitly; drawing may freely
@@ -109,3 +109,11 @@ serial evidence are stored in `build/out/ide-output-captures`.
 The complete journey passed in both BIOS and UEFI/GOP. The UEFI Notes/app
 journey also passed after these changes. A separate visible UEFI preview was
 reviewed with source and run output together, without touching the user's disk.
+
+## Numeric output and protected-code scratch
+
+CI caught a collision between numeric formatting and the restricted user-code
+emitter at IDE-page offsets 3072–3327. Numeric capture now uses 2880–3007,
+separate from Notes state, emitted code, and IDE output at 3360–3999. The
+roadmap guest checks emitted instruction bytes after printing compilation
+results and rational output; these bytes must remain intact.
