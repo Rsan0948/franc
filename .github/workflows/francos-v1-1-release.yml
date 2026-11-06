@@ -5,12 +5,16 @@ on:
     paths:
       - '.github/workflows/francos-v1-1-release.yml'
       - 'tools/history_audit.py'
+      - 'tools/release_tag_state.sh'
+      - 'tests/test_release_tag_state.py'
       - 'docs/RELEASE_NOTES_V1_1.md'
   push:
     branches: [main]
     paths:
       - '.github/workflows/francos-v1-1-release.yml'
       - 'tools/history_audit.py'
+      - 'tools/release_tag_state.sh'
+      - 'tests/test_release_tag_state.py'
       - 'docs/RELEASE_NOTES_V1_1.md'
 
 permissions:
@@ -24,10 +28,17 @@ jobs:
   review-publication-inputs:
     runs-on: ubuntu-latest
     timeout-minutes: 14
+    outputs:
+      publish: ${{ steps.tag.outputs.publish }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Test immutable release detection
+        run: python3 tests/test_release_tag_state.py
+      - name: Check whether v1.1 still needs publication
+        id: tag
+        run: sh tools/release_tag_state.sh francos-v1.1.0-experimental >> "$GITHUB_OUTPUT"
       - name: Check mainline release authority, manifest, screenshots and licenses
         run: |
           set -euo pipefail
@@ -48,7 +59,7 @@ jobs:
 
   tested-release:
     needs: review-publication-inputs
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.review-publication-inputs.outputs.publish == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 95
     steps:
