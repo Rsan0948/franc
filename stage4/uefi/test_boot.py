@@ -17,11 +17,12 @@ import time
 root = Path(__file__).resolve().parents[1]
 qemu = shutil.which("qemu-system-x86_64")
 assert qemu, "qemu-system-x86_64 missing"
-esp = root / "uefi" / "franc-esp.img"
-native = root / "native_seed.img"
+esp = Path(os.environ.get("FRANC_UEFI_ESP", str(root / "uefi" / "franc-esp.img"))).resolve()
+native = Path(os.environ.get("FRANC_BIOS_IMAGE", str(root / "native_seed.img"))).resolve()
 assert esp.is_file() and native.is_file()
 
 firmware = [
+    (os.environ.get("FRANC_OVMF_CODE", ""), os.environ.get("FRANC_OVMF_VARS") or None),
     ("/usr/share/OVMF/OVMF_CODE_4M.fd", "/usr/share/OVMF/OVMF_VARS_4M.fd"),
     ("/usr/share/OVMF/OVMF_CODE.fd", "/usr/share/OVMF/OVMF_VARS.fd"),
     ("/usr/share/ovmf/OVMF.fd", None),

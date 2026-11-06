@@ -42,7 +42,7 @@ fr_gop_putchar:
     movl fr_gop_row(%rip),%ecx
     cmpl $7,%ecx
     jb .Lgop_focus_checked
-    cmpl $15,%ecx
+    cmpl $31,%ecx
     ja .Lgop_focus_checked
     movl %ecx,fr_gop_focus_row(%rip)
     call .Lgop_focus_paint
@@ -396,4 +396,155 @@ fr_gop_clear_count: .long 0
 fr_gop_focus_row: .long 0
 fr_gop_column: .long 0
 fr_gop_row: .long 0
+.section .text,"ax"
+
+/* Native drawing primitives share the same GOP handoff as the text console.
+ * VGA remains the 320x200 indexed backing store for pixel@ and BIOS guests.
+ * The UEFI viewport is 2x at (32,112), with bounds checked before stores. */
+.section .text,"ax"
+fr_gop_pixel:
+    cmpl $0x50475246,fr_gop_descriptor(%rip)
+    jne .Lgp_done
+    pushq %rax
+    pushq %rcx
+    pushq %rdx
+    pushq %rdi
+    pushq %rsi
+    pushq %r8
+    pushq %r9
+    pushq %r10
+    pushq %r11
+    leal 32(%rdi,%rdi),%r8d
+    leal 112(%rsi,%rsi),%r9d
+    leal 1(%r8),%eax
+    cmpl fr_gop_descriptor+16(%rip),%eax
+    jae .Lgp_restore
+    leal 1(%r9),%eax
+    cmpl fr_gop_descriptor+20(%rip),%eax
+    jae .Lgp_restore
+    movzbl %dl,%edx
+    leaq fr_gop_palette(%rip),%rcx
+    movl (%rcx,%rdx,4),%r11d
+    cmpl $0,fr_gop_descriptor+28(%rip)
+    jne .Lgp_color_ready
+    /* GOP PixelRedGreenBlueReserved uses red in the low byte. */
+    movl %r11d,%eax
+    andl $0xff00,%r11d
+    movl %eax,%edx
+    andl $255,%edx
+    shll $16,%edx
+    orl %edx,%r11d
+    shrl $16,%eax
+    orl %eax,%r11d
+.Lgp_color_ready:
+    movl fr_gop_descriptor+24(%rip),%r10d
+    imull %r10d,%r9d
+    addl %r8d,%r9d
+    movq fr_gop_descriptor+8(%rip),%rdi
+    leaq (%rdi,%r9,4),%rdi
+    movl %r11d,(%rdi)
+    movl %r11d,4(%rdi)
+    movl %r11d,(%rdi,%r10,4)
+    movl %r11d,4(%rdi,%r10,4)
+.Lgp_restore:
+    popq %r11
+    popq %r10
+    popq %r9
+    popq %r8
+    popq %rsi
+    popq %rdi
+    popq %rdx
+    popq %rcx
+    popq %rax
+.Lgp_done:
+    ret
+
+fr_gop_clear:
+    cmpl $0x50475246,fr_gop_descriptor(%rip)
+    jne .Lgclear_done
+    pushq %rbx
+    pushq %r12
+    pushq %r13
+    movzbl %al,%r13d
+    call .Lgc_init
+    movl $0,fr_gop_column(%rip)
+    movl $0,fr_gop_row(%rip)
+    xorl %r12d,%r12d
+.Lgclear_y:
+    xorl %ebx,%ebx
+.Lgclear_x:
+    movl %ebx,%edi
+    movl %r12d,%esi
+    movl %r13d,%edx
+    call fr_gop_pixel
+    incl %ebx
+    cmpl $320,%ebx
+    jb .Lgclear_x
+    incl %r12d
+    cmpl $200,%r12d
+    jb .Lgclear_y
+    popq %r13
+    popq %r12
+    popq %rbx
+.Lgclear_done:
+    ret
+
+/* Observe the existing VGA DAC API, retaining six-bit RGB palette writes. */
+fr_gop_palette_out:
+    cmpw $0x3c8,%dx
+    jne .Lgpal_component
+    movzbl %al,%eax
+    movl %eax,fr_gop_palette_index(%rip)
+    movl $0,fr_gop_palette_component(%rip)
+    ret
+.Lgpal_component:
+    cmpw $0x3c9,%dx
+    jne .Lgpal_done
+    pushq %rax
+    pushq %rcx
+    pushq %rdx
+    pushq %rdi
+    andl $63,%eax
+    movl %eax,%edi
+    shll $2,%eax
+    shrl $4,%edi
+    orl %edi,%eax
+    movl fr_gop_palette_component(%rip),%ecx
+    movl $2,%edx
+    subl %ecx,%edx
+    shll $3,%edx
+    movl %edx,%ecx
+    shll %cl,%eax
+    movl $255,%edx
+    shll %cl,%edx
+    notl %edx
+    leaq fr_gop_palette(%rip),%rdi
+    movl fr_gop_palette_index(%rip),%ecx
+    andl %edx,(%rdi,%rcx,4)
+    orl %eax,(%rdi,%rcx,4)
+    incl fr_gop_palette_component(%rip)
+    cmpl $3,fr_gop_palette_component(%rip)
+    jb .Lgpal_restore
+    movl $0,fr_gop_palette_component(%rip)
+    incl %ecx
+    andl $255,%ecx
+    movl %ecx,fr_gop_palette_index(%rip)
+.Lgpal_restore:
+    popq %rdi
+    popq %rdx
+    popq %rcx
+    popq %rax
+.Lgpal_done:
+    ret
+.section .data
+.balign 4
+fr_gop_palette:
+    .long 0x000000,0x0000aa,0x00aa00,0x00aaaa
+    .long 0xaa0000,0xaa00aa,0xaa5500,0xaaaaaa
+    .long 0x555555,0x5555ff,0x55ff55,0x55ffff
+    .long 0xff5555,0xff55ff,0xffff55,0xffffff
+    .skip 960
+.section .bss
+fr_gop_palette_index: .long 0
+fr_gop_palette_component: .long 0
 .section .text,"ax"

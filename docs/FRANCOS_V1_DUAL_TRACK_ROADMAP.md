@@ -1,8 +1,8 @@
 # FrancOS v1 — two-track release contract
 
-**Status:** Proposed release scope, not a claim that the following work is complete.  
+**Scope:** The paired implementation and acceptance requirements for the v1 release. See the [release record](FRANCOS_V1_RELEASE_CANDIDATE.md) for outcomes.
 **Authority:** This document defines the FrancOS v1 finish line. [FRANCOS_NEXT_MILESTONES.md](FRANCOS_NEXT_MILESTONES.md) remains the detailed engineering backlog and [stage4/apps/README.md](../stage4/apps/README.md) remains the as-built app inventory.  
-**Target:** A cohesive, single-user **experimental x86-64 Franc operating system in QEMU**. It is not a production-secure, broadly portable replacement for a general-purpose OS.
+**Target:** A cohesive, single-user **x86-64 Franc operating system in QEMU**, with integrated apps, persistent files, protected user-program execution, and networking.
 
 ## Release principle
 

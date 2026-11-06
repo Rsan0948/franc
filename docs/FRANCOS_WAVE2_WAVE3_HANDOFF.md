@@ -1,5 +1,8 @@
 # FrancOS v1 — Wave 2 acceptance and Wave 3 handoff
 
+> Development record: Wave 2 implementation and Wave 3 handoff. For the current system,
+> start with the [project overview](../README.md) and [build guide](BUILD_AND_TEST.md).
+
 **Authority:** [FRANCOS_V1_DUAL_TRACK_ROADMAP.md](FRANCOS_V1_DUAL_TRACK_ROADMAP.md) remains the v1 release contract. This document records *testable implementation*, not a substitute for passing QEMU on the exact merge commit.
 
 ## Paired Wave 2 implementation

@@ -14,6 +14,8 @@ $(EFI_DIR)/loader.obj: $(EFI_DIR)/loader.c $(EFI_DIR)/uefi.h
 $(EFI): $(EFI_DIR)/loader.obj
 	$(LLD_LINK) /machine:x64 /subsystem:efi_application /entry:efi_main \
 	  /nodefaultlib /out:$@ $<
+build/out/kernel.bin:
+	$(MAKE) -f build/Makefile.native bios
 $(ESP): $(EFI) build/out/kernel.bin
 	truncate -s 64M $@
 	mformat -i $@ -F ::

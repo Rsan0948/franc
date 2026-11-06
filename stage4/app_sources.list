@@ -29,3 +29,5 @@ stage4/udp.frac
 lib/services.frac
 lib/pkg.frac
 stage4/fibers.frac
+apps/native/notes.frac
+apps/native/workspace.frac

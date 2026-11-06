@@ -1,4 +1,4 @@
-# Plan: make the self-hosting, exactness and isolation claims literally true
+# Self-hosting, numerical parity, and process isolation plan
 
 **Status:** started 2026-11-04 from `main` at `47ea545`. Phases 0 and 1 are merged (#22) and passed CI. Phase 2 is merged (#23) and passed CI. Phase 3 steps 1 and 2 are merged (#24) and passed CI. Step 3 is merged (#25) and passed CI. Step 4 is merged (#26) and passed CI. Step 5 is in #27. Step 6 passes locally. The rest of Phase 3 and Phase 4 have not started.
 

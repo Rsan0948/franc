@@ -1,5 +1,8 @@
 # FrancOS experimental v1 — integrated release candidate
 
+> Development record: the v1 release-candidate acceptance. For the current system,
+> start with the [project overview](../README.md) and [build guide](BUILD_AND_TEST.md).
+
 **Current status:** Waves 1–4 are fully implemented in `main` after [Wave 4 PR #15](https://github.com/Rsan0948/franc/pull/15) passed **14/14 exact-head GitHub Actions workflow suites**, including the full real-QEMU integrated acceptance driver. This is an experimental QEMU-focused operating system, not a production-secure, broadly portable desktop OS.
 
 **Release tag gate:** `.github/workflows/francos-v1-release.yml` rebuilds the final *main-commit* image, verifies byte-for-byte second/third generation self-hosting, repeats the integrated user journey, native Franc CPL3 fault isolation, six-cold-boot package lifecycle and live UDP/PCAP checks. It records main-image hashes and only creates the annotated `francos-v1.0-experimental` tag **if all those exact-main checks succeed**. Do not consider the tag published until it exists.

@@ -1,5 +1,8 @@
 # Required final milestone: zero C
 
+> Development record: the early native-bootstrap goals. For the current system,
+> start with the [project overview](../README.md) and [build guide](BUILD_AND_TEST.md).
+
 **Non-negotiable project objective:** the release candidate must boot, rebuild,
 and operate without any C code, C compiler, C runtime objects, or C-derived
 machine-code helpers. The current Stage 3 image does **not** meet this goal.

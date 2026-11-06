@@ -1,9 +1,21 @@
 name: Franc native applications — end-to-end QEMU
 on:
   push:
-    branches: [stage4-franc-native-bootstrap, stage4-roadmap-foundations]
+    branches: [main, stage4-franc-native-bootstrap, stage4-roadmap-foundations]
     paths:
       - 'stage4/**'
+      - 'boot/**'
+      - 'build/**'
+      - 'compiler/**'
+      - 'drivers/**'
+      - 'kernel/**'
+      - 'runtime/**'
+      - 'system/**'
+      - 'apps/native/**'
+      - 'tests/qemu_native*'
+      - 'tests/qemu_app_qol.py'
+      - 'tests/qemu_ide_output.py'
+      - 'tools/run_francos.sh'
       - 'franctxt/seed.lock.franctxt'
       - 'franctxt/build.py'
       - 'franctxt/memory.franctxt'
@@ -15,6 +27,18 @@ on:
   pull_request:
     paths:
       - 'stage4/**'
+      - 'boot/**'
+      - 'build/**'
+      - 'compiler/**'
+      - 'drivers/**'
+      - 'kernel/**'
+      - 'runtime/**'
+      - 'system/**'
+      - 'apps/native/**'
+      - 'tests/qemu_native*'
+      - 'tests/qemu_app_qol.py'
+      - 'tests/qemu_ide_output.py'
+      - 'tools/run_francos.sh'
       - 'franctxt/seed.lock.franctxt'
       - 'franctxt/build.py'
       - 'franctxt/memory.franctxt'
@@ -37,8 +61,18 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-system-x86
       - name: Assemble committed Franc-generated native kernel (no Python/C compiler)
         run: make -f stage4/Makefile.native native-seed
+      - name: Check launcher persistence against canonical image
+        run: |
+          make os
+          python3 tests/test_launcher_persistence.py
       - name: Check original Franc libraries and apps execute in native JIT
         run: python3 stage4/qemu_apps.py stage4/native_seed.img
+      - name: Verify physical keyboard, app screens and failure paths
+        run: |
+          python3 tests/qemu_native_integration.py stage4/native_seed.img
+          python3 tests/qemu_native_failures.py stage4/native_seed.img
+          python3 tests/qemu_app_qol.py stage4/native_seed.img
+          python3 tests/qemu_ide_output.py stage4/native_seed.img
       - name: Verify Stage 4+ roadmap libraries in the native guest
         run: python3 stage4/qemu_roadmap.py stage4/native_seed.img
       - name: Verify e1000 Ethernet DMA packet I/O against QEMU SLIRP

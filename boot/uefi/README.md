@@ -1,48 +1,44 @@
-# FrancOS experimental UEFI loader
+# FrancOS UEFI boot and graphics
 
-**C is allowed only in this UEFI firmware adapter.** The FrancOS kernel,
-Franc compiler, native JIT and AOT self-hosting remain C-free. Nothing
-here replaces the existing BIOS stage4/boot.S or changes its disk image.
+The UEFI adapter boots the Franc/assembly kernel and hands it a validated GOP
+framebuffer descriptor. FrancOS then renders text and graphics directly to
+the guest framebuffer. QEMU/OVMF acceptance exercises the 1024×768 display,
+keyboard navigation, applications, and persistent ATA storage.
 
-The separate PE32+ UEFI application is built freestanding using Clang
-and lld-link. It reads FRANC.KRN (the existing Franc-generated native
-kernel binary) from a FAT ESP, reserves physical memory at the
-kernel's original link address 0x10000, builds a 4GiB identity-mapped
-page table, obtains a fresh UEFI memory-map key, exits Boot Services,
-and jumps directly to the native kernel entry point. It does not use
-libc, UEFI runtime calls from the kernel, or a C-based kernel runtime.
+The adapter is a separate freestanding C PE32+ application, built with Clang
+and LLD. It reads `FRANC.KRN` from a FAT EFI system partition, reserves the
+kernel's fixed physical memory, builds identity-mapped startup page tables,
+obtains the UEFI memory map, exits Boot Services, and enters the native kernel.
+The kernel, compiler, and native runtime use Franc and assembly.
 
-## Build
+## Build and launch
 
-From repository root, with clang, lld-link, mtools and GNU binutils:
+From the repository root, with GNU binutils, Make, Clang, LLD, and mtools:
 
-    make -f stage4/Makefile.native native-seed
-    make -f stage4/uefi/Makefile esp
+```sh
+make os-uefi
+tools/run_francos.sh uefi
+```
 
-This produces stage4/uefi/BOOTX64.EFI and
-stage4/uefi/franc-esp.img (FAT32, containing
-EFI/BOOT/BOOTX64.EFI and FRANC.KRN).
+The build produces `boot/uefi/BOOTX64.EFI` and
+`build/out/francos-uefi-esp.img`, containing `EFI/BOOT/BOOTX64.EFI` and
+`FRANC.KRN`. The launcher attaches both the persistent ATA disk and the EFI
+system partition. Install QEMU and OVMF to run the guest; the launcher
+recognizes standard Linux and Homebrew firmware paths and accepts
+`FRANC_OVMF_CODE` and `FRANC_OVMF_VARS` overrides.
 
-The OVMF integration workflow also requires QEMU and OVMF. Its
-test_boot.py attaches the native disk as the first IDE master and
-the separate FAT ESP as a virtio block device; it confirms the
-UEFI-to-kernel transition, existing ATA storage, and application load.
+## Boot contract
 
-## Experimental limitations
+- The raw kernel loads at physical `0x10000`. The loader checks memory
+  availability and image size before entering it; constants are in
+  [`loader.c`](loader.c).
+- The EFI system partition supplies the loader and kernel. The primary
+  IDE disk supplies `FRANCFS1` storage and source bundles.
+- The GOP descriptor supplies framebuffer address, dimensions, pitch, and
+  pixel format to the assembly runtime; the BIOS path uses VGA.
+- The firmware memory map supports the Boot Services handoff. FrancOS
+  manages its own execution after that transition.
 
-- Requires x86-64 UEFI and RAM available at physical 0x10000;
-  the loader intentionally refuses to overwrite unallocated low RAM.
-- Loads only the known pinned, raw kernel image up to 158720 bytes;
-  there is no PE or ELF kernel relocation. The native fixed address
-  and the 0x80000 kernel stack remain unchanged.
-- Serial output is functional. The original FrancOS framebuffer writes
-  VGA Mode 13h at 0xA0000 and is **not compatible with UEFI GOP**.
-  No UEFI graphical framebuffer, real-world hardware or USB boot claim.
-- Still depends on an IDE primary-master image for FRANCFS1 and source
-  bundles. The UEFI FAT ESP is strictly the loader medium.
-- The UEFI memory map is used only for ExitBootServices; the kernel
-  does not yet parse the firmware map or preserve runtime services.
-- A 4GiB identity map is temporary boot scaffolding, **not** user/kernel
-  memory isolation or hardened page permission management.
-- The loader is a prototype for OVMF/QEMU, **not** tested on physical
-  UEFI computers. The separate BIOS bootstrap is unchanged.
+The supported validation target is QEMU/OVMF. See the
+[security policy](../../SECURITY.md) for trust boundaries and the
+[build guide](../../docs/BUILD_AND_TEST.md) for guest acceptance commands.

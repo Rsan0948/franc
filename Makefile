@@ -16,6 +16,7 @@ test: frac
 	python3 tests/test_stage3_storage_display.py
 	python3 tests/test_graphics.py
 	python3 tests/test_apps.py
+	python3 tests/test_native_integration.py
 	python3 tests/test_dd.py
 	python3 tests/test_persistence.py
 	python3 tests/test_qemu_visual.py

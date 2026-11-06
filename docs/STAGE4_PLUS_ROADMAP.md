@@ -1,5 +1,8 @@
 # FrancOS Stage 4+ roadmap execution (experimental branch)
 
+> Development record: the Stage 4+ implementation sequence. For the current system,
+> start with the [project overview](../README.md) and [build guide](BUILD_AND_TEST.md).
+
 Source: `next steps` on `main`, after "MOST RECENT IS APPENDED:".
 This document tracks *implemented functionality*, not aspirational demo code.
 Do not substitute C micro-runtime code from the original proposal: the
